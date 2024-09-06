@@ -1,6 +1,8 @@
 package com.webank.wedpr.components.admin.transport;
 
+import com.webank.wedpr.components.admin.entity.WedprJobTable;
 import com.webank.wedpr.components.admin.entity.WedprProjectTable;
+import com.webank.wedpr.components.admin.service.WedprJobTableService;
 import com.webank.wedpr.components.admin.service.WedprProjectTableService;
 import com.webank.wedpr.components.transport.Transport;
 import com.webank.wedpr.core.protocol.TransportTopicEnum;
@@ -19,14 +21,44 @@ public class TopicSubscriber implements CommandLineRunner {
     private Transport transport;
 
     @Autowired private WedprProjectTableService wedprProjectTableService;
+    @Autowired private WedprJobTableService wedprJobTableService;
 
     @Override
     public void run(String... args) throws Exception {
         try {
             subscribeProjectTopic();
+            subscribeJobTopic();
         } catch (Exception e) {
             log.warn("subscribe topic error", e);
         }
+    }
+
+    private void subscribeJobTopic() {
+        transport.registerTopicHandler(
+                TransportTopicEnum.JOB_REPORT.name(),
+                (message) -> {
+                    byte[] payload = message.getPayload();
+                    List<WedprJobTable> wedprJobTableList = null;
+                    try {
+                        wedprJobTableList =
+                                (List<WedprJobTable>)
+                                        ObjectMapperFactory.getObjectMapper()
+                                                .readValue(payload, List.class);
+                    } catch (IOException e) {
+                        log.warn("parse message error", e);
+                    }
+                    for (WedprJobTable wedprJobTable : wedprJobTableList) {
+                        String id = wedprJobTable.getId();
+                        WedprJobTable queriedWedprJobTable = wedprJobTableService.getById(id);
+                        if (queriedWedprJobTable == null) {
+                            wedprJobTableService.save(wedprJobTable);
+                        } else {
+                            wedprJobTableService.updateById(wedprJobTable);
+                        }
+                    }
+                    // TODO send response message
+                    //            transport.asyncSendMessage()
+                });
     }
 
     private void subscribeProjectTopic() {

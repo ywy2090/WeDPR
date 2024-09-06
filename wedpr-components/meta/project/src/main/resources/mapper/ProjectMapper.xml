@@ -62,9 +62,7 @@
             <if test="projectDO.label != null and projectDO.label !=''">
                 `label` = #{projectDO.label},
             </if>
-            <if test="projectDO.reportStatus != null">
-                `report_status` = #{projectDO.reportStatus},
-            </if>
+                `report_status` = 0,
         </set>
         where `id` = #{projectDO.id}
         <if test="owner != null and owner !=''">

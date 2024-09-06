@@ -4,6 +4,7 @@ import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapper;
 import com.webank.wedpr.components.transport.Transport;
 import com.webank.wedpr.components.transport.model.Message;
+import com.webank.wedpr.core.protocol.ReportStatusEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class JobReportMessageHandler implements Transport.MessageHandler {
                 for (String jobId : jobIdList) {
                     JobDO jobDO = new JobDO();
                     jobDO.setId(jobId);
-                    jobDO.setReportStatus(1);
+                    jobDO.setReportStatus(ReportStatusEnum.DO_REPORT.getReportStatus());
                     jobDOList.add(jobDO);
                 }
                 projectMapper.batchUpdateJobInfo(jobDOList);
