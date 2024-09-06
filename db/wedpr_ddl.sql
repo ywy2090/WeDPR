@@ -142,9 +142,11 @@ create table if not exists `wedpr_job_table`(
 create table if not exists `wedpr_job_dataset_relation`(
     `job_id` varchar(64) not null comment "任务ID",
     `dataset_id` varchar(64) not null comment "数据集ID",
+    `report_status` tinyint default 0 comment "上报状态",
     `create_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "任务创建时间",
     index job_id_index(`job_id`),
-    index dataset_id_index(`dataset_id`)
+    index dataset_id_index(`dataset_id`),
+    index report_status_index(`report_status`)
 )ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 -- the algorithm_setting template

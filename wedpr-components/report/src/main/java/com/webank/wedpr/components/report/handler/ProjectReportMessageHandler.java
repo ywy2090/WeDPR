@@ -36,7 +36,7 @@ public class ProjectReportMessageHandler implements Transport.MessageHandler {
                 for (String projectId : projectIdList) {
                     ProjectDO projectDO = new ProjectDO();
                     projectDO.setId(projectId);
-                    projectDO.setReportStatus(ReportStatusEnum.DO_REPORT.getReportStatus());
+                    projectDO.setReportStatus(ReportStatusEnum.DONE_REPORT.getReportStatus());
                     projectDOList.add(projectDO);
                 }
                 projectMapper.batchUpdateProjectInfo(projectDOList);

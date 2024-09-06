@@ -35,7 +35,7 @@ public class JobReportMessageHandler implements Transport.MessageHandler {
                 for (String jobId : jobIdList) {
                     JobDO jobDO = new JobDO();
                     jobDO.setId(jobId);
-                    jobDO.setReportStatus(ReportStatusEnum.DO_REPORT.getReportStatus());
+                    jobDO.setReportStatus(ReportStatusEnum.DONE_REPORT.getReportStatus());
                     jobDOList.add(jobDO);
                 }
                 projectMapper.batchUpdateJobInfo(jobDOList);

@@ -1,7 +1,10 @@
 package com.webank.wedpr.components.admin.transport;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.webank.wedpr.components.admin.entity.WedprJobDatasetRelation;
 import com.webank.wedpr.components.admin.entity.WedprJobTable;
 import com.webank.wedpr.components.admin.entity.WedprProjectTable;
+import com.webank.wedpr.components.admin.service.WedprJobDatasetRelationService;
 import com.webank.wedpr.components.admin.service.WedprJobTableService;
 import com.webank.wedpr.components.admin.service.WedprProjectTableService;
 import com.webank.wedpr.components.transport.Transport;
@@ -22,15 +25,51 @@ public class TopicSubscriber implements CommandLineRunner {
 
     @Autowired private WedprProjectTableService wedprProjectTableService;
     @Autowired private WedprJobTableService wedprJobTableService;
+    @Autowired private WedprJobDatasetRelationService wedprJobDatasetRelationService;
 
     @Override
     public void run(String... args) throws Exception {
         try {
             subscribeProjectTopic();
             subscribeJobTopic();
+            subscribeJobDatasetRelationTopic();
         } catch (Exception e) {
             log.warn("subscribe topic error", e);
         }
+    }
+
+    private void subscribeJobDatasetRelationTopic() {
+        transport.registerTopicHandler(
+                TransportTopicEnum.JOB_DATASET_REPORT.name(),
+                (message) -> {
+                    byte[] payload = message.getPayload();
+                    List<WedprJobDatasetRelation> wedprJobDatasetRelationList = null;
+                    try {
+                        wedprJobDatasetRelationList =
+                                (List<WedprJobDatasetRelation>)
+                                        ObjectMapperFactory.getObjectMapper()
+                                                .readValue(payload, List.class);
+                    } catch (IOException e) {
+                        log.warn("parse message error", e);
+                    }
+                    for (WedprJobDatasetRelation wedprJobDatasetRelation :
+                            wedprJobDatasetRelationList) {
+                        String jobId = wedprJobDatasetRelation.getJobId();
+                        LambdaQueryWrapper<WedprJobDatasetRelation> lambdaQueryWrapper =
+                                new LambdaQueryWrapper<>();
+                        lambdaQueryWrapper.eq(WedprJobDatasetRelation::getJobId, jobId);
+                        WedprJobDatasetRelation queriedWedprJobDatasetRelation =
+                                wedprJobDatasetRelationService.getOne(lambdaQueryWrapper);
+                        if (queriedWedprJobDatasetRelation == null) {
+                            wedprJobDatasetRelationService.save(wedprJobDatasetRelation);
+                        } else {
+                            wedprJobDatasetRelationService.update(
+                                    wedprJobDatasetRelation, lambdaQueryWrapper);
+                        }
+                    }
+                    // TODO send response message
+                    //            transport.asyncSendMessage()
+                });
     }
 
     private void subscribeJobTopic() {

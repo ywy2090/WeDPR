@@ -7,14 +7,8 @@ import javax.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class GetWedprJobListRequest {
-    @NotBlank private String projectName;
-    private String ownerAgency;
-    private String owner;
-    private String name;
-    private String status;
-    private String startTime;
-    private String endTime;
+public class GetJobByDatasetRequest {
+    @NotBlank private String datasetId;
     private Integer pageNum = Constant.DEFAULT_PAGE_NUM;
 
     @Min(value = 5, message = "分页条数最小不能小于5")

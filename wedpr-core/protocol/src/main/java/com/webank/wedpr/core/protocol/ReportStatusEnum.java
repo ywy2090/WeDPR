@@ -11,7 +11,7 @@ public enum ReportStatusEnum {
     NO_REPORT(0),
 
     /** 已上报 */
-    DO_REPORT(1);
+    DONE_REPORT(1);
 
     private Integer reportStatus;
 }
