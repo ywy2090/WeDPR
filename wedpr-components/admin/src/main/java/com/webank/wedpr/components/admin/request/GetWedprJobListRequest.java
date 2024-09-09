@@ -10,8 +10,7 @@ import lombok.Data;
 public class GetWedprJobListRequest {
     @NotBlank private String projectName;
     private String ownerAgency;
-    private String owner;
-    private String name;
+    private String jobType;
     private String status;
     private String startTime;
     private String endTime;

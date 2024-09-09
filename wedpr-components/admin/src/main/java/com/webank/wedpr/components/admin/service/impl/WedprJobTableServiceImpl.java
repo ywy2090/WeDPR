@@ -26,26 +26,22 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
     public ListJobResponse listJob(GetWedprJobListRequest request) {
         LambdaQueryWrapper<WedprJobTable> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         String projectName = request.getProjectName();
-        String ownerAgencyName = request.getOwnerAgency();
-        String ownerUser = request.getOwner();
-        String jobTitle = request.getName();
+        String ownerAgency = request.getOwnerAgency();
+        String jobType = request.getJobType();
         String status = request.getStatus();
         String startTimeStr = request.getStartTime();
         String endTimeStr = request.getEndTime();
         Integer pageNum = request.getPageNum();
         Integer pageSize = request.getPageSize();
         lambdaQueryWrapper.eq(WedprJobTable::getProjectName, projectName);
-        if (!StringUtils.isEmpty(ownerAgencyName)) {
-            lambdaQueryWrapper.like(WedprJobTable::getOwnerAgency, ownerAgencyName);
+        if (!StringUtils.isEmpty(ownerAgency)) {
+            lambdaQueryWrapper.eq(WedprJobTable::getOwnerAgency, ownerAgency);
         }
-        if (!StringUtils.isEmpty(ownerUser)) {
-            lambdaQueryWrapper.like(WedprJobTable::getOwner, ownerUser);
-        }
-        if (!StringUtils.isEmpty(jobTitle)) {
-            lambdaQueryWrapper.like(WedprJobTable::getName, jobTitle);
+        if (!StringUtils.isEmpty(jobType)) {
+            lambdaQueryWrapper.eq(WedprJobTable::getJobType, jobType);
         }
         if (!StringUtils.isEmpty(status)) {
-            lambdaQueryWrapper.like(WedprJobTable::getStatus, status);
+            lambdaQueryWrapper.eq(WedprJobTable::getStatus, status);
         }
         if (!StringUtils.isEmpty(startTimeStr)) {
             LocalDateTime startTime = Utils.getLocalDateTime(startTimeStr);
