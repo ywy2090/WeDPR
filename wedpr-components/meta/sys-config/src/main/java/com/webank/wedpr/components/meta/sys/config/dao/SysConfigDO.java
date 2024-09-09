@@ -16,12 +16,18 @@
 
 package com.webank.wedpr.components.meta.sys.config.dao;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.webank.wedpr.core.utils.WeDPRException;
 import org.apache.commons.lang3.StringUtils;
 
+@TableName("wedpr_config_table")
 public class SysConfigDO {
+    @TableId("config_key")
     private String configKey;
+
     private String configValue;
+    private Integer reportStatus;
     private String createTime;
     private String lastUpdateTime;
 
@@ -49,6 +55,14 @@ public class SysConfigDO {
         this.createTime = createTime;
     }
 
+    public Integer getReportStatus() {
+        return reportStatus;
+    }
+
+    public void setReportStatus(Integer reportStatus) {
+        this.reportStatus = reportStatus;
+    }
+
     public String getLastUpdateTime() {
         return lastUpdateTime;
     }
@@ -74,6 +88,8 @@ public class SysConfigDO {
                 + ", configValue='"
                 + configValue
                 + '\''
+                + ", reportStatus="
+                + reportStatus
                 + ", createTime='"
                 + createTime
                 + '\''

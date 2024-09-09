@@ -2,6 +2,8 @@
 package com.webank.wedpr.components.report.job;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.webank.wedpr.components.meta.sys.config.dao.SysConfigDO;
+import com.webank.wedpr.components.meta.sys.config.dao.SysConfigMapper;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.JobDatasetDO;
 import com.webank.wedpr.components.project.dao.ProjectDO;
@@ -9,6 +11,7 @@ import com.webank.wedpr.components.project.dao.ProjectMapper;
 import com.webank.wedpr.components.report.handler.JobDatasetRelationReportMessageHandler;
 import com.webank.wedpr.components.report.handler.JobReportMessageHandler;
 import com.webank.wedpr.components.report.handler.ProjectReportMessageHandler;
+import com.webank.wedpr.components.report.handler.SysConfigReportMessageHandler;
 import com.webank.wedpr.components.transport.Transport;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.protocol.ReportStatusEnum;
@@ -28,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class ReportQuartzJob implements Job {
     @Autowired private ProjectMapper projectMapper;
+    @Autowired private SysConfigMapper sysConfigMapper;
 
     private Transport transport;
 
@@ -49,9 +53,24 @@ public class ReportQuartzJob implements Job {
             reportProjectInfo(adminAgency);
             reportJobInfo(adminAgency);
             reportJobDatasteRelationInfo(adminAgency);
+            reportSysConfig(adminAgency);
         } catch (Exception e) {
             log.warn("report error", e);
         }
+    }
+
+    private void reportSysConfig(String agency) throws JsonProcessingException {
+        SysConfigReportMessageHandler sysConfigReportMessageHandler =
+                new SysConfigReportMessageHandler(sysConfigMapper);
+        List<SysConfigDO> sysConfigDOList = sysConfigMapper.queryAllConfig();
+        byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(sysConfigDOList);
+        transport.asyncSendMessageByAgency(
+                TransportTopicEnum.SYS_CONFIG_REPORT.name(),
+                agency,
+                payload,
+                0,
+                WeDPRCommonConfig.getReportTimeout(),
+                sysConfigReportMessageHandler);
     }
 
     private void reportJobDatasteRelationInfo(String agency) throws JsonProcessingException {

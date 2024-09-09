@@ -14,9 +14,11 @@ create table if not exists `wedpr_agency_table`(
 create table if not exists `wedpr_config_table`(
     `config_key` varchar(128) not null comment "配置项主键",
     `config_value` longtext not null comment "配置项的值",
+    `report_status` tinyint default 0 comment "上报状态",
     `create_time` datetime DEFAULT  CURRENT_TIMESTAMP comment "配置创建时间",
     `last_update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment "配置更新时间",
-     primary key(`config_key`)
+     primary key(`config_key`),
+     index report_status_index(`report_status`)
 )ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
 -- the sync table(record the sync status of all resources)

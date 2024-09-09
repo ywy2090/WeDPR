@@ -44,6 +44,17 @@
         update wedpr_config_table set `config_value` = #{sysConfigDO.configValue}
                 where `config_key` = #{sysConfigDO.configKey} and (config_value is null or config_value="" or timestampdiff(second, `last_update_time`, NOW()) > #{expireTimeSeconds})
     </update>
+    <update id="batchUpdateSysConfig" parameterType="java.util.List">
+        <foreach collection="configKeyList" item = "sysConfigDO" separator=";">
+            update `wedpr_config_table`
+            <set>
+                <if test="sysConfigDO.reportStatus != null">
+                    `report_status` = #{sysConfigDO.reportStatus},
+                </if>
+            </set>
+            where `config_key` = #{sysConfigDO.config_key}
+        </foreach>
+    </update>
     <delete id = "deleteConfig">
         delete from wedpr_config_table where `config_key` in #{configKey}
     </delete>

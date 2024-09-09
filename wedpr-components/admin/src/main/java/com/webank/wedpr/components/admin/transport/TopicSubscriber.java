@@ -7,6 +7,8 @@ import com.webank.wedpr.components.admin.entity.WedprProjectTable;
 import com.webank.wedpr.components.admin.service.WedprJobDatasetRelationService;
 import com.webank.wedpr.components.admin.service.WedprJobTableService;
 import com.webank.wedpr.components.admin.service.WedprProjectTableService;
+import com.webank.wedpr.components.meta.sys.config.dao.SysConfigDO;
+import com.webank.wedpr.components.meta.sys.config.service.SysConfigService;
 import com.webank.wedpr.components.transport.Transport;
 import com.webank.wedpr.core.protocol.TransportTopicEnum;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
@@ -26,6 +28,7 @@ public class TopicSubscriber implements CommandLineRunner {
     @Autowired private WedprProjectTableService wedprProjectTableService;
     @Autowired private WedprJobTableService wedprJobTableService;
     @Autowired private WedprJobDatasetRelationService wedprJobDatasetRelationService;
+    @Autowired private SysConfigService sysConfigService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -33,9 +36,38 @@ public class TopicSubscriber implements CommandLineRunner {
             subscribeProjectTopic();
             subscribeJobTopic();
             subscribeJobDatasetRelationTopic();
+            subscribeSysConfigTopic();
         } catch (Exception e) {
             log.warn("subscribe topic error", e);
         }
+    }
+
+    private void subscribeSysConfigTopic() {
+        transport.registerTopicHandler(
+                TransportTopicEnum.SYS_CONFIG_REPORT.name(),
+                (message) -> {
+                    byte[] payload = message.getPayload();
+                    List<SysConfigDO> sysConfigDOList = null;
+                    try {
+                        sysConfigDOList =
+                                (List<SysConfigDO>)
+                                        ObjectMapperFactory.getObjectMapper()
+                                                .readValue(payload, List.class);
+                    } catch (IOException e) {
+                        log.warn("parse message error", e);
+                    }
+                    for (SysConfigDO sysConfigDO : sysConfigDOList) {
+                        String configKey = sysConfigDO.getConfigKey();
+                        SysConfigDO queriedSysConfigDO = sysConfigService.getById(configKey);
+                        if (queriedSysConfigDO == null) {
+                            sysConfigService.save(sysConfigDO);
+                        } else {
+                            sysConfigService.updateById(sysConfigDO);
+                        }
+                    }
+                    // TODO send response message
+                    //            transport.asyncSendMessage()
+                });
     }
 
     private void subscribeJobDatasetRelationTopic() {
