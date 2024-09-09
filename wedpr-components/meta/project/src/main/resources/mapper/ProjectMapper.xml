@@ -44,6 +44,27 @@
         <result column="create_time" property="createTime"/>
         <result column="last_update_time" property="lastUpdateTime"/>
     </resultMap>
+    <resultMap id="JobDatasetDOMap" type="com.webank.wedpr.components.project.dao.JobDatasetDO">
+        <result column="job_id" property="jobId"/>
+        <result column="dataset_id" property="datasetId"/>
+        <result column="report_status" property="reportStatus"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="queryJobDatasetInfo" resultMap="JobDatasetDOMap">
+        select * from `wedpr_job_dataset_relation` where 1 = 1
+        <choose>
+            <when test="condition != null and condition != ''">
+                <if test="condition.reportStatus != null">
+                    and `report_status` = #{condition.reportStatus}
+                </if>
+            </when>
+        </choose>
+        <if test="condition.limitItems != -1 and condition.limitItems !=''">
+            limit #{condition.limitItems}
+        </if>
+    </select>
+
     <insert id="insertProjectInfo" parameterType="com.webank.wedpr.components.project.dao.ProjectDO">
         insert into `wedpr_project_table`(`id`, `name`, `desc`, `project_type`, `owner`, `owner_agency`, `label`, `create_time`)
         values(#{projectDO.id}, #{projectDO.name}, #{projectDO.projectDesc}, #{projectDO.type},
@@ -62,9 +83,7 @@
             <if test="projectDO.label != null and projectDO.label !=''">
                 `label` = #{projectDO.label},
             </if>
-            <if test="projectDO.reportStatus != null">
-                `report_status` = #{projectDO.reportStatus},
-            </if>
+                `report_status` = 0,
         </set>
         where `id` = #{projectDO.id}
         <if test="owner != null and owner !=''">
@@ -134,6 +153,9 @@
             </when>
         </choose>
         order by `last_update_time` desc
+        <if test="condition.limitItems != -1 and condition.limitItems !=''">
+            limit #{condition.limitItems}
+        </if>
     </select>
 
     <select id="queryProjectCount" resultType="java.lang.Long">
@@ -399,6 +421,17 @@
             <if test="job.ownerAgency != null and job.ownerAgency !=''">
                 and `owner_agency` = #{job.ownerAgency}
             </if>
+        </foreach>
+    </update>
+    <update id="batchUpdateJobDatasetInfo" parameterType="java.util.List">
+        <foreach collection="jobDatasetDOList" item = "jobDataset" separator=";">
+            update `wedpr_job_dataset_relation`
+            <set>
+                <if test="jobDataset.reportStatus != null">
+                    `report_status` = #{jobDataset.reportStatus},
+                </if>
+            </set>
+            where `job_id` = #{jobDataset.jobId}
         </foreach>
     </update>
 </mapper>

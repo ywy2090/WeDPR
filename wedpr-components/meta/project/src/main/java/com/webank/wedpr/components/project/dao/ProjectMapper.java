@@ -64,4 +64,8 @@ public interface ProjectMapper {
             @Param("condition") JobDO condition);
 
     public List<JobDO> queryJobsByDatasetID(@Param("datasetID") String datasetID);
+
+    public List<JobDatasetDO> queryJobDatasetInfo(@Param("condition") JobDatasetDO condition);
+
+    void batchUpdateJobDatasetInfo(@Param("jobDatasetDOList") List<JobDatasetDO> jobDatasetDOList);
 }

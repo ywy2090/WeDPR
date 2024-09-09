@@ -17,6 +17,7 @@ package com.webank.wedpr.components.project.dao;
 
 import com.webank.wedpr.components.meta.resource.follower.dao.FollowerMapper;
 import com.webank.wedpr.core.protocol.JobStatus;
+import com.webank.wedpr.core.protocol.ReportStatusEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRResponse;
 import java.util.*;
@@ -104,9 +105,10 @@ public class ProjectMapperWrapper {
         for (JobDO job : jobs) {
             JobDO updatedJob = new JobDO(job.getId());
             updatedJob.setStatus(status.getStatus());
-            updatedJobList.add(updatedJob);
             updatedJob.setOwner(user);
             updatedJob.setOwnerAgency(agency);
+            updatedJob.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
+            updatedJobList.add(updatedJob);
         }
         this.projectMapper.batchUpdateJobInfo(updatedJobList);
     }
@@ -134,6 +136,7 @@ public class ProjectMapperWrapper {
     }
 
     public void updateJob(JobDO jobDO) {
+        jobDO.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
         this.projectMapper.batchUpdateJobInfo(new ArrayList<>(Collections.singletonList(jobDO)));
     }
 
@@ -145,6 +148,7 @@ public class ProjectMapperWrapper {
             this.insertJob(jobDO);
             return;
         }
+        jobDO.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
         this.projectMapper.batchUpdateJobInfo(new ArrayList<>(Collections.singletonList(jobDO)));
     }
 

@@ -11,5 +11,11 @@ public enum TransportTopicEnum {
     PROJECT_REPORT,
 
     /** job report */
-    JOB_REPORT;
+    JOB_REPORT,
+
+    /** job dataset report */
+    JOB_DATASET_REPORT,
+
+    /** sys config report */
+    SYS_CONFIG_REPORT;
 }

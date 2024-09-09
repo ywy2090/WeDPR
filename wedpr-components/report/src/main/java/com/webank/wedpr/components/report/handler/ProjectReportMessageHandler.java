@@ -4,6 +4,7 @@ import com.webank.wedpr.components.project.dao.ProjectDO;
 import com.webank.wedpr.components.project.dao.ProjectMapper;
 import com.webank.wedpr.components.transport.Transport;
 import com.webank.wedpr.components.transport.model.Message;
+import com.webank.wedpr.core.protocol.ReportStatusEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import com.webank.wedpr.core.utils.WeDPRException;
@@ -35,7 +36,7 @@ public class ProjectReportMessageHandler implements Transport.MessageHandler {
                 for (String projectId : projectIdList) {
                     ProjectDO projectDO = new ProjectDO();
                     projectDO.setId(projectId);
-                    projectDO.setReportStatus(1);
+                    projectDO.setReportStatus(ReportStatusEnum.DONE_REPORT.getReportStatus());
                     projectDOList.add(projectDO);
                 }
                 projectMapper.batchUpdateProjectInfo(projectDOList);

@@ -103,10 +103,9 @@ public class ProjectServiceImpl implements ProjectService {
         WeDPRResponse response =
                 new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG);
         try {
+            ProjectDO projectDO = updatedProject.getProject();
             int result =
-                    this.projectMapperWrapper
-                            .getProjectMapper()
-                            .updateProjectInfo(user, updatedProject.getProject());
+                    this.projectMapperWrapper.getProjectMapper().updateProjectInfo(user, projectDO);
             logger.info(
                     "updateProject, updated-record: {}, detail: {}",
                     result,
@@ -116,7 +115,7 @@ public class ProjectServiceImpl implements ProjectService {
             }
             throw new WeDPRException(
                     "updateProject failed for no project with id "
-                            + updatedProject.getProject().getId()
+                            + projectDO.getId()
                             + " found for user "
                             + user);
         } catch (Exception e) {

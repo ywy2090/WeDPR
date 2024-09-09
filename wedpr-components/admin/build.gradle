@@ -8,5 +8,6 @@ dependencies {
     implementation project(":wedpr-components-mybatis")
     implementation project(":wedpr-components-dataset")
     implementation project(":wedpr-components-sync")
+    implementation project(":wedpr-components-sys-config")
     implementation project(":wedpr-components-transport")
 }

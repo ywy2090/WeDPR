@@ -22,6 +22,8 @@ public class WeDPRCommonConfig {
     private static final Integer DEFAULT_WRITE_TRUNK_SIZE = 1024 * 1024;
     // the agency id
     private static final String AGENCY = WeDPRConfig.apply("wedpr.agency", null, Boolean.TRUE);
+    private static final String ADMIN_AGENCY =
+            WeDPRConfig.apply("wedpr.admin_agency", "ADMIN", Boolean.TRUE);
     private static final String FIELD_SPLITTER = WeDPRConfig.apply("wedpr.field.splitter", ",");
 
     private static final Integer READ_CHUNK_SIZE =
@@ -39,6 +41,10 @@ public class WeDPRCommonConfig {
 
     public static String getAgency() {
         return AGENCY;
+    }
+
+    public static String getAdminAgency() {
+        return ADMIN_AGENCY;
     }
 
     public static String getFieldSplitter() {
