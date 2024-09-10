@@ -55,3 +55,11 @@ export function handleParamsValid(params) {
   })
   return validParams
 }
+
+export function maskString(str) {
+  if (str.length <= 8) return str.replace(/./g, '*')
+  const start = str.slice(0, 4)
+  const end = str.slice(-4)
+  const masked = str.slice(4, -4)
+  return start + masked.replace(/./g, '*') + end
+}

@@ -42,16 +42,16 @@
             </div>
             <div class="count-detail">
               <dl>
+                <dt>所属机构</dt>
+                <dd>{{ item.ownerAgency }}</dd>
+              </dl>
+              <dl>
                 <dt>机构数量</dt>
-                <dd>6</dd>
+                <dd>{{ item.agencyCount }}</dd>
               </dl>
               <dl>
                 <dt>数据资源数量</dt>
-                <dd>6</dd>
-              </dl>
-              <dl>
-                <dt>模型数量</dt>
-                <dd>6</dd>
+                <dd>{{ item.dataCount }}</dd>
               </dl>
             </div>
             <ul>
@@ -244,7 +244,7 @@ div.card-container {
         }
         dd {
           color: #262a32;
-          font-size: 16px;
+          font-size: 14px;
           line-height: 24px;
           font-weight: 500;
         }

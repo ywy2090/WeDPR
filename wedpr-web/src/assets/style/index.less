@@ -130,3 +130,36 @@ div.upload-loading {
     color: #787b84;
   }
 }
+
+.scopeSwitch .el-switch__label {
+  position: absolute;
+  display: none;
+  color: #fff;
+}
+
+/*打开时文字位置设置*/
+.scopeSwitch .el-switch__label--right {
+  z-index: 1;
+  right: -8px; /*不同场景下可能不同，自行调整*/
+  font-size: 12px;
+  color: #fff;
+}
+/*关闭时文字位置设置*/
+.scopeSwitch .el-switch__label--left {
+  z-index: 1;
+  left: 20px; /*不同场景下可能不同，自行调整*/
+  font-size: 12px;
+  color: #fff;
+}
+.scopeSwitch .el-switch__label.is-active {
+  font-size: 12px;
+  color: #fff;
+}
+/*显示文字*/
+.scopeSwitch .el-switch__label.is-active {
+  display: block;
+}
+.scopeSwitch.el-switch .el-switch__core,
+.el-switch .el-switch__label {
+  width: 56px !important; /*开关按钮的宽度大小*/
+}

@@ -112,25 +112,29 @@ export const algListFull = [
     label: '隐私求交',
     value: 'PSI',
     src: require('../assets/images/psi_job.png'),
-    jobSrc: require('../assets/images/PSI.png')
+    jobSrc: require('../assets/images/PSI.png'),
+    participateNumber: 2
   },
   {
     label: 'SecureLGBM训练',
     value: 'XGB_TRAINING',
     src: require('../assets/images/xgbtrain_job.png'),
-    jobSrc: require('../assets/images/XGB.png')
+    jobSrc: require('../assets/images/XGB.png'),
+    participateNumber: 1
   },
   {
     label: 'SecureLGBM预测',
     value: 'XGB_PREDICTING',
     src: require('../assets/images/xgbpredict_job.png'),
-    jobSrc: require('../assets/images/XGB_2.png')
+    jobSrc: require('../assets/images/XGB_2.png'),
+    participateNumber: 1
   },
   {
     label: '连表SQL分析',
     value: 'SQL',
     src: require('../assets/images/SQL.png'),
-    jobSrc: require('../assets/images/SQL.png')
+    jobSrc: require('../assets/images/SQL.png'),
+    participateNumber: 3
   },
   // {
   //   label: '多方XGB建模',

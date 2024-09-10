@@ -21,12 +21,12 @@
         <div class="img-con">
           <img v-if="defaultIndex === menu.name" :src="bindIcon(menu.icon_active_src)" alt="" class="icon-tab" />
           <img v-else :src="bindIcon(menu.icon_src)" alt="" class="icon-tab" />
-          <span class="todo" v-if="menu.name === 'approveManage' && todoNum"></span>
+          <span class="todo" v-if="menu.name === 'approveManage' && todoNum">{{ todoNum > 99 ? '99+' : todoNum }}</span>
         </div>
 
         <template #title>
           <span class="menu-text">{{ menu.text }}</span>
-          <span class="todo" v-if="menu.name === 'approveManage' && todoNum"></span>
+          <span class="todo" v-if="menu.name === 'approveManage' && todoNum">{{ todoNum > 99 ? '99+' : todoNum }}</span>
         </template>
       </el-menu-item>
     </div>
@@ -257,11 +257,15 @@ export default {
 }
 span.todo {
   position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  height: 16px;
+  padding: 0 5.26px;
+  border-radius: 8px;
   background-color: #ff5f4a;
-  right: 6px;
-  top: 6px;
+  right: 3px;
+  top: 3px;
+  text-align: center;
+  color: white;
+  line-height: 16px;
+  font-size: 10px;
 }
 </style>

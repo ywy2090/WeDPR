@@ -29,7 +29,7 @@
         </div>
         <div class="half">
           <span class="title right">特征量：</span>
-          <span class="info" :title="dataInfo.columCount"> {{ dataInfo.columCount }} </span>
+          <span class="info" :title="dataInfo.columnCount"> {{ dataInfo.columnCount }} </span>
         </div>
       </div>
       <div class="whole">

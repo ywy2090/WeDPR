@@ -29,7 +29,7 @@
     <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
       <el-tab-pane label="我的待办" name="todo">
         <span slot="label"
-          ><span class="todo" v-if="todoNum"></span> 我的待办</span
+          ><span class="todo" v-if="todoNum">{{ todoNum > 99 ? '99+' : todoNum }}</span> 我的待办</span
         >
         <div class="tableContent autoTableWrap" v-if="total">
           <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
@@ -400,12 +400,16 @@ export default {
   }
   span.todo {
     position: absolute;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    height: 16px;
+    padding: 0 5.26px;
+    border-radius: 8px;
     background-color: #ff5f4a;
-    right: 4px;
-    top: 4px;
+    right: 3px;
+    top: 3px;
+    text-align: center;
+    color: white;
+    line-height: 16px;
+    font-size: 10px;
   }
 }
 </style>

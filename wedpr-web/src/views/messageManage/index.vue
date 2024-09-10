@@ -86,7 +86,7 @@
 import { jobManageServer } from 'Api'
 import wePagination from '@/components/wePagination.vue'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
-import { jobStatusMap } from 'Utils/constant.js'
+import { jobStatusMap, jobStatusList } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 import { handleParamsValid } from 'Utils/index.js'
 export default {
@@ -120,7 +120,8 @@ export default {
       showAddModal: false,
       activeName: 'first',
       typeList: [],
-      jobStatusMap
+      jobStatusMap,
+      jobStatusList
     }
   },
   computed: {

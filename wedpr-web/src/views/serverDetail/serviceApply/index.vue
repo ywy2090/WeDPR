@@ -1,5 +1,5 @@
 <template>
-  <el-dialog width="632px" title="申请调用" @close="handleClose" :visible="showApplyModal">
+  <el-dialog width="652px" title="申请调用" @close="handleClose" :visible="showApplyModal">
     <div class="form-con">
       <div class="key-info" v-if="selectedAccessKey && selectedAccessKey.accessKeyID">
         <ul>
@@ -8,7 +8,11 @@
         </ul>
         <ul>
           <li>Access Secret：</li>
-          <li>{{ selectedAccessKey.accessKeySecret }}</li>
+          <li>
+            {{ showSercret ? selectedAccessKey.accessKeySecret : maskString(selectedAccessKey.accessKeySecret) }}
+            <img v-if="showSercret" @click="hideSecretStr" src="~Assets/images/hide.png" alt="" />
+            <img @click="openSecretStr" v-else src="~Assets/images/show.png" alt="" />
+          </li>
         </ul>
       </div>
       <el-form v-else label-position="right" size="small" :model="dataForm" :rules="dataFormRules" ref="dataForm" :label-width="formLabelWidth">
@@ -28,6 +32,7 @@
 </template>
 <script>
 import { accountManageServer, accessKeyManageServer } from 'Api'
+import { maskString } from 'Utils/index.js'
 export default {
   name: 'applyService',
   props: {
@@ -56,7 +61,9 @@ export default {
       pageData: {
         page_offset: 1,
         page_size: 999
-      }
+      },
+      showSercret: false,
+      maskString
     }
   },
   created() {
@@ -65,6 +72,12 @@ export default {
   methods: {
     handleClose() {
       this.$emit('closeModal')
+    },
+    hideSecretStr() {
+      this.showSercret = false
+    },
+    openSecretStr() {
+      this.showSercret = true
     },
     copy() {
       const { accessKeyID, accessKeySecret } = this.selectedAccessKey
@@ -146,6 +159,14 @@ div.form-con {
       }
       li:last-child {
         flex: 1;
+        img {
+          vertical-align: middle;
+          width: 20px;
+          height: auto;
+          margin-left: 10px;
+          cursor: pointer;
+          transform: translateY(-1px);
+        }
       }
     }
     ul:first-child {
