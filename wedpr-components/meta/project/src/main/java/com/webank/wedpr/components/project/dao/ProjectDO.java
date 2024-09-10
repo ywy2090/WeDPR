@@ -66,6 +66,7 @@ public class ProjectDO extends TimeRange {
     private Integer reportStatus;
     private String type;
     private ProjectType projectType;
+    private Integer limitItems;
 
     private String createTime;
     private String lastUpdateTime;
@@ -80,6 +81,14 @@ public class ProjectDO extends TimeRange {
 
     public ProjectDO(String name) {
         setName(name);
+    }
+
+    public void setLimitItems(int limitItems) {
+        this.limitItems = limitItems;
+    }
+
+    public Integer getLimitItems() {
+        return this.limitItems;
     }
 
     public String getId() {

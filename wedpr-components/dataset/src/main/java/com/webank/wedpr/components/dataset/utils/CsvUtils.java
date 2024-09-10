@@ -1,6 +1,6 @@
 package com.webank.wedpr.components.dataset.utils;
 
-import com.opencsv.CSVReaderHeaderAware;
+import com.opencsv.CSVReader;
 import com.webank.wedpr.components.dataset.datasource.DBType;
 import com.webank.wedpr.components.dataset.datasource.category.DBDataSource;
 import com.webank.wedpr.components.dataset.exception.DatasetException;
@@ -13,9 +13,8 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -43,14 +42,10 @@ public class CsvUtils {
 
         try (BufferedReader bufferedReader =
                         Files.newBufferedReader(Paths.get(csvPath), StandardCharsets.UTF_8);
-                CSVReaderHeaderAware csvReaderHeaderAware =
-                        new CSVReaderHeaderAware(bufferedReader)) {
-            Map<String, String> header = csvReaderHeaderAware.readMap();
+                CSVReader csvReader = new CSVReader(bufferedReader)) {
 
-            List<String> fieldList = new ArrayList<>();
-            for (Map.Entry<String, String> entry : header.entrySet()) {
-                fieldList.add(entry.getKey());
-            }
+            String[] headers = csvReader.readNextSilently();
+            List<String> fieldList = Arrays.asList(headers);
 
             String joinString = String.join(CSV_SEPARATOR, fieldList);
             logger.info(

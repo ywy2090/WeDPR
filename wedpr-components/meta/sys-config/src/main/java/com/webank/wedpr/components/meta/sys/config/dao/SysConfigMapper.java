@@ -16,12 +16,13 @@
 
 package com.webank.wedpr.components.meta.sys.config.dao;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 @Mapper
-public interface SysConfigMapper {
+public interface SysConfigMapper extends BaseMapper<SysConfigDO> {
 
     // insert config
     public void insertConfig(@Param("sysConfig") SysConfigDO sysConfig);
@@ -58,4 +59,6 @@ public interface SysConfigMapper {
             @Param("expireTimeSeconds") long expireTimeSeconds);
 
     public Long getConfigCount();
+
+    void batchUpdateSysConfig(@Param("configKeyList") List<SysConfigDO> sysConfigDOList);
 }
