@@ -6,9 +6,9 @@
         <span class="current" v-if="isCurrent(item)">审批中</span>
         <span v-if="item.deleteAble" @click="deleteUser(i)" class="close">x</span>
       </div>
-      <div class="connect">
+      <div class="connect" v-if="showAdd && !item.addNextUserDisbaled">
         <span class="point"></span> <span class="line"></span>
-        <el-popover v-if="showAdd" v-model="item.visible" placement="top-start" width="363" trigger="click">
+        <el-popover v-model="item.visible" placement="top-start" width="363" trigger="click">
           <p style="margin-bottom: 20px">添加审批节点</p>
           <el-form :inline="false" :rules="userInfoRules" :model="addUserInfo" ref="addUserInfo" size="small">
             <el-form-item label-width="116px" label="本机构用户ID:" prop="user">
@@ -17,14 +17,15 @@
               </el-select>
             </el-form-item>
             <div style="text-align: right">
-              <el-button>取消</el-button>
-              <el-button type="primary" @click="addUserToChain(i)">确定</el-button>
+              <el-button @click="cancelAdd(item)">取消</el-button>
+              <el-button type="primary" @click="addUserToChain(i, item)">确定</el-button>
             </div>
           </el-form>
           <img slot="reference" src="~Assets/images/add.png" alt="" />
         </el-popover>
         <span class="line"></span> <span class="point right"></span>
       </div>
+      <div class="connect" v-else><span class="point"></span> <span class="line"></span> <span class="line"></span> <span class="point right"></span></div>
     </div>
   </div>
 </template>
@@ -57,7 +58,7 @@ export default {
       },
       userInfoRules: {
         agency: [{ required: true, message: '机构不能为空', trigger: 'blur' }],
-        user: [{ required: true, message: '审批人不能为空', trigger: 'blur' }]
+        user: [{ required: true, trigger: 'blur', validator: this.userValidate }]
       },
       statusMap: {
         Agree: '已审批',
@@ -82,7 +83,17 @@ export default {
       console.log(this.currentApply)
       return item.agency + '_' + item.name === this.currentApply
     },
-    addUserToChain(index) {
+    userValidate(rule, value, callback) {
+      if (value) {
+        if (this.approveChainList.some((v) => v.name === value && v.agency === this.agencyId)) {
+          return callback(new Error('审批人已存在当前审批链'))
+        }
+        callback()
+      } else {
+        return callback(new Error('请选择审批人'))
+      }
+    },
+    addUserToChain(index, item) {
       console.log(this.$refs.addUserInfo)
       this.$refs.addUserInfo[0].validate((valid) => {
         if (valid) {
@@ -91,6 +102,7 @@ export default {
           data.splice(index + 1, 0, { agency: this.agencyId, name: user, deleteAble: true, visible: false })
           this.$emit('addUserToChain', data)
           this.user = ''
+          item.visible = false
         }
       })
     },
@@ -98,6 +110,9 @@ export default {
       const data = [...this.approveChainList]
       data.splice(index, 1)
       this.$emit('deleteUser', data)
+    },
+    cancelAdd(item) {
+      item.visible = false
     }
   }
 }

@@ -129,24 +129,27 @@ export default {
         console.log(data, 'data')
         // 合并审批链 FIXME:
         // 插入自己
-        const approveChainList = [{ agency: this.agencyId, name: this.userId }]
+        let combineApproveChainList = [{ agency: this.agencyId, name: this.userId, deleteAble: false }]
+        // 循环插入每个数据集自己设置的审批链,且申请方不能更改，只能在前方插入自己机构的人
         data.forEach((v) => {
           const { approvalChain = '' } = v
           const approvalChainList = Array.isArray(JSON.parse(approvalChain)) ? JSON.parse(approvalChain) : []
           approvalChainList.forEach((k) => {
             // 已有的不放入链内
-            if (!approveChainList.some((dataPushed) => dataPushed.agency === v.ownerAgencyName && dataPushed.name === k)) {
-              approveChainList.push({
-                agency: v.ownerAgencyName,
-                name: k,
-                deleteAble: false,
-                visible: false
-              })
-            }
+            combineApproveChainList = combineApproveChainList.filter((dataPushed) => {
+              return !(dataPushed.agency === v.ownerAgencyName && dataPushed.name === k)
+            })
+            combineApproveChainList.push({
+              agency: v.ownerAgencyName,
+              name: k,
+              deleteAble: false,
+              addNextUserDisbaled: true,
+              visible: false
+            })
           })
         })
-        console.log(approveChainList, 'approveChainList')
-        this.approveChainList = approveChainList
+        console.log(combineApproveChainList, 'combineApproveChainList')
+        this.approveChainList = combineApproveChainList
         console.log(this.approveChainList, 'this.approveChainList ')
       } else {
         this.applyDataList = []

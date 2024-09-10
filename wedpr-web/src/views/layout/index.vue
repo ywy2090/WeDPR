@@ -63,7 +63,7 @@ export default {
     },
     feed() {
       // this.$router.push({ path: 'feed' })
-      window.open('https://wj.qq.com/s2/15263371/ce6c/')
+      location.href = 'https://wj.qq.com/s2/15263371/ce6c/'
     },
     closeFeed() {
       this.hiddenFeed = true

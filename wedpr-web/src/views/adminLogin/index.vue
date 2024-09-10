@@ -132,11 +132,11 @@ export default {
         })
         this.SET_AGENCYLIST(agencyListSelect)
         this.$router.push({ path: '/agencyManage' })
-        // this.getConfigAlgList()
+        this.getConfigAlgList()
       }
     },
     async getConfigAlgList() {
-      const res = await settingManageServer.getConfig({ key: 'wedpr_algorithm_templates' })
+      const res = await settingManageServer.adminGetConfig({ key: 'wedpr_algorithm_templates' })
       if (res.code === 0 && res.data) {
         const realData = JSON.parse(res.data)
         const supportAlg = realData.templates.map((v) => v.name)

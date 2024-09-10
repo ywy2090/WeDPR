@@ -46,7 +46,14 @@
         <el-table-column label="机构内用户数" prop="userCount" show-overflow-tooltip />
         <el-table-column label="机构状态" prop="agencyStatus">
           <template v-slot="scope">
-            <el-switch :value="!scope.row.agencyStatus" @change="(status) => handleStatusChange(status, scope.row)"></el-switch>
+            <el-switch
+              class="scopeSwitch"
+              :value="!scope.row.agencyStatus"
+              @change="(status) => handleStatusChange(status, scope.row)"
+              inactive-color="#787B84"
+              active-text="启用"
+              inactive-text="禁用"
+            ></el-switch>
           </template>
         </el-table-column>
         <el-table-column label="证书状态" prop="certStatus">

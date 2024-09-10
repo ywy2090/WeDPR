@@ -71,7 +71,7 @@ export default {
       if (res.code === 0) {
         this.$message.success(this.agencyId ? '机构编辑成功' : '机构新增成功')
         if (this.agencyId) {
-          this.getAgencyDetail()
+          history.go(-1)
         } else {
           this.$router.push({ path: '/agencyManage' })
         }

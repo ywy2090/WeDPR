@@ -1,5 +1,5 @@
 const { defineConfig } = require('@vue/cli-service')
-const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
+// const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
 
 const path = require('path') // 引入path模块
@@ -8,6 +8,7 @@ function resolve(dir) {
 }
 
 module.exports = defineConfig({
+  outputDir: process.env.VUE_APP_MODE === 'agency' ? 'dist' : 'manage',
   transpileDependencies: true,
   parallel: true,
   publicPath: './',

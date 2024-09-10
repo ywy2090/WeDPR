@@ -28,11 +28,15 @@
     </div>
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
-        <el-form-item prop="owner" label="创建用户：">
-          <el-input style="width: 160px" placeholder="请输入" v-model="searchForm.owner" autocomplete="off"></el-input>
+        <el-form-item prop="jobType" label="任务类型：">
+          <el-select style="width: 160px" v-model="searchForm.jobType" placeholder="请选择" clearable>
+            <el-option :label="item.label" :value="item.value" v-for="item in algList" :key="item.value"></el-option>
+          </el-select>
         </el-form-item>
-        <el-form-item prop="name" label="任务名称：">
-          <el-input style="width: 160px" placeholder="请输入" v-model="searchForm.name" autocomplete="off"></el-input>
+        <el-form-item prop="name" label="任务状态：">
+          <el-select style="width: 160px" v-model="searchForm.status" placeholder="请选择" clearable>
+            <el-option :label="item.label" :value="item.value" v-for="item in jobStatusList" :key="item.value"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
           <el-date-picker
@@ -61,12 +65,11 @@
           <template v-slot="scope"> <img class="type-img" :src="handleData(scope.row.jobType).src" /> {{ handleData(scope.row.jobType).label }} </template>
         </el-table-column>
         <el-table-column label="任务ID" prop="id" show-overflow-tooltip />
-        <el-table-column label="任务名称" prop="name" show-overflow-tooltip />
+        <!-- <el-table-column label="任务名称" prop="name" show-overflow-tooltip /> -->
         <el-table-column label="创建时间" prop="createTime" show-overflow-tooltip />
         <el-table-column label="发起机构" prop="ownerAgency" show-overflow-tooltip />
         <el-table-column label="参与机构" prop="participate" show-overflow-tooltip />
         <el-table-column label="创建时间" prop="createTime" show-overflow-tooltip />
-        <el-table-column label="链上存证" prop="createTime" show-overflow-tooltip />
         <el-table-column label="任务状态" prop="status">
           <template v-slot="scope">
             <el-tag size="small" v-if="scope.row.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
@@ -84,7 +87,7 @@
   </div>
 </template>
 <script>
-import { projectManageServer, settingManageServer } from 'Api'
+import { projectManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import { jobStatusList, jobStatusMap } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
@@ -99,13 +102,13 @@ export default {
   data() {
     return {
       searchForm: {
-        owner: '',
-        name: '',
+        jobType: '',
+        status: '',
         createTime: ''
       },
       searchQuery: {
-        owner: '',
-        name: '',
+        jobType: '',
+        status: '',
         createTime: ''
       },
       dataInfo: {},
@@ -119,7 +122,6 @@ export default {
         Expert: '向导模式',
         Wizard: '专家模式'
       },
-      typeList: [],
       jobStatusList,
       jobStatusMap,
       pageMode: process.env.VUE_APP_MODE
@@ -129,7 +131,6 @@ export default {
     const { projectId } = this.$route.query
     this.projectId = projectId
     projectId && this.queryProject()
-    this.getConfig()
   },
   computed: {
     ...mapGetters(['algList', 'agencyList'])
@@ -142,21 +143,6 @@ export default {
     reset() {
       this.$refs.searchForm.resetFields()
     },
-    async getConfig() {
-      const res = await settingManageServer.getConfig({ key: 'wedpr_algorithm_templates' })
-      console.log(res)
-      if (res.code === 0 && res.data) {
-        const realData = JSON.parse(res.data)
-        console.log(realData)
-        this.typeList = realData.templates.map((V) => {
-          return {
-            label: V.title,
-            value: V.name
-          }
-        })
-      }
-    },
-
     // 获取项目详情
     async queryProject() {
       this.loadingFlag = true
@@ -198,8 +184,8 @@ export default {
       this.loadingFlag = true
       const { name: projectName } = this.dataInfo
       const { page_offset, page_size } = this.pageData
-      const { ownerAgency, owner, name, createTime } = this.searchForm
-      const params = handleParamsValid({ ownerAgency, owner, name })
+      const { jobType, status, createTime } = this.searchForm
+      const params = handleParamsValid({ jobType, status })
       if (createTime && createTime.length) {
         params.startTime = createTime[0]
         params.endTime = createTime[1]

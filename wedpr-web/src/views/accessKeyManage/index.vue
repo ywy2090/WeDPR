@@ -80,7 +80,11 @@
           </ul>
           <ul>
             <li>Access Secret：</li>
-            <li>{{ accessInfo.accessKeySecret }}</li>
+            <li>
+              {{ showSercret ? accessInfo.accessKeySecret : maskString(accessInfo.accessKeySecret) }}
+              <img v-if="showSercret" @click="hideSecretStr" src="~Assets/images/hide.png" alt="" />
+              <img @click="openSecretStr" v-else src="~Assets/images/show.png" alt="" />
+            </li>
           </ul>
         </div>
       </div>
@@ -95,7 +99,7 @@
 import { accessKeyManageServer } from 'Api'
 import wePagination from '@/components/wePagination.vue'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
-import { handleParamsValid } from 'Utils/index.js'
+import { handleParamsValid, maskString } from 'Utils/index.js'
 export default {
   name: 'accessKeyManage',
   mixins: [tableHeightHandle],
@@ -132,7 +136,9 @@ export default {
       accessInfo: {
         accessKeyID: '',
         accessKeySecret: ''
-      }
+      },
+      showSercret: false,
+      maskString
     }
   },
   created() {
@@ -141,6 +147,12 @@ export default {
   methods: {
     showAddKey() {
       this.showAddModal = true
+    },
+    hideSecretStr() {
+      this.showSercret = false
+    },
+    openSecretStr() {
+      this.showSercret = true
     },
     openCopyModal(accessData) {
       this.showCopyModal = true
@@ -292,6 +304,13 @@ div.access-manage {
       }
       li:last-child {
         flex: 1;
+        img {
+          vertical-align: middle;
+          width: 20px;
+          height: auto;
+          margin-left: 10px;
+          cursor: pointer;
+        }
       }
     }
     ul:first-child {

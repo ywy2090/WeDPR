@@ -2,7 +2,7 @@
   <div class="group-manage" style="position: relative; height: 100%">
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
-        <el-form-item prop="resourceType" label="发起机构：">
+        <el-form-item prop="ownerAgencyName" label="发起机构：">
           <el-select clearable size="small" style="width: 160px" v-model="searchForm.ownerAgencyName" placeholder="请选择">
             <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
           </el-select>
@@ -23,7 +23,15 @@
           </el-select>
         </el-form-item>
         <el-form-item prop="createTime" label="生成时间：">
-          <el-date-picker value-format="yyyy-MM-dd" v-model="searchForm.createTime" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" />
+          <el-date-picker
+            style="width: 344px"
+            value-format="yyyy-MM-dd hh:mm:ss"
+            v-model="searchForm.createTime"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="queryFlag" @click="queryHandle">
@@ -48,6 +56,8 @@
             {{ actionMap[scope.row.resourceAction] || '--' }}
           </template>
         </el-table-column>
+        <el-table-column show-overflow-tooltip label="操作机构" prop="agency" />
+        <el-table-column show-overflow-tooltip label="操作人" prop="trigger" />
         <el-table-column show-overflow-tooltip label="操作时间" prop="createTime" />
         <el-table-column label="操作状态" prop="status">
           <template v-slot="scope">

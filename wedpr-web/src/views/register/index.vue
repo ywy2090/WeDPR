@@ -34,7 +34,7 @@
                   <div class="rule">
                     <el-icon v-if="!passwordRule.charStatus" style="color: #ff4d4f" class="icon el-icon-error" />
                     <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
-                    至少包含一个数字、一个大写字母、一个小写字母、一个特殊字符
+                    至少包含数字、大写字母、小写字母、特殊字符
                   </div>
                 </div>
                 <el-input type="password" v-model="normalForm.password" @input="checkPassword" placeholder="请输入登录密码" show-password> </el-input>
@@ -51,7 +51,7 @@
                   <div class="rule">
                     <el-icon v-if="!passwordRepeatRule.charStatus" style="color: #ff4d4f" class="icon el-icon-error" />
                     <el-icon v-else style="color: #52b81f" class="icon el-icon-success" />
-                    至少包含一个数字、一个大写字母、一个小写字母、一个特殊字符
+                    至少包含数字、大写字母、小写字母、特殊字符
                   </div>
                 </div>
                 <el-input type="password" v-model="normalForm.passwordRepeat" @input="checkPasswordRepeat" placeholder="确认密码" show-password> </el-input>
@@ -89,7 +89,7 @@ export default {
         email: ''
       },
       userNametips: '用户名长度3～18个字符，支持数字、大小写字母、下划线_、连接符-',
-      passwordtips: '密码长度8~18个字符，至少包含一个数字、一个大写字母、一个小写字母、一个特殊字符',
+      passwordtips: '密码长度8~18个字符，至少包含数字、大写字母、小写字母、特殊字符',
       normalFormRules: {
         username: [{ validator: this.validUsername, trigger: 'blur' }],
         password: [{ validator: this.validPassword, trigger: 'blur' }],
