@@ -1,7 +1,10 @@
 package com.webank.wedpr.components.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.webank.wedpr.components.admin.request.GetDatasetDateLineRequest;
 import com.webank.wedpr.components.admin.request.GetWedprDatasetListRequest;
+import com.webank.wedpr.components.admin.response.GetDatasetLineResponse;
+import com.webank.wedpr.components.admin.response.GetDatasetStatisticsResponse;
 import com.webank.wedpr.components.dataset.dao.Dataset;
 import com.webank.wedpr.components.dataset.message.ListDatasetResponse;
 
@@ -14,4 +17,8 @@ import com.webank.wedpr.components.dataset.message.ListDatasetResponse;
 public interface WedprDatasetService extends IService<Dataset> {
 
     ListDatasetResponse listDataset(GetWedprDatasetListRequest getWedprDatasetListRequest);
+
+    GetDatasetStatisticsResponse getDatasetStatistics();
+
+    GetDatasetLineResponse getDatasetDateLine(GetDatasetDateLineRequest getDatasetDateLineRequest);
 }

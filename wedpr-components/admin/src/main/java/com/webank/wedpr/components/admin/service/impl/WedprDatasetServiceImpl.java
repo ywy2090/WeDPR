@@ -1,15 +1,26 @@
 package com.webank.wedpr.components.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.webank.wedpr.components.admin.common.Utils;
+import com.webank.wedpr.components.admin.entity.WedprAgency;
+import com.webank.wedpr.components.admin.entity.WedprJobDatasetRelation;
+import com.webank.wedpr.components.admin.request.GetDatasetDateLineRequest;
 import com.webank.wedpr.components.admin.request.GetWedprDatasetListRequest;
+import com.webank.wedpr.components.admin.response.*;
+import com.webank.wedpr.components.admin.service.WedprAgencyService;
 import com.webank.wedpr.components.admin.service.WedprDatasetService;
+import com.webank.wedpr.components.admin.service.WedprJobDatasetRelationService;
 import com.webank.wedpr.components.dataset.dao.Dataset;
 import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.message.ListDatasetResponse;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -22,6 +33,15 @@ import org.springframework.util.StringUtils;
 @Service
 public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
         implements WedprDatasetService {
+
+    @Value("${dashbord.decimalPlaces:0}")
+    private Integer decimalPlaces;
+
+    @Autowired private WedprJobDatasetRelationService wedprJobDatasetRelationService;
+
+    @Autowired private WedprAgencyService wedprAgencyService;
+
+    @Autowired private DatasetMapper datasetMapper;
 
     @Override
     public ListDatasetResponse listDataset(GetWedprDatasetListRequest getWedprDatasetListRequest) {
@@ -56,5 +76,105 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
                         .content(page.getRecords())
                         .build();
         return listDatasetResponse;
+    }
+
+    @Override
+    public GetDatasetStatisticsResponse getDatasetStatistics() {
+        // query dataset overview
+        int totalCount = count();
+        QueryWrapper<WedprJobDatasetRelation> jobDatasetRelationQueryWrapper1 =
+                new QueryWrapper<>();
+        jobDatasetRelationQueryWrapper1.select("DISTINCT dataset_id");
+        int usedCount = wedprJobDatasetRelationService.count(jobDatasetRelationQueryWrapper1);
+        String usedProportion = Utils.getPercentage(usedCount, totalCount, decimalPlaces);
+        DatasetOverview datasetOverview = new DatasetOverview();
+        datasetOverview.setTotalCount(totalCount);
+        datasetOverview.setUsedCount(usedCount);
+        datasetOverview.setUsedProportion(usedProportion);
+
+        // query datasetTypeStatistic
+        LambdaQueryWrapper<Dataset> datasetLambdaQueryWrapper1 = new LambdaQueryWrapper<>();
+        datasetLambdaQueryWrapper1.select(Dataset::getDataSourceType, Dataset::getCount);
+        datasetLambdaQueryWrapper1.groupBy(Dataset::getDataSourceType);
+        List<Dataset> datasetList1 = list(datasetLambdaQueryWrapper1);
+        List<DatasetTypeStatistic> datasetTypeStatisticList = new ArrayList<>();
+        for (Dataset dataset : datasetList1) {
+            DatasetTypeStatistic datasetTypeStatistic = new DatasetTypeStatistic();
+            datasetTypeStatistic.setDatasetType(dataset.getDataSourceType());
+            Integer countByDataSourceType = dataset.getCount();
+            datasetTypeStatistic.setCount(countByDataSourceType);
+            int usedCountByDataSourceType =
+                    datasetMapper.getUseCountByDataSourceType(dataset.getDataSourceType());
+            datasetTypeStatistic.setUsedProportion(
+                    Utils.getPercentage(
+                            usedCountByDataSourceType, countByDataSourceType, decimalPlaces));
+            datasetTypeStatisticList.add(datasetTypeStatistic);
+        }
+
+        // query agencyDatasetTypeStatistic
+        LambdaQueryWrapper<Dataset> datasetLambdaQueryWrapper2 = new LambdaQueryWrapper<>();
+        datasetLambdaQueryWrapper2.select(Dataset::getOwnerAgencyName, Dataset::getCount);
+        datasetLambdaQueryWrapper2.groupBy(Dataset::getOwnerAgencyName);
+        List<Dataset> datasetList2 = list(datasetLambdaQueryWrapper2);
+
+        LambdaQueryWrapper<Dataset> datasetLambdaQueryWrapper3 = new LambdaQueryWrapper<>();
+        datasetLambdaQueryWrapper3.select(
+                Dataset::getOwnerAgencyName, Dataset::getDataSourceType, Dataset::getCount);
+        datasetLambdaQueryWrapper3.groupBy(Dataset::getOwnerAgencyName, Dataset::getDataSourceType);
+        List<Dataset> datasetList3 = list(datasetLambdaQueryWrapper3);
+
+        ArrayList<AgencyDatasetTypeStatistic> agencyDatasetTypeStatisticList =
+                new ArrayList<>(datasetList2.size());
+        for (Dataset dataset2 : datasetList2) {
+            AgencyDatasetTypeStatistic agencyDatasetTypeStatistic =
+                    new AgencyDatasetTypeStatistic();
+            agencyDatasetTypeStatistic.setAgencyName(dataset2.getOwnerAgencyName());
+            agencyDatasetTypeStatistic.setTotalCount(dataset2.getCount());
+            List<DatasetTypeStatistic> datasetTypeStatisticsList = new ArrayList<>();
+            for (Dataset dataset3 : datasetList3) {
+                if (dataset3.getOwnerAgencyName().equals(dataset2.getOwnerAgencyName())) {
+                    DatasetTypeStatistic datasetTypeStatistic = new DatasetTypeStatistic();
+                    datasetTypeStatistic.setDatasetType(dataset3.getDataSourceType());
+                    datasetTypeStatistic.setCount(dataset3.getCount());
+                    datasetTypeStatisticsList.add(datasetTypeStatistic);
+                }
+            }
+            agencyDatasetTypeStatistic.setDatasetTypeStatistic(datasetTypeStatisticsList);
+            agencyDatasetTypeStatisticList.add(agencyDatasetTypeStatistic);
+        }
+        GetDatasetStatisticsResponse response = new GetDatasetStatisticsResponse();
+        response.setDatasetOverview(datasetOverview);
+        response.setDatasetTypeStatistic(datasetTypeStatisticList);
+        response.setAgencyDatasetTypeStatistic(agencyDatasetTypeStatisticList);
+        return response;
+    }
+
+    @Override
+    public GetDatasetLineResponse getDatasetDateLine(
+            GetDatasetDateLineRequest getDatasetDateLineRequest) {
+        String startTime = getDatasetDateLineRequest.getStartTime();
+        String endTime = getDatasetDateLineRequest.getEndTime();
+        List<WedprAgency> wedprAgencyList = wedprAgencyService.list();
+        List<AgencyDatasetStat> agencyDatasetStatList = new ArrayList<>();
+        for (WedprAgency wedprAgency : wedprAgencyList) {
+            String agencyName = wedprAgency.getAgencyName();
+            List<Dataset> datasetList =
+                    datasetMapper.getDatasetDateLine(agencyName, startTime, endTime);
+            AgencyDatasetStat agencyDatasetStat = new AgencyDatasetStat();
+            agencyDatasetStat.setAgencyName(agencyName);
+            int size = datasetList.size();
+            List<String> dateList = new ArrayList<>(size);
+            List<Integer> countList = new ArrayList<>(size);
+            for (Dataset dataset : datasetList) {
+                dateList.add(dataset.getCreateAt());
+                countList.add(dataset.getCount());
+            }
+            agencyDatasetStat.setDateList(dateList);
+            agencyDatasetStat.setCountList(countList);
+            agencyDatasetStatList.add(agencyDatasetStat);
+        }
+        GetDatasetLineResponse response = new GetDatasetLineResponse();
+        response.setAgencyDatasetStat(agencyDatasetStatList);
+        return response;
     }
 }

@@ -8,18 +8,5 @@
         <result column="dataset_id" property="datasetId" />
         <result column="create_time" property="createTime" />
     </resultMap>
-    <select id="queryJobsByDatasetId" resultType="com.webank.wedpr.components.admin.entity.WedprJobTable">
-        SELECT t.*
-        FROM `wedpr_job_table` t
-        INNER JOIN (
-        SELECT
-        DISTINCT job_id
-        FROM
-        `wedpr_job_dataset_relation`
-        WHERE
-        dataset_id = #{datasetID}
-        ) temp ON t.id = temp.job_id
-        ORDER BY create_time DESC
-    </select>
 
 </mapper>
