@@ -92,4 +92,10 @@ public interface DatasetMapper extends BaseMapper<Dataset> {
             @Param("agencyName") String agencyName,
             @Param("startTime") String startTime,
             @Param("endTime") String endTime);
+
+    List<Dataset> datasetTypeStatistic();
+
+    List<Dataset> datasetAgencyStatistic();
+
+    List<Dataset> datasetAgencyTypeStatistic();
 }

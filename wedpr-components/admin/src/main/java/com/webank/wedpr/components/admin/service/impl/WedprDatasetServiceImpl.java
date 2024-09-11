@@ -93,10 +93,7 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
         datasetOverview.setUsedProportion(usedProportion);
 
         // query datasetTypeStatistic
-        LambdaQueryWrapper<Dataset> datasetLambdaQueryWrapper1 = new LambdaQueryWrapper<>();
-        datasetLambdaQueryWrapper1.select(Dataset::getDataSourceType, Dataset::getCount);
-        datasetLambdaQueryWrapper1.groupBy(Dataset::getDataSourceType);
-        List<Dataset> datasetList1 = list(datasetLambdaQueryWrapper1);
+        List<Dataset> datasetList1 = datasetMapper.datasetTypeStatistic();
         List<DatasetTypeStatistic> datasetTypeStatisticList = new ArrayList<>();
         for (Dataset dataset : datasetList1) {
             DatasetTypeStatistic datasetTypeStatistic = new DatasetTypeStatistic();
@@ -110,19 +107,9 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
                             usedCountByDataSourceType, countByDataSourceType, decimalPlaces));
             datasetTypeStatisticList.add(datasetTypeStatistic);
         }
-
         // query agencyDatasetTypeStatistic
-        LambdaQueryWrapper<Dataset> datasetLambdaQueryWrapper2 = new LambdaQueryWrapper<>();
-        datasetLambdaQueryWrapper2.select(Dataset::getOwnerAgencyName, Dataset::getCount);
-        datasetLambdaQueryWrapper2.groupBy(Dataset::getOwnerAgencyName);
-        List<Dataset> datasetList2 = list(datasetLambdaQueryWrapper2);
-
-        LambdaQueryWrapper<Dataset> datasetLambdaQueryWrapper3 = new LambdaQueryWrapper<>();
-        datasetLambdaQueryWrapper3.select(
-                Dataset::getOwnerAgencyName, Dataset::getDataSourceType, Dataset::getCount);
-        datasetLambdaQueryWrapper3.groupBy(Dataset::getOwnerAgencyName, Dataset::getDataSourceType);
-        List<Dataset> datasetList3 = list(datasetLambdaQueryWrapper3);
-
+        List<Dataset> datasetList2 = datasetMapper.datasetAgencyStatistic();
+        List<Dataset> datasetList3 = datasetMapper.datasetAgencyTypeStatistic();
         ArrayList<AgencyDatasetTypeStatistic> agencyDatasetTypeStatisticList =
                 new ArrayList<>(datasetList2.size());
         for (Dataset dataset2 : datasetList2) {
