@@ -94,6 +94,7 @@ public class ProjectMapperWrapper {
         return jobDOList;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void batchUpdateJobStatus(
             String user, String agency, List<JobDO> jobs, JobStatus status) {
         if (jobs == null || jobs.isEmpty()) {
@@ -107,8 +108,15 @@ public class ProjectMapperWrapper {
             updatedJobList.add(updatedJob);
             updatedJob.setOwner(user);
             updatedJob.setOwnerAgency(agency);
+            this.projectMapper.updateJobInfo(updatedJob);
         }
-        this.projectMapper.batchUpdateJobInfo(updatedJobList);
+
+        logger.info(
+                "batch update job status, user: {}, agency: {}, jobsSize: {}",
+                user,
+                agency,
+                updatedJobList.size());
+        // this.projectMapper.batchUpdateJobInfo(updatedJobList);
     }
 
     public WeDPRResponse updateJobStatus(

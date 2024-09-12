@@ -15,6 +15,7 @@
 
 package com.webank.wedpr.components.scheduler.executor.impl.psi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
 import com.webank.wedpr.components.scheduler.executor.impl.model.DatasetInfo;
@@ -65,7 +66,7 @@ public class PSIJobParam {
             if (dataset == null) {
                 throw new WeDPRException("Invalid PSI Request, must define the input dataset!");
             }
-            dataset.check();
+            dataset.check(this.datasetIDList);
             if (idFields == null || idFields.isEmpty()) {
                 throw new WeDPRException("Must define the field list to run PSI!");
             }
@@ -89,6 +90,8 @@ public class PSIJobParam {
 
     @JsonProperty("dataSetList")
     private List<PartyResourceInfo> partyResourceInfoList;
+
+    @JsonIgnore private List<String> datasetIDList;
 
     public String getJobID() {
         return jobID;
@@ -141,6 +144,7 @@ public class PSIJobParam {
             throw new WeDPRException("Invalid PSIJobParam, must define at least 2-parties!");
         }
         for (PartyResourceInfo partyResourceInfo : partyResourceInfoList) {
+            partyResourceInfo.setDatasetIDList(datasetIDList);
             partyResourceInfo.checkAndResetPath(fileMetaBuilder, jobID);
         }
     }
@@ -245,16 +249,19 @@ public class PSIJobParam {
                     downloadedFilePath,
                     extractFilePath,
                     System.currentTimeMillis() - startT);
+
             // upload the psi tmp file
             startT = System.currentTimeMillis();
             String owner = partyInfo.getDataset().getOwner();
             String remotePath =
                     WeDPRCommonConfig.getUserJobCachePath(
                             owner, jobID, ExecutorConfig.getPSIPrepareFileName());
+
             // update the input
             FileMeta updatedInput =
                     fileMetaBuilder.build(
                             storage.type(), remotePath, owner, WeDPRCommonConfig.getAgency());
+
             // reset the home
             fileMetaBuilder.resetWithHome(updatedInput);
             logger.info(
@@ -263,6 +270,7 @@ public class PSIJobParam {
                     updatedInput.getPath());
             storage.upload(Boolean.TRUE, extractFilePath, updatedInput.getPath(), true);
             partyInfo.setDataset(updatedInput);
+
             logger.info(
                     "Upload the extracted psi file from {}=>{} success, timecost: {}",
                     extractFilePath,
@@ -281,6 +289,14 @@ public class PSIJobParam {
 
     public void setTaskID(String taskID) {
         this.taskID = taskID;
+    }
+
+    public List<String> getDatasetIDList() {
+        return datasetIDList;
+    }
+
+    public void setDatasetIDList(List<String> datasetIDList) {
+        this.datasetIDList = datasetIDList;
     }
 
     public String serialize() throws Exception {

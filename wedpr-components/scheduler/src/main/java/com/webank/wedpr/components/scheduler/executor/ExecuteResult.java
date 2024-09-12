@@ -19,7 +19,7 @@ import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import lombok.SneakyThrows;
 
 public class ExecuteResult {
-    public static enum ResultStatus {
+    public enum ResultStatus {
         RUNNING("Running"),
         SUCCESS("SUCCESS"),
         FAILED("Failed");
@@ -80,6 +80,7 @@ public class ExecuteResult {
         return this.resultStatus.finished();
     }
 
+    // {"msg":"task is running","resultStatus":"SUCCESS"}
     @SneakyThrows(Exception.class)
     public String serialize() {
         return ObjectMapperFactory.getObjectMapper().writeValueAsString(this);

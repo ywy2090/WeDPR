@@ -93,22 +93,40 @@ public class PSIExecutor implements Executor {
     @Override
     public void execute(JobDO jobDO) throws Exception {
         prepare(jobDO);
+
+        Object jobRequest = jobDO.getJobRequest();
+
+        logger.info(
+                "begin to submit job to PSI node, jobID: {}, taskID: {}, jobRequest: {}",
+                jobDO.getId(),
+                jobDO.getTaskID(),
+                jobRequest);
+
         JsonRpcResponse response =
                 this.jsonRpcClient.post(
                         PSIExecutorConfig.getPsiToken(),
                         PSIExecutorConfig.getPsiRunTaskMethod(),
                         jobDO.getJobRequest());
         if (response.statusOk()) {
-            logger.info("submit PSI job success, job: {}", jobDO.getTaskID());
+            logger.info(
+                    "submit PSI job to node success, jobID: {}, taskID: {}, jobRequest: {}",
+                    jobDO.getId(),
+                    jobDO.getTaskID(),
+                    jobRequest);
             return;
         }
         if (response.getResult().getCode().equals(Constant.DuplicatedTaskCode)) {
-            logger.info("PSI job has already been submitted, job: {}", jobDO.getTaskID());
+            logger.info(
+                    "PSI job has already been submitted, jobID: {}, taskID: {}, jobRequest: {}",
+                    jobDO.getId(),
+                    jobDO.getTaskID(),
+                    jobRequest);
             return;
         }
         logger.warn(
-                "Run PSI job failed, jobDetail: {}, result: {}",
-                jobDO.toString(),
+                "Run PSI job failed, jobDetail: {}, jobRequest: {}, result: {}",
+                jobDO,
+                jobRequest,
                 response.getResult().toString());
         throw new WeDPRException(
                 "Run PSI job "

@@ -21,6 +21,7 @@ import com.webank.wedpr.components.storage.builder.StoragePathBuilder;
 import com.webank.wedpr.core.protocol.StorageType;
 import com.webank.wedpr.core.utils.Common;
 import com.webank.wedpr.core.utils.WeDPRException;
+import java.util.List;
 import lombok.SneakyThrows;
 
 public class FileMeta {
@@ -43,6 +44,8 @@ public class FileMeta {
     protected Integer type;
     protected String storageTypeStr;
     @JsonIgnore protected transient StorageType storageType;
+
+    // Note: path works only if the dataset id is not specified
     protected String path;
     protected String owner;
     protected String ownerAgency;
@@ -129,16 +132,25 @@ public class FileMeta {
     }
 
     @SneakyThrows(Exception.class)
-    public void check() {
-        if (this.storageType == null) {
-            throw new WeDPRException("Not supported storageType: " + storageTypeStr);
-        }
+    public void check(List<String> datasetIDList) {
         Common.requireNonEmpty(owner, "owner");
         Common.requireNonEmpty(ownerAgency, "ownerAgency");
-        if (this.path == null) {
-            throw new WeDPRException("Invalid FileMeta, must define the filePath!");
+
+        // check datasetID valid
+        if (this.datasetID != null && !this.datasetID.isEmpty()) {
+            if ((datasetIDList != null)
+                    && !datasetIDList.isEmpty()
+                    && !datasetIDList.contains(this.datasetID)) {
+                throw new WeDPRException(
+                        "Invalid datasetID, datasetID must in datasetIDList set, datasetID: "
+                                + datasetID);
+            }
+        } else {
+            if (this.storageType == null) {
+                throw new WeDPRException("Not supported storageType: " + storageTypeStr);
+            }
+            Common.requireNonEmpty(path, "filePath");
         }
-        Common.requireNonEmpty(path, "filePath");
     }
 
     public String getDatasetID() {

@@ -85,6 +85,19 @@ public class PartyInfo {
         public void setOutput(FileMeta output) {
             this.output = output;
         }
+
+        @Override
+        public String toString() {
+            return "PartyData{"
+                    + "id='"
+                    + id
+                    + '\''
+                    + ", input="
+                    + input
+                    + ", output="
+                    + output
+                    + '}';
+        }
     }
 
     private String id;

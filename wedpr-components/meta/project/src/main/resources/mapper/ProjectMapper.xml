@@ -375,6 +375,31 @@
         on job_table.id = follower_table.resource_id where job_table.owner is not NULL
     </select>
 
+    <update id="updateJobInfo" parameterType="com.webank.wedpr.components.project.dao.JobDO">
+        update `wedpr_job_table`
+        <set>
+            <if test="jobDO.param != null and jobDO.param !=''">
+                `param` = #{jobDO.param},
+            </if>
+            <if test="jobDO.status != null and jobDO.status !=''">
+                `status` = #{jobDO.status},
+            </if>
+            <if test="jobDO.result != null and jobDO.result !=''">
+                `job_result` = #{jobDO.result},
+            </if>
+            <if test="jobDO.reportStatus != null">
+                `report_status` = #{jobDO.reportStatus},
+            </if>
+        </set>
+        where `id` = #{jobDO.id}
+        <if test="jobDO.owner != null and jobDO.owner !=''">
+            and `owner` = #{jobDO.owner}
+        </if>
+        <if test="jobDO.ownerAgency != null and jobDO.ownerAgency !=''">
+            and `owner_agency` = #{jobDO.ownerAgency}
+        </if>
+    </update>
+
     <update id="batchUpdateJobInfo" parameterType="java.util.List">
         <foreach collection="jobDOList" item = "job" separator=";">
             update `wedpr_job_table`

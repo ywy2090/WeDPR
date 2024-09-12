@@ -47,6 +47,8 @@ public interface ProjectMapper {
 
     public int insertJobInfo(@Param("jobDO") JobDO jobDO);
 
+    public int updateJobInfo(@Param("jobDO") JobDO jobDO);
+
     public int batchUpdateJobInfo(@Param("jobDOList") List<JobDO> jobDOList);
 
     public int batchInsertJobDatasetRelationInfo(

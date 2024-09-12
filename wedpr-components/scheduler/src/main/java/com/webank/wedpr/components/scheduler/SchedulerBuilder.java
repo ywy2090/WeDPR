@@ -53,7 +53,7 @@ public class SchedulerBuilder {
                             storage,
                             jobChecker,
                             projectMapperWrapper);
-            ;
+
             SchedulerImpl schedulerImpl =
                     new SchedulerImpl(
                             WeDPRCommonConfig.getAgency(),

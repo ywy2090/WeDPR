@@ -42,6 +42,7 @@ public class PSIExecutorParamChecker implements ExecutorParamChecker {
         // deserialize the jobParam
         PSIJobParam psiJobParam = PSIJobParam.deserialize(jobDO.getParam());
         psiJobParam.setJobID(jobDO.getId());
+        psiJobParam.setDatasetIDList(jobDO.getDatasetList());
         // check the jobParam
         psiJobParam.check(this.fileMetaBuilder);
         return psiJobParam;

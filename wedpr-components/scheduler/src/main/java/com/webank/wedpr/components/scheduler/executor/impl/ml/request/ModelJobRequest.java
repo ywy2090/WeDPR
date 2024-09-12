@@ -106,6 +106,11 @@ public class ModelJobRequest implements BaseRequest {
 
     public void setDatasetPath(String datasetPath) {
         this.datasetPath = datasetPath;
+
+        if (this.datasetID != null && !datasetID.isEmpty()) {
+            return;
+        }
+
         if (StringUtils.isBlank(this.datasetPath)) {
             return;
         }
