@@ -54,7 +54,9 @@ public class DataSourceProcessorDispatcher {
         Class<?> aClass = dataSourcePreprocessorMap.get(upperCase);
         DataSourceProcessor dataSourceProcessor = null;
         try {
-            dataSourceProcessor = (DataSourceProcessor) aClass.newInstance();
+            //            dataSourceProcessor = (DataSourceProcessor) aClass.newInstance();
+            dataSourceProcessor =
+                    (DataSourceProcessor) aClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             logger.error("newInstance Exception, dataSourceType: {}, e: ", dataSourceType, e);
             throw new RuntimeException(e);
