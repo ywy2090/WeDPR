@@ -6,10 +6,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.webank.wedpr.components.admin.common.Utils;
 import com.webank.wedpr.components.admin.entity.WedprJobTable;
 import com.webank.wedpr.components.admin.mapper.WedprJobTableMapper;
+import com.webank.wedpr.components.admin.request.GetJobDateLineRequest;
 import com.webank.wedpr.components.admin.request.GetWedprJobListRequest;
 import com.webank.wedpr.components.admin.response.*;
 import com.webank.wedpr.components.admin.service.WedprJobTableService;
 import com.webank.wedpr.core.protocol.JobStatus;
+import com.webank.wedpr.core.protocol.JobType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,6 +121,34 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
         response.setJobOverview(jobOverview);
         response.setJobTypeStatistic(jobTypeStatisticList);
         response.setAgencyJobTypeStatistic(agencyJobTypeStatisticList);
+        return response;
+    }
+
+    @Override
+    public GetJobLineResponse getJobDateLine(GetJobDateLineRequest getJobDateLineRequest) {
+        String startTime = getJobDateLineRequest.getStartTime();
+        String endTime = getJobDateLineRequest.getEndTime();
+        JobType[] jobTypeList = JobType.values();
+        List<JobTypeStat> jobTypeStatList = new ArrayList<>();
+        for (JobType jobTypeEnum : jobTypeList) {
+            String jobType = jobTypeEnum.getType();
+            List<WedprJobTable> jobList =
+                    wedprJobTableMapper.getJobDateLine(jobType, startTime, endTime);
+            JobTypeStat jobTypeStat = new JobTypeStat();
+            jobTypeStat.setJobType(jobType);
+            int size = jobList.size();
+            List<String> dateList = new ArrayList<>(size);
+            List<Integer> countList = new ArrayList<>(size);
+            for (WedprJobTable wedprJobTable : jobList) {
+                dateList.add(wedprJobTable.getCreateTime());
+                countList.add(wedprJobTable.getCount());
+            }
+            jobTypeStat.setDateList(dateList);
+            jobTypeStat.setCountList(countList);
+            jobTypeStatList.add(jobTypeStat);
+        }
+        GetJobLineResponse response = new GetJobLineResponse();
+        response.setJobTypeStat(jobTypeStatList);
         return response;
     }
 }

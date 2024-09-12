@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import lombok.Data;
 
 /**
@@ -55,10 +54,10 @@ public class WedprJobTable implements Serializable {
     private Integer reportStatus;
 
     @ApiModelProperty(value = "任务创建时间")
-    private LocalDateTime createTime;
+    private String createTime;
 
     @ApiModelProperty(value = "任务更新时间")
-    private LocalDateTime lastUpdateTime;
+    private String lastUpdateTime;
 
     @TableField(exist = false)
     private Integer count;
