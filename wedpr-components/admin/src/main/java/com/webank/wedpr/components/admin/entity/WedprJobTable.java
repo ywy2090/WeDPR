@@ -1,11 +1,13 @@
 package com.webank.wedpr.components.admin.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import lombok.Data;
 
 /**
  * @author caryliao
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
  */
 @TableName("wedpr_job_table")
 @ApiModel(value = "WedprJobTable对象", description = "")
+@Data
 public class WedprJobTable implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -57,139 +60,6 @@ public class WedprJobTable implements Serializable {
     @ApiModelProperty(value = "任务更新时间")
     private LocalDateTime lastUpdateTime;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getProjectName() {
-        return projectName;
-    }
-
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
-    }
-
-    public String getOwner() {
-        return owner;
-    }
-
-    public void setOwner(String owner) {
-        this.owner = owner;
-    }
-
-    public String getOwnerAgency() {
-        return ownerAgency;
-    }
-
-    public void setOwnerAgency(String ownerAgency) {
-        this.ownerAgency = ownerAgency;
-    }
-
-    public String getJobType() {
-        return jobType;
-    }
-
-    public void setJobType(String jobType) {
-        this.jobType = jobType;
-    }
-
-    public String getParties() {
-        return parties;
-    }
-
-    public void setParties(String parties) {
-        this.parties = parties;
-    }
-
-    public String getParam() {
-        return param;
-    }
-
-    public void setParam(String param) {
-        this.param = param;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getJobResult() {
-        return jobResult;
-    }
-
-    public void setJobResult(String jobResult) {
-        this.jobResult = jobResult;
-    }
-
-    public Integer getReportStatus() {
-        return reportStatus;
-    }
-
-    public void setReportStatus(Integer reportStatus) {
-        this.reportStatus = reportStatus;
-    }
-
-    public LocalDateTime getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(LocalDateTime createTime) {
-        this.createTime = createTime;
-    }
-
-    public LocalDateTime getLastUpdateTime() {
-        return lastUpdateTime;
-    }
-
-    public void setLastUpdateTime(LocalDateTime lastUpdateTime) {
-        this.lastUpdateTime = lastUpdateTime;
-    }
-
-    @Override
-    public String toString() {
-        return "WedprJobTable{"
-                + "id="
-                + id
-                + ", name="
-                + name
-                + ", projectName="
-                + projectName
-                + ", owner="
-                + owner
-                + ", ownerAgency="
-                + ownerAgency
-                + ", jobType="
-                + jobType
-                + ", parties="
-                + parties
-                + ", param="
-                + param
-                + ", status="
-                + status
-                + ", jobResult="
-                + jobResult
-                + ", reportStatus="
-                + reportStatus
-                + ", createTime="
-                + createTime
-                + ", lastUpdateTime="
-                + lastUpdateTime
-                + "}";
-    }
+    @TableField(exist = false)
+    private Integer count;
 }

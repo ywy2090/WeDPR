@@ -7,9 +7,14 @@ import com.webank.wedpr.components.admin.common.Utils;
 import com.webank.wedpr.components.admin.entity.WedprJobTable;
 import com.webank.wedpr.components.admin.mapper.WedprJobTableMapper;
 import com.webank.wedpr.components.admin.request.GetWedprJobListRequest;
-import com.webank.wedpr.components.admin.response.ListJobResponse;
+import com.webank.wedpr.components.admin.response.*;
 import com.webank.wedpr.components.admin.service.WedprJobTableService;
+import com.webank.wedpr.core.protocol.JobStatus;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -22,6 +27,12 @@ import org.springframework.util.StringUtils;
 @Service
 public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, WedprJobTable>
         implements WedprJobTableService {
+
+    @Value("${dashbord.decimalPlaces:0}")
+    private Integer decimalPlaces;
+
+    @Autowired private WedprJobTableMapper wedprJobTableMapper;
+
     @Override
     public ListJobResponse listJob(GetWedprJobListRequest request) {
         LambdaQueryWrapper<WedprJobTable> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -58,5 +69,56 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
         listProjectResponse.setTotal(page.getTotal());
         listProjectResponse.setJobList(page.getRecords());
         return listProjectResponse;
+    }
+
+    @Override
+    public GetJobStatisticsResponse getJobStatistics() {
+        // query job overview
+        int totalCount = count();
+        LambdaQueryWrapper<WedprJobTable> wedprJobTableQueryWrapper = new LambdaQueryWrapper<>();
+        wedprJobTableQueryWrapper.eq(WedprJobTable::getStatus, JobStatus.RunSuccess.getStatus());
+        int successCount = count(wedprJobTableQueryWrapper);
+        String successProportion = Utils.getPercentage(successCount, totalCount, decimalPlaces);
+        JobOverview jobOverview = new JobOverview();
+        jobOverview.setTotalCount(totalCount);
+        jobOverview.setSuccessCount(successCount);
+        jobOverview.setSuccessProportion(successProportion);
+
+        // query jobTypeStatistic
+        List<WedprJobTable> jobTableList1 = wedprJobTableMapper.jobTypeStatistic();
+        List<JobTypeStatistic> jobTypeStatisticList = new ArrayList<>();
+        for (WedprJobTable wedprJobTable : jobTableList1) {
+            JobTypeStatistic jobTypeStatistic = new JobTypeStatistic();
+            jobTypeStatistic.setJobType(wedprJobTable.getJobType());
+            Integer countByJobType = wedprJobTable.getCount();
+            jobTypeStatistic.setCount(countByJobType);
+            jobTypeStatisticList.add(jobTypeStatistic);
+        }
+        // query agencyJobTypeStatistic
+        List<WedprJobTable> jobTableList2 = wedprJobTableMapper.jobAgencyStatistic();
+        List<WedprJobTable> jobTableList3 = wedprJobTableMapper.jobAgencyTypeStatistic();
+        ArrayList<AgencyJobTypeStatistic> agencyJobTypeStatisticList =
+                new ArrayList<>(jobTableList2.size());
+        for (WedprJobTable wedprJobTable2 : jobTableList2) {
+            AgencyJobTypeStatistic agencyJobTypeStatistic = new AgencyJobTypeStatistic();
+            agencyJobTypeStatistic.setAgencyName(wedprJobTable2.getOwnerAgency());
+            agencyJobTypeStatistic.setTotalCount(wedprJobTable2.getCount());
+            List<JobTypeStatistic> jobTypeStatisticsList = new ArrayList<>();
+            for (WedprJobTable wedprJobTable3 : jobTableList3) {
+                if (wedprJobTable3.getOwnerAgency().equals(wedprJobTable2.getOwnerAgency())) {
+                    JobTypeStatistic jobTypeStatistic = new JobTypeStatistic();
+                    jobTypeStatistic.setJobType(wedprJobTable3.getJobType());
+                    jobTypeStatistic.setCount(wedprJobTable3.getCount());
+                    jobTypeStatisticsList.add(jobTypeStatistic);
+                }
+            }
+            agencyJobTypeStatistic.setJobTypeStatistic(jobTypeStatisticsList);
+            agencyJobTypeStatisticList.add(agencyJobTypeStatistic);
+        }
+        GetJobStatisticsResponse response = new GetJobStatisticsResponse();
+        response.setJobOverview(jobOverview);
+        response.setJobTypeStatistic(jobTypeStatisticList);
+        response.setAgencyJobTypeStatistic(agencyJobTypeStatisticList);
+        return response;
     }
 }

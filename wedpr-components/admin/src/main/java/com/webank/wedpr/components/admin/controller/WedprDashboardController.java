@@ -4,7 +4,9 @@ import com.webank.wedpr.components.admin.common.Utils;
 import com.webank.wedpr.components.admin.request.GetDatasetDateLineRequest;
 import com.webank.wedpr.components.admin.response.GetDatasetLineResponse;
 import com.webank.wedpr.components.admin.response.GetDatasetStatisticsResponse;
+import com.webank.wedpr.components.admin.response.GetJobStatisticsResponse;
 import com.webank.wedpr.components.admin.service.WedprDatasetService;
+import com.webank.wedpr.components.admin.service.WedprJobTableService;
 import com.webank.wedpr.components.token.auth.model.UserToken;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRResponse;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class WedprDashboardController {
     @Autowired private WedprDatasetService wedprDatasetService;
+    @Autowired private WedprJobTableService wedprJobTableService;
 
     @GetMapping("/dataset")
     public WeDPRResponse getDatasetStatistics(HttpServletRequest request) {
@@ -51,6 +54,19 @@ public class WedprDashboardController {
             return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
         } catch (Exception e) {
             log.error("getDatasetDateLine error", e);
+            return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
+        }
+    }
+
+    @GetMapping("/job")
+    public WeDPRResponse getJobStatistics(HttpServletRequest request) {
+        try {
+            // check user permission
+            UserToken userToken = Utils.checkPermission(request);
+            GetJobStatisticsResponse response = wedprJobTableService.getJobStatistics();
+            return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
+        } catch (Exception e) {
+            log.error("getJobStatistics error", e);
             return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
         }
     }

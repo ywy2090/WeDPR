@@ -18,5 +18,14 @@
         <result column="create_time" property="createTime" />
         <result column="last_update_time" property="lastUpdateTime" />
     </resultMap>
+    <select id="jobTypeStatistic" resultType="com.webank.wedpr.components.admin.entity.WedprJobTable">
+        select job_type, count(*) as count from wedpr_job_table wjt group by job_type
+    </select>
+    <select id="jobAgencyStatistic" resultType="com.webank.wedpr.components.admin.entity.WedprJobTable">
+        select owner_agency, count(*) as count from wedpr_job_table wjt group by owner_agency
+    </select>
+    <select id="jobAgencyTypeStatistic" resultType="com.webank.wedpr.components.admin.entity.WedprJobTable">
+        select owner_agency, job_type, count(*) as count from wedpr_job_table wjt group by owner_agency, job_type
+    </select>
 
 </mapper>
