@@ -14,6 +14,7 @@ import com.webank.wedpr.components.admin.service.WedprAgencyService;
 import com.webank.wedpr.components.admin.service.WedprDatasetService;
 import com.webank.wedpr.components.admin.service.WedprJobDatasetRelationService;
 import com.webank.wedpr.components.dataset.dao.Dataset;
+import com.webank.wedpr.components.dataset.datasource.DataSourceType;
 import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.message.ListDatasetResponse;
 import java.time.LocalDateTime;
@@ -95,38 +96,63 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
         // query datasetTypeStatistic
         List<Dataset> datasetList1 = datasetMapper.datasetTypeStatistic();
         List<DatasetTypeStatistic> datasetTypeStatisticList = new ArrayList<>();
-        for (Dataset dataset : datasetList1) {
+        DataSourceType[] dataSourceTypes = DataSourceType.values();
+        for (DataSourceType dataSourceTypeItem : dataSourceTypes) {
             DatasetTypeStatistic datasetTypeStatistic = new DatasetTypeStatistic();
-            datasetTypeStatistic.setDatasetType(dataset.getDataSourceType());
-            Integer countByDataSourceType = dataset.getCount();
-            datasetTypeStatistic.setCount(countByDataSourceType);
-            int usedCountByDataSourceType =
-                    datasetMapper.getUseCountByDataSourceType(dataset.getDataSourceType());
-            datasetTypeStatistic.setUsedProportion(
-                    Utils.getPercentage(
-                            usedCountByDataSourceType, countByDataSourceType, decimalPlaces));
+            String dataSourceType = dataSourceTypeItem.name();
+            datasetTypeStatistic.setDatasetType(dataSourceType);
+            datasetTypeStatistic.setCount(0);
+            datasetTypeStatistic.setUsedProportion("0");
+            for (Dataset dataset : datasetList1) {
+                if (dataSourceType.equals(dataset.getDataSourceType())) {
+                    Integer countByDataSourceType = dataset.getCount();
+                    datasetTypeStatistic.setCount(countByDataSourceType);
+                    int usedCountByDataSourceType =
+                            datasetMapper.getUseCountByDataSourceType(dataSourceType);
+                    datasetTypeStatistic.setUsedProportion(
+                            Utils.getPercentage(
+                                    usedCountByDataSourceType,
+                                    countByDataSourceType,
+                                    decimalPlaces));
+                }
+            }
             datasetTypeStatisticList.add(datasetTypeStatistic);
         }
+
         // query agencyDatasetTypeStatistic
+        List<WedprAgency> wedprAgencyList = wedprAgencyService.list();
         List<Dataset> datasetList2 = datasetMapper.datasetAgencyStatistic();
         List<Dataset> datasetList3 = datasetMapper.datasetAgencyTypeStatistic();
         ArrayList<AgencyDatasetTypeStatistic> agencyDatasetTypeStatisticList =
                 new ArrayList<>(datasetList2.size());
-        for (Dataset dataset2 : datasetList2) {
+        for (WedprAgency wedprAgency : wedprAgencyList) {
             AgencyDatasetTypeStatistic agencyDatasetTypeStatistic =
                     new AgencyDatasetTypeStatistic();
-            agencyDatasetTypeStatistic.setAgencyName(dataset2.getOwnerAgencyName());
-            agencyDatasetTypeStatistic.setTotalCount(dataset2.getCount());
-            List<DatasetTypeStatistic> datasetTypeStatisticsList = new ArrayList<>();
-            for (Dataset dataset3 : datasetList3) {
-                if (dataset3.getOwnerAgencyName().equals(dataset2.getOwnerAgencyName())) {
-                    DatasetTypeStatistic datasetTypeStatistic = new DatasetTypeStatistic();
-                    datasetTypeStatistic.setDatasetType(dataset3.getDataSourceType());
-                    datasetTypeStatistic.setCount(dataset3.getCount());
-                    datasetTypeStatisticsList.add(datasetTypeStatistic);
+            String agencyName = wedprAgency.getAgencyName();
+            agencyDatasetTypeStatistic.setAgencyName(agencyName);
+            agencyDatasetTypeStatistic.setTotalCount(0);
+            for (Dataset dataset2 : datasetList2) {
+                if (agencyName.equals(dataset2.getOwnerAgencyName())) {
+                    agencyDatasetTypeStatistic.setTotalCount(dataset2.getCount());
+                    List<DatasetTypeStatistic> datasetTypeStatisticsList = new ArrayList<>();
+                    for (Dataset dataset3 : datasetList3) {
+                        if (dataset3.getOwnerAgencyName().equals(dataset2.getOwnerAgencyName())) {
+                            for (DataSourceType dataSourceTypeItem : dataSourceTypes) {
+                                String dataSourceType = dataSourceTypeItem.name();
+                                DatasetTypeStatistic datasetTypeStatistic =
+                                        new DatasetTypeStatistic();
+                                datasetTypeStatistic.setDatasetType(dataSourceType);
+                                datasetTypeStatistic.setCount(0);
+                                if (dataSourceType.equals(dataset3.getDataSourceType())) {
+                                    datasetTypeStatistic.setCount(dataset3.getCount());
+                                }
+                                datasetTypeStatisticsList.add(datasetTypeStatistic);
+                            }
+                        }
+                    }
+                    agencyDatasetTypeStatistic.setDatasetTypeStatistic(datasetTypeStatisticsList);
                 }
             }
-            agencyDatasetTypeStatistic.setDatasetTypeStatistic(datasetTypeStatisticsList);
             agencyDatasetTypeStatisticList.add(agencyDatasetTypeStatistic);
         }
         GetDatasetStatisticsResponse response = new GetDatasetStatisticsResponse();
