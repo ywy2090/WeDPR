@@ -15,6 +15,7 @@
 
 package com.webank.wedpr.components.scheduler.executor.impl.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
 import java.util.ArrayList;
@@ -30,6 +31,16 @@ public class DatasetInfo {
     protected String labelField = Constant.DEFAULT_LABEL_FIELD;
     protected Boolean receiveResult = false;
     protected List<String> idFields = new ArrayList<>(Arrays.asList(Constant.DEFAULT_ID_FIELD));
+
+    @JsonIgnore protected List<String> datasetIDList;
+
+    public List<String> getDatasetIDList() {
+        return datasetIDList;
+    }
+
+    public void setDatasetIDList(List<String> datasetIDList) {
+        this.datasetIDList = datasetIDList;
+    }
 
     public FileMeta getDataset() {
         return dataset;
@@ -63,7 +74,7 @@ public class DatasetInfo {
         if (this.dataset == null) {
             throw new WeDPRException("Invalid ML job param for no dataset defined!");
         }
-        dataset.check();
+        dataset.check(datasetIDList);
     }
 
     public List<String> getIdFields() {

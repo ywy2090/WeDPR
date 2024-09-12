@@ -300,7 +300,7 @@ public class ProjectServiceImpl implements ProjectService {
 
             this.projectMapperWrapper.insertJob(request.getJob());
             logger.info(
-                    "submitJob, user: {}, agency: {}, datasetIds: {}, detail: {}",
+                    "submitJob, user: {}, agency: {}, datasetIDs: {}, detail: {}",
                     user,
                     agency,
                     datasetList,
