@@ -154,11 +154,7 @@ export default {
       return this.dataInfo.status === dataStatusEnum.Success
     },
     showReupload() {
-      return (
-        this.dataInfo.status === dataStatusEnum.Failure ||
-        this.dataInfo.status === dataStatusEnum.Fatal ||
-        (this.dataInfo.status === dataStatusEnum.Created && !this.fileUploadTask)
-      )
+      return this.dataInfo.status === dataStatusEnum.Failure || this.dataInfo.status === dataStatusEnum.Fatal
     },
     showUploading() {
       return this.dataInfo.status === dataStatusEnum.Created && this.fileUploadTask && this.fileUploadTask.datasetId

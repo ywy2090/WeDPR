@@ -11,6 +11,12 @@
           </div>
           <div class="whole">
             <div class="half">
+              <span class="title">标签提供方：</span>
+              <span class="info" :title="jobInfo.particapate"> {{ jobInfo.particapate }} </span>
+            </div>
+          </div>
+          <div class="whole">
+            <div class="half">
               <span class="title">参与方：</span>
               <span class="info" :title="jobInfo.particapate"> {{ jobInfo.particapate }} </span>
             </div>

@@ -29,25 +29,25 @@
         <el-form-item v-if="dataForm.dataSourceType.includes('EXCEL')" label-width="126px" label="上传文件：" prop="dataFile">
           <weUpLoad key="dataExcelFile" accept=".xls,.xlsx" tips="将excel文件拖到此处，或点击此处上传" :beforeUpload="beforeUploadExcel" v-model="dataForm.dataFile"></weUpLoad>
         </el-form-item>
-        <el-form-item v-if="dataForm.dataSourceType.includes('HIVE') || dataForm.dataSourceType.includes('DB')" label-width="126px" label="数据类型：" prop="dynamicType">
-          <el-radio-group v-model="dataForm.dynamicType">
-            <el-radio :label="0">静态数据</el-radio>
-            <el-radio :label="1">动态数据</el-radio>
+        <el-form-item v-if="dataForm.dataSourceType.includes('HIVE') || dataForm.dataSourceType.includes('DB')" label-width="126px" label="数据类型：" prop="dynamicDataSource">
+          <el-radio-group v-model="dataForm.dynamicDataSource">
+            <el-radio :label="false">静态数据</el-radio>
+            <el-radio :label="true">动态数据</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="dataForm.dataSourceType.includes('DB')" label-width="126px" label="数据库信息：" prop="databaseInfo">
-          <el-form-item prop="ip">
-            <el-input v-model="dataForm.ip" placeholder="请输入" style="width: 480px">
+          <el-form-item prop="dbIp">
+            <el-input v-model="dataForm.dbIp" placeholder="请输入" style="width: 480px">
               <template slot="prepend"> IP地址 </template>
             </el-input>
           </el-form-item>
-          <el-form-item prop="port">
-            <el-input v-model="dataForm.port" placeholder="请输入" style="width: 480px">
+          <el-form-item prop="dbPort">
+            <el-input v-model="dataForm.dbPort" placeholder="请输入" style="width: 480px">
               <template slot="prepend"> 端口号 </template>
             </el-input>
           </el-form-item>
-          <el-form-item prop="databaseName">
-            <el-input v-model="dataForm.databaseName" placeholder="请输入" style="width: 480px">
+          <el-form-item prop="database">
+            <el-input v-model="dataForm.database" placeholder="请输入" style="width: 480px">
               <template slot="prepend"> 数据库名 </template>
             </el-input>
           </el-form-item>
@@ -193,9 +193,9 @@ export default {
         datasetDesc: '',
         datasetLabel: '',
         dataSourceType: [],
-        ip: '',
-        port: '',
-        databaseName: '',
+        dbIp: '',
+        dbPort: '',
+        database: '',
         userName: '',
         password: '',
         sql: '',
@@ -203,7 +203,7 @@ export default {
         setting: [],
         agencyList: '',
         dataFile: null,
-        dynamicType: '',
+        dynamicDataSource: false,
         filePath: '',
         userList: [{}],
         groupIdList: []
@@ -271,21 +271,21 @@ export default {
             trigger: 'blur'
           }
         ],
-        ip: [
+        dbIp: [
           {
             required: this.dataForm.dataSourceType.includes('DB'),
             message: '请输入数据库IP地址',
             trigger: 'blur'
           }
         ],
-        port: [
+        dbPort: [
           {
             required: this.dataForm.dataSourceType.includes('DB'),
             message: '请输入数据库端口',
             trigger: 'blur'
           }
         ],
-        databaseName: [
+        database: [
           {
             required: this.dataForm.dataSourceType.includes('DB'),
             message: '请输入数据库名称',
@@ -320,7 +320,7 @@ export default {
             trigger: 'blur'
           }
         ],
-        dynamicType: [
+        dynamicDataSource: [
           {
             required: this.dataForm.dataSourceType.includes('HIVE') || this.dataForm.dataSourceType.includes('DB'),
             message: '请选择数据类型',
@@ -376,7 +376,7 @@ export default {
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { visibilityDetails, datasetTitle = '', datasetDesc = '', datasetLabel = '', dataSourceType, approvalChain = '' } = res.data
+        const { visibilityDetails, datasetTitle = '', datasetDesc = '', datasetLabel = '', dataSourceType, dataSourceMeta = '', approvalChain = '' } = res.data
         const visibilityDetailsData = JSON.parse(visibilityDetails)
         const dataForm = { ...this.dataForm, datasetTitle, datasetDesc, datasetLabel, ...visibilityDetailsData, setting: [] }
         // 回显权限设置
@@ -396,6 +396,10 @@ export default {
         })
         if (this.type === 'reupload') {
           dataForm.dataSourceType = dataSourceType
+          if (dataSourceType === 'DB') {
+            const { dbType } = JSON.parse(dataSourceMeta)
+            dataForm.dataSourceType = [dataSourceType, dbType]
+          }
         }
         this.dataForm = { ...dataForm }
         const approvalChainData = Array.isArray(JSON.parse(approvalChain)) ? JSON.parse(approvalChain) : []
@@ -543,8 +547,10 @@ export default {
         if (dataSourceType === 'CSV' || dataSourceType === 'EXCEL') {
           const params = { dataSourceType, dataFile, datasetId, status: 'waitting', percentage: 0 }
           this.SET_FILEUPLOADTASK(params) // 上传任务推到队列
+          this.$message.success('数据集创建成功，开始上传数据')
+        } else {
+          this.$message.success('数据集创建成功')
         }
-        this.$message.success('数据集创建成功，开始上传数据')
         this.$router.push({ path: 'dataManage' })
       }
     },
@@ -656,9 +662,8 @@ export default {
             const dbType = dataSourceType[1]
             const params = { datasetTitle, datasetDesc, datasetLabel, datasetVisibility, dataSourceType: sourceType }
             if (sourceType === 'DB') {
-              const { ip, port, databaseName, userName, password, dynamicType } = this.dataForm
-              params.dataSourceParams = { ...params, ip, port, databaseName, userName, password, dbType }
-              params.dynamicType = dynamicType
+              const { dbIp, dbPort, database, userName, password, dynamicDataSource, sql } = this.dataForm
+              params.dataSourceMeta = { ...params, dbIp, dbPort, database, userName, password, dbType, sql, dynamicDataSource }
             }
             if (sourceType === 'HDFS') {
               params.filePath = filePath

@@ -63,6 +63,15 @@ export const actionStatus = {
   CommitFailed: '操作失败'
 }
 
+export const actionScreenStatus = {
+  WaitingSubmitToChain: '待上链',
+  SubmittedToChain: '上链中',
+  SubmittedToChainFailed: '上链失败',
+  SubmittedToChainSuccess: '上链成功',
+  CommitSuccess: '成功',
+  CommitFailed: '失败'
+}
+
 export const dataStatusEnum = {
   Success: 0,
   Failure: -1,
@@ -73,7 +82,8 @@ export const jobEnum = {
   XGB_TRAINING: 'XGB_TRAINING',
   XGB_PREDICTING: 'XGB_PREDICTING',
   PSI: 'PSI',
-  SQL: 'SQL'
+  SQL: 'SQL',
+  PIR: 'PIR'
 }
 export const agencyStatusEnum = {
   OPEN: 0,
@@ -120,7 +130,8 @@ export const algListFull = [
     value: 'XGB_TRAINING',
     src: require('../assets/images/xgbtrain_job.png'),
     jobSrc: require('../assets/images/XGB.png'),
-    participateNumber: 1
+    participateNumber: 1,
+    needTagsProvider: true
   },
   {
     label: 'SecureLGBM预测',
@@ -134,7 +145,14 @@ export const algListFull = [
     value: 'SQL',
     src: require('../assets/images/SQL.png'),
     jobSrc: require('../assets/images/SQL.png'),
-    participateNumber: 3
+    participateNumber: 2
+  },
+  {
+    label: '匿踪查询',
+    value: 'PIR',
+    src: require('../assets/images/SQL.png'),
+    jobSrc: require('../assets/images/SQL.png'),
+    participateNumber: 1
   },
   // {
   //   label: '多方XGB建模',

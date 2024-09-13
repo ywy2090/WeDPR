@@ -22,7 +22,8 @@
   </div>
 </template>
 <script>
-import { projectManageServer } from 'Api'
+import { projectManageServer, jupyterManageServer } from 'Api'
+import { mapGetters } from 'vuex'
 export default {
   name: 'projectCreate',
   data() {
@@ -38,6 +39,9 @@ export default {
         type: [{ required: true, message: '模式不能为空', trigger: 'blur' }]
       }
     }
+  },
+  computed: {
+    ...mapGetters(['userId'])
   },
   methods: {
     // 获取项目详情
@@ -61,11 +65,26 @@ export default {
         this.$router.push({ path: '/projectManage' })
       }
     },
+    async getJupterLink(params) {
+      const res = await jupyterManageServer.getJupterLink(params)
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { jupyters = [] } = res.data
+        if (jupyters.length) {
+          const { url } = jupyters[0]
+          window.open(url)
+        }
+      }
+    },
     submit() {
       this.$refs.dataForm.validate((valid) => {
         if (valid) {
           const { name, projectDesc, type } = this.dataForm
-          this.createProject({ project: { name, projectDesc, type } })
+          if (type === 'Wizard') {
+            this.getJupterLink({ id: this.userId })
+          } else {
+            this.createProject({ project: { name, projectDesc, type } })
+          }
         }
       })
     }

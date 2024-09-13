@@ -166,7 +166,7 @@ export default {
       this.pageData = { ...pageData }
       this.queryRecordSyncStatus()
     },
-    // 获取账户列表
+    // 获取日志列表
     async queryRecordSyncStatus() {
       const { page_offset, page_size } = this.pageData
       const { createTime, resourceType, resourceAction, status, ownerAgencyName } = this.searchQuery

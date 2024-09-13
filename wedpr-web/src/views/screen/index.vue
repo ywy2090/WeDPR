@@ -48,17 +48,9 @@
             <ul class="head">
               <li>网络实时动态</li>
             </ul>
-            <ul>
-              <li>A上传你数据集成功</li>
-              <li>2024-09-08 09:34:23</li>
-            </ul>
-            <ul>
-              <li>A上传你数据集成功</li>
-              <li>2024-09-08 09:34:23</li>
-            </ul>
-            <ul>
-              <li>A上传你数据集成功</li>
-              <li>2024-09-08 09:34:23</li>
+            <ul v-for="item in logInfoList" :key="item.des">
+              <li class="msg">{{ item.des }}</li>
+              <li class="time">{{ item.createTime }}</li>
             </ul>
           </div>
           <div class="msg-table">
@@ -66,8 +58,8 @@
               <li>告警通知</li>
             </ul>
             <ul>
-              <li>A上传你数据集成功</li>
-              <li>2024-09-08 09:34:23</li>
+              <li class="msg">A上传你数据集成功</li>
+              <li class="time">2024-09-08 09:34:23</li>
             </ul>
             <ul>
               <li>A上传你数据集成功</li>
@@ -113,8 +105,9 @@
 <script>
 import * as echarts from 'echarts'
 import { mapGetters } from 'vuex'
-import { dashboardManageServer } from 'Api'
-import { jobStatusMap } from 'Utils/constant.js'
+import { dashboardManageServer, logManageServer } from 'Api'
+import { jobStatusMap, actionMap, actionScreenStatus } from 'Utils/constant.js'
+import dayjs from 'dayjs'
 export default {
   name: 'HomePage',
   props: {},
@@ -146,22 +139,16 @@ export default {
       myJobineChart: null,
       myJobBarChart: null,
       graphChart: null,
+      resourceTypeMap: {},
       circleOption: {
         tooltip: {
           trigger: 'item'
-        },
-        grid: {
-          left: 0, // 图表距离容器左侧多少距离
-          right: 0, // 图表距离容器右侧侧多少距离
-          bottom: 0, // 图表距离容器上面多少距离
-          top: 0, // 图表距离容器下面多少距离
-          containLabel: true // 防止标签溢出
         },
         series: [
           {
             name: '来源',
             type: 'pie',
-            radius: ['40%', '70%'],
+            radius: ['60%', '90%'],
             avoidLabelOverlap: false,
             label: {
               show: false,
@@ -261,6 +248,9 @@ export default {
             }
           }
         },
+        tooltip: {
+          trigger: 'axis'
+        },
         grid: {
           show: true, // 是否显示图表背景网格
           left: 0, // 图表距离容器左侧多少距离
@@ -277,7 +267,9 @@ export default {
           },
           left: 'center',
           bottom: -6,
-          icon: 'circle'
+          icon: 'circle',
+          type: 'scroll',
+          orient: 'horizontal' // vertical
         },
         yAxis: {
           type: 'value',
@@ -312,35 +304,26 @@ export default {
         ]
       },
       circleJobOption: {
-        tooltip: {
-          trigger: 'item'
-        },
         legend: {
           orient: 'vertical',
-          right: '20px',
+          right: '40px',
           top: 'center',
           textStyle: {
             color: 'white'
           },
           icon: 'circle'
         },
-        grid: {
-          left: 0, // 图表距离容器左侧多少距离
-          right: 0, // 图表距离容器右侧侧多少距离
-          bottom: 0, // 图表距离容器上面多少距离
-          top: 0, // 图表距离容器下面多少距离
-          containLabel: false // 防止标签溢出
-        },
         series: [
           {
             name: '来源',
             type: 'pie',
-            radius: ['40%', '70%'],
+            radius: ['60%', '90%'],
             avoidLabelOverlap: false,
             label: {
               show: false,
               position: 'center'
             },
+            center: ['30%', '50%'],
             emphasis: {
               label: {
                 show: true,
@@ -359,7 +342,11 @@ export default {
               //   { value: 300, name: 'HDFS' }
             ]
           }
-        ]
+        ],
+        tooltip: {
+          // trigger 设置触发类型，默认数据触发，可选值：'item' ¦ 'axis'
+          trigger: 'item'
+        }
       },
       barJobOption: {
         tooltip: {
@@ -435,6 +422,9 @@ export default {
             }
           }
         },
+        tooltip: {
+          trigger: 'axis'
+        },
         grid: {
           show: true, // 是否显示图表背景网格
           left: 0, // 图表距离容器左侧多少距离
@@ -451,7 +441,9 @@ export default {
           },
           left: 'center',
           bottom: -6,
-          icon: 'circle'
+          icon: 'circle',
+          type: 'scroll',
+          orient: 'horizontal' // vertical
         },
         yAxis: {
           type: 'value',
@@ -614,23 +606,27 @@ export default {
         totalCount: 0,
         successProportion: 0
       },
-      datasetTypeStatisticTableData: []
+      datasetTypeStatisticTableData: [],
+      logInfoList: []
     }
   },
   computed: {
-    ...mapGetters(['userId', 'agencyName', 'userinfo', 'algList', 'agencyAdmin', 'permission'])
+    ...mapGetters(['userId', 'agencyName', 'userinfo', 'algList', 'agencyAdmin', 'permission']),
+    algListMap() {
+      const data = {}
+      this.algList.forEach((v) => {
+        data[v.value] = v.label
+      })
+      console.log(data, 'this.algListMap(v.jobType)')
+      return data
+    }
   },
   created() {
-    this.getDatasetInfo()
-    this.getDatasetLineData()
-    this.getJobInfo()
-    this.getJobLineData()
+    this.queryRecordSyncStatus()
   },
+
   mounted() {
-    // this.initCircleData()
-    // this.initBarData()
-    // this.initLineData()
-    // this.initJobCircleData()
+    this.initData()
     this.initGraphChart()
     this.fullScreen()
     const that = this
@@ -645,6 +641,12 @@ export default {
     }
   },
   methods: {
+    initData() {
+      this.getDatasetInfo()
+      this.getDatasetLineData()
+      this.getJobInfo()
+      this.getJobLineData()
+    },
     fullScreen() {
       const full = document.getElementById('app')
       console.log(full, '=================')
@@ -768,9 +770,14 @@ export default {
           const countList = []
           agencyDatasetTypeStatistic.forEach((agencyData) => {
             const { datasetTypeStatistic } = agencyData
-            const count = datasetTypeStatistic.filter((data) => data.datasetType === dataType)[0].count
-            countList.push(count)
+            const data = datasetTypeStatistic.filter((data) => data.datasetType === dataType)
+            if (data.length) {
+              countList.push(data[0].count)
+            } else {
+              countList.push(0)
+            }
           })
+          console.log(countList, 'countList')
           return {
             name: dataType,
             type: 'bar',
@@ -788,12 +795,16 @@ export default {
           }
         })
         this.initBarData()
-        console.log(agencyDatasetTypeStatistic, datasetTypeList)
+        console.log(agencyDatasetTypeStatistic)
+        // console.log(datasetTypeList)
       }
     },
     // 数据集趋势图
-    async getDatasetLineData(params) {
-      const res = await dashboardManageServer.getDatasetLineData(params)
+    async getDatasetLineData() {
+      const start = new Date()
+      const end = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 6)
+      const res = await dashboardManageServer.getDatasetLineData({ startTime: dayjs(start).format('YYYY-MM-DD'), endTime: dayjs(end).format('YYYY-MM-DD') })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
@@ -811,6 +822,7 @@ export default {
         })
         this.lineOption.xAxis.data = dateList
         this.lineOption.legend.data = agencylist
+        this.lineOption.legend.left = agencylist.length > 5 ? '20px' : 'center'
         this.lineOption.series = series
         this.initLineData()
       }
@@ -847,8 +859,12 @@ export default {
           const countList = []
           agencyJobTypeStatistic.forEach((agencyData) => {
             const { jobTypeStatistic } = agencyData
-            const count = jobTypeStatistic.filter((data) => data.jobType === jobType)[0].count
-            countList.push(count)
+            const data = jobTypeStatistic.filter((data) => data.jobType === jobType)
+            if (data.length) {
+              countList.push(data[0].count)
+            } else {
+              countList.push(0)
+            }
           })
           return {
             name: jobType,
@@ -872,26 +888,51 @@ export default {
     },
     // 任务趋势图
     async getJobLineData(params) {
-      const res = await dashboardManageServer.getJobLineData(params)
+      const start = new Date()
+      const end = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 6)
+      console.log(start, end)
+      const res = await dashboardManageServer.getJobLineData({ startTime: '2024-09-11', endTime: '2024-09-17' })
       this.loadingFlag = false
-      console.log(res)
+
       if (res.code === 0 && res.data) {
         console.log(res)
-        const { agencyJobStat = [] } = res.data
-        const dateList = agencyJobStat[0].dateList
-        const agencylist = agencyJobStat.map((v) => v.agencyName)
-        const series = agencyJobStat.map((v) => {
+        const { jobTypeStat = [] } = res.data
+        const dateList = jobTypeStat[0].dateList
+        // FIXME:
+        const jobTypeList = jobTypeStat.map((v) => this.algListMap[v.jobType] || v.jobType)
+        const series = jobTypeStat.map((v) => {
           return {
             data: v.countList, // 具体数据
             type: 'line', // 设置图表类型为折线图
-            name: v.agencyName, // 图表名称
+            name: this.algListMap[v.jobType] || v.jobType, // 图表名称
             smooth: true // 是否将折线设置为平滑曲线
           }
         })
         this.lineJobOption.xAxis.data = dateList
-        this.lineJobOption.legend.data = agencylist
+        this.lineJobOption.legend.data = jobTypeList
+        this.lineJobOption.legend.left = jobTypeList.length > 5 ? '20px' : 'center'
         this.lineJobOption.series = series
+        console.log(this.lineJobOption, 'this.lineJobOption')
         this.initJobLineData()
+      }
+    },
+    async queryRecordSyncStatus() {
+      const params = { pageNum: 1, pageSize: 5 }
+      const res = await logManageServer.queryRecordSyncStatus(params)
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { dataList = [] } = res.data
+        this.logInfoList = dataList
+          .map((v) => {
+            const { resourceAction, createTime, status } = v
+            const des = actionMap[resourceAction] + actionScreenStatus[status]
+            return {
+              des,
+              createTime
+            }
+          })
+          .splice(0, 3)
       }
     },
     goDataDetail(data) {
@@ -1027,6 +1068,10 @@ div.screen {
           width: 40%;
           height: 100%;
         }
+        #job-circle-chart {
+          width: 100%;
+          height: 100%;
+        }
       }
     }
     .chart {
@@ -1049,15 +1094,23 @@ div.screen {
           ul {
             display: flex;
             justify-content: space-between;
+            padding: 0 10px;
+            background: rgb(14, 14, 14);
             li {
               height: 34px;
               font-size: 14px;
               line-height: 34px;
-              text-align: center;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
-              width: 33%;
+            }
+            li.msg {
+              flex: 1;
+              padding-right: 10px;
+              text-align: left;
+            }
+            li.time {
+              width: auto;
             }
           }
           .head {
