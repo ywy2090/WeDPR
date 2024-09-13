@@ -14,9 +14,10 @@ import org.apache.ibatis.annotations.Param;
 public interface WedprJobTableMapper extends BaseMapper<WedprJobTable> {
     List<WedprJobTable> jobTypeStatistic();
 
-    List<WedprJobTable> jobAgencyStatistic();
+    WedprJobTable jobAgencyStatistic(@Param("agencyName") String agencyName);
 
-    List<WedprJobTable> jobAgencyTypeStatistic();
+    WedprJobTable jobAgencyTypeStatistic(
+            @Param("agencyName") String agencyName, @Param("jobType") String jobType);
 
     List<WedprJobTable> getJobDateLine(
             @Param("jobType") String jobType,

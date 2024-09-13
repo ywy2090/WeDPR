@@ -95,7 +95,8 @@ public interface DatasetMapper extends BaseMapper<Dataset> {
 
     List<Dataset> datasetTypeStatistic();
 
-    List<Dataset> datasetAgencyStatistic();
+    Dataset datasetAgencyStatistic(@Param("agencyName") String agencyName);
 
-    List<Dataset> datasetAgencyTypeStatistic();
+    Dataset datasetAgencyTypeStatistic(
+            @Param("agencyName") String agencyName, @Param("dataSourceType") String dataSourceType);
 }

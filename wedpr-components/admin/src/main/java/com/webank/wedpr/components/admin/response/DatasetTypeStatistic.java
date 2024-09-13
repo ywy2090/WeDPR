@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class DatasetTypeStatistic {
     private String datasetType;
-    private Integer count;
+    private int count;
     private String usedProportion;
 }

@@ -7,5 +7,5 @@ import lombok.Data;
 public class AgencyDatasetTypeStatistic {
     private String agencyName;
     private List<DatasetTypeStatistic> datasetTypeStatistic;
-    private Integer totalCount;
+    private int totalCount;
 }

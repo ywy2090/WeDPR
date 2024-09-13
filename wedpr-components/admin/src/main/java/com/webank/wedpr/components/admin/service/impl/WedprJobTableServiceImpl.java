@@ -109,38 +109,31 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
 
         // query agencyJobTypeStatistic
         List<WedprAgency> wedprAgencyList = wedprAgencyService.list();
-        List<WedprJobTable> jobTableList2 = wedprJobTableMapper.jobAgencyStatistic();
-        List<WedprJobTable> jobTableList3 = wedprJobTableMapper.jobAgencyTypeStatistic();
         ArrayList<AgencyJobTypeStatistic> agencyJobTypeStatisticList =
-                new ArrayList<>(jobTableList2.size());
+                new ArrayList<>(wedprAgencyList.size());
         for (WedprAgency wedprAgency : wedprAgencyList) {
-            AgencyJobTypeStatistic agencyJobTypeStatistic = new AgencyJobTypeStatistic();
             String agencyName = wedprAgency.getAgencyName();
+            WedprJobTable jobTable1 = wedprJobTableMapper.jobAgencyStatistic(agencyName);
+            AgencyJobTypeStatistic agencyJobTypeStatistic = new AgencyJobTypeStatistic();
             agencyJobTypeStatistic.setAgencyName(agencyName);
             agencyJobTypeStatistic.setTotalCount(0);
-            for (WedprJobTable wedprJobTable2 : jobTableList2) {
-                if (agencyName.equals(wedprJobTable2.getOwnerAgency())) {
-                    agencyJobTypeStatistic.setTotalCount(wedprJobTable2.getCount());
-                    List<JobTypeStatistic> jobTypeStatisticsList = new ArrayList<>();
-                    for (WedprJobTable wedprJobTable3 : jobTableList3) {
-                        if (wedprJobTable3
-                                .getOwnerAgency()
-                                .equals(wedprJobTable2.getOwnerAgency())) {
-                            for (JobType jobTypeItem : jobTypes) {
-                                String jobType = jobTypeItem.getType();
-                                JobTypeStatistic jobTypeStatistic = new JobTypeStatistic();
-                                jobTypeStatistic.setJobType(jobType);
-                                jobTypeStatistic.setCount(0);
-                                if (jobType.equals(wedprJobTable3.getJobType())) {
-                                    jobTypeStatistic.setCount(wedprJobTable3.getCount());
-                                }
-                                jobTypeStatisticsList.add(jobTypeStatistic);
-                            }
-                        }
-                    }
-                    agencyJobTypeStatistic.setJobTypeStatistic(jobTypeStatisticsList);
-                }
+            if (jobTable1 != null) {
+                agencyJobTypeStatistic.setTotalCount(jobTable1.getCount());
             }
+            List<JobTypeStatistic> jobTypeStatisticsList = new ArrayList<>(jobTypes.length);
+            for (JobType jobTypeItem : jobTypes) {
+                String jobType = jobTypeItem.getType();
+                WedprJobTable jobTable2 =
+                        wedprJobTableMapper.jobAgencyTypeStatistic(agencyName, jobType);
+                JobTypeStatistic jobTypeStatistic = new JobTypeStatistic();
+                jobTypeStatistic.setJobType(jobType);
+                jobTypeStatistic.setCount(0);
+                if (jobTable2 != null) {
+                    jobTypeStatistic.setCount(jobTable2.getCount());
+                }
+                jobTypeStatisticsList.add(jobTypeStatistic);
+            }
+            agencyJobTypeStatistic.setJobTypeStatistic(jobTypeStatisticsList);
             agencyJobTypeStatisticList.add(agencyJobTypeStatistic);
         }
         GetJobStatisticsResponse response = new GetJobStatisticsResponse();

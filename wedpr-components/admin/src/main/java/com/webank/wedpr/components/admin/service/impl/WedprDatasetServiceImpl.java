@@ -121,38 +121,32 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
 
         // query agencyDatasetTypeStatistic
         List<WedprAgency> wedprAgencyList = wedprAgencyService.list();
-        List<Dataset> datasetList2 = datasetMapper.datasetAgencyStatistic();
-        List<Dataset> datasetList3 = datasetMapper.datasetAgencyTypeStatistic();
         ArrayList<AgencyDatasetTypeStatistic> agencyDatasetTypeStatisticList =
-                new ArrayList<>(datasetList2.size());
+                new ArrayList<>(wedprAgencyList.size());
         for (WedprAgency wedprAgency : wedprAgencyList) {
+            String agencyName = wedprAgency.getAgencyName();
+            Dataset dataset1 = datasetMapper.datasetAgencyStatistic(agencyName);
             AgencyDatasetTypeStatistic agencyDatasetTypeStatistic =
                     new AgencyDatasetTypeStatistic();
-            String agencyName = wedprAgency.getAgencyName();
             agencyDatasetTypeStatistic.setAgencyName(agencyName);
             agencyDatasetTypeStatistic.setTotalCount(0);
-            for (Dataset dataset2 : datasetList2) {
-                if (agencyName.equals(dataset2.getOwnerAgencyName())) {
-                    agencyDatasetTypeStatistic.setTotalCount(dataset2.getCount());
-                    List<DatasetTypeStatistic> datasetTypeStatisticsList = new ArrayList<>();
-                    for (Dataset dataset3 : datasetList3) {
-                        if (dataset3.getOwnerAgencyName().equals(dataset2.getOwnerAgencyName())) {
-                            for (DataSourceType dataSourceTypeItem : dataSourceTypes) {
-                                String dataSourceType = dataSourceTypeItem.name();
-                                DatasetTypeStatistic datasetTypeStatistic =
-                                        new DatasetTypeStatistic();
-                                datasetTypeStatistic.setDatasetType(dataSourceType);
-                                datasetTypeStatistic.setCount(0);
-                                if (dataSourceType.equals(dataset3.getDataSourceType())) {
-                                    datasetTypeStatistic.setCount(dataset3.getCount());
-                                }
-                                datasetTypeStatisticsList.add(datasetTypeStatistic);
-                            }
-                        }
-                    }
-                    agencyDatasetTypeStatistic.setDatasetTypeStatistic(datasetTypeStatisticsList);
-                }
+            if (dataset1 != null) {
+                agencyDatasetTypeStatistic.setTotalCount(dataset1.getCount());
             }
+            List<DatasetTypeStatistic> datasetTypeStatisticsList = new ArrayList<>();
+            for (DataSourceType dataSourceTypeItem : dataSourceTypes) {
+                String dataSourceType = dataSourceTypeItem.name();
+                Dataset dataset2 =
+                        datasetMapper.datasetAgencyTypeStatistic(agencyName, dataSourceType);
+                DatasetTypeStatistic datasetTypeStatistic = new DatasetTypeStatistic();
+                datasetTypeStatistic.setDatasetType(dataSourceType);
+                datasetTypeStatistic.setCount(0);
+                if (dataset2 != null) {
+                    datasetTypeStatistic.setCount(dataset2.getCount());
+                }
+                datasetTypeStatisticsList.add(datasetTypeStatistic);
+            }
+            agencyDatasetTypeStatistic.setDatasetTypeStatistic(datasetTypeStatisticsList);
             agencyDatasetTypeStatisticList.add(agencyDatasetTypeStatistic);
         }
         GetDatasetStatisticsResponse response = new GetDatasetStatisticsResponse();
