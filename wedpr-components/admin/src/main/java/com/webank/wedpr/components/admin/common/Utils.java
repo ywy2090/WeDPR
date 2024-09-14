@@ -10,6 +10,8 @@ import com.webank.wedpr.core.utils.WeDPRException;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -164,5 +166,18 @@ public class Utils {
                 return CertStatusViewEnum.EXPIRED_CERT.getStatusValue();
             }
         }
+    }
+
+    public static String getPercentage(int numerator, int denominator, int decimalPlaces) {
+        double result = 0;
+        if (denominator != 0) {
+            result = (double) numerator / denominator;
+        }
+        DecimalFormat decimalFormat = (DecimalFormat) NumberFormat.getNumberInstance();
+        decimalFormat.setMinimumFractionDigits(decimalPlaces);
+        decimalFormat.setMaximumFractionDigits(decimalPlaces);
+        decimalFormat.setRoundingMode(java.math.RoundingMode.HALF_UP);
+        int percentRate = 100;
+        return decimalFormat.format(result * percentRate);
     }
 }

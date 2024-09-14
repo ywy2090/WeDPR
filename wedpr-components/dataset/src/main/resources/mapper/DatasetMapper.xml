@@ -26,7 +26,6 @@
         <result property="approvalChain" column="approval_chain" />
         <result property="status" column="status" />
         <result property="statusDesc" column="status_desc" />
-        <result property="reportStatus" column="report_status" />
         <result property="createAt" column="create_at" />
         <result property="updateAt" column="update_at" />
     </resultMap>
@@ -130,6 +129,40 @@
             </if>
         ORDER BY
           t1.create_at DESC
+    </select>
+    <select id="getUseCountByDataSourceType" resultType="java.lang.Integer">
+        select count(wjdr.dataset_id) from wedpr_job_dataset_relation wjdr, wedpr_dataset wd where wjdr.dataset_id = wd.dataset_id and wd.data_source_type = #{dataSourceType};
+    </select>
+    <select id="getDatasetDateLine" resultType="com.webank.wedpr.components.dataset.dao.Dataset">
+        WITH RECURSIVE DateRange AS (
+        SELECT #{startTime} AS `create_at`
+        UNION ALL
+        SELECT DATE_ADD(`create_at`, INTERVAL 1 DAY)
+        FROM DateRange
+        WHERE <![CDATA[ DATEDIFF(create_at, #{endTime}) < 0]]>
+        )
+        SELECT
+        DR.`create_at`,
+        COALESCE(COUNT(WS.`dataset_id`), 0) AS `count`
+        FROM
+        DateRange DR
+        LEFT JOIN
+        `wedpr_dataset` WS ON DATE(WS.`create_at`) = DR.`create_at` AND WS.`owner_agency_name` = #{agencyName}
+        GROUP BY
+        DR.`create_at`
+        ORDER BY
+        DR.`create_at`
+    </select>
+    <select id="datasetTypeStatistic" resultType="com.webank.wedpr.components.dataset.dao.Dataset">
+        select data_source_type, count(*) as count from wedpr_dataset group by data_source_type
+    </select>
+    <select id="datasetAgencyStatistic" resultType="com.webank.wedpr.components.dataset.dao.Dataset">
+        select owner_agency_name, count(*) as count from wedpr_dataset where owner_agency_name = #{agencyName} group by owner_agency_name
+    </select>
+    <select id="datasetAgencyTypeStatistic" resultType="com.webank.wedpr.components.dataset.dao.Dataset">
+        select owner_agency_name, data_source_type, count(*) as count from wedpr_dataset
+        where owner_agency_name = #{agencyName} and data_source_type = #{dataSourceType}
+        group by owner_agency_name, data_source_type
     </select>
 
     <insert id="insertDataset" parameterType="com.webank.wedpr.components.dataset.dao.Dataset">

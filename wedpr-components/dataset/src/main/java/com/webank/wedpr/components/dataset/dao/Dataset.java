@@ -70,6 +70,9 @@ public class Dataset {
     @TableField(exist = false)
     private DatasetUserPermissions permissions;
 
+    @TableField(exist = false)
+    private Integer count;
+
     public void resetMeta() {
         // datasetFields = "";
         // datasetVersionHash = "";

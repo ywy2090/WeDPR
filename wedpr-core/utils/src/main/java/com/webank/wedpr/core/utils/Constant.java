@@ -48,7 +48,7 @@ public class Constant {
     public static final int DEFAULT_PAGE_NUM = 1;
 
     /** @Fields DEFAULT_PAGE_SIZE:分页的每页记录数 */
-    public static final int DEFAULT_PAGE_SIZE = 5;
+    public static final int DEFAULT_PAGE_SIZE = 1;
 
     public static final int DEFAULT_REPORT_PAGE_SIZE = 1000;
 

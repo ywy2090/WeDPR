@@ -85,4 +85,18 @@ public interface DatasetMapper extends BaseMapper<Dataset> {
      * @return
      */
     int updateDatasetMetaInfo(Dataset dataset);
+
+    int getUseCountByDataSourceType(@Param("dataSourceType") String dataSourceType);
+
+    List<Dataset> getDatasetDateLine(
+            @Param("agencyName") String agencyName,
+            @Param("startTime") String startTime,
+            @Param("endTime") String endTime);
+
+    List<Dataset> datasetTypeStatistic();
+
+    Dataset datasetAgencyStatistic(@Param("agencyName") String agencyName);
+
+    Dataset datasetAgencyTypeStatistic(
+            @Param("agencyName") String agencyName, @Param("dataSourceType") String dataSourceType);
 }
