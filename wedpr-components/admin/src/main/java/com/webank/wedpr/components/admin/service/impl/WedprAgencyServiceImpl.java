@@ -10,18 +10,19 @@ import com.webank.wedpr.components.admin.mapper.WedprAgencyMapper;
 import com.webank.wedpr.components.admin.request.CreateOrUpdateWedprAgencyRequest;
 import com.webank.wedpr.components.admin.request.GetWedprAgencyListRequest;
 import com.webank.wedpr.components.admin.request.SetWedprAgencyRequest;
-import com.webank.wedpr.components.admin.response.GetWedprAgencyDetailResponse;
-import com.webank.wedpr.components.admin.response.GetWedprAgencyListResponse;
-import com.webank.wedpr.components.admin.response.WedprAgencyDTO;
+import com.webank.wedpr.components.admin.response.*;
 import com.webank.wedpr.components.admin.service.WedprAgencyService;
 import com.webank.wedpr.components.admin.service.WedprCertService;
 import com.webank.wedpr.components.token.auth.model.UserToken;
+import com.webank.wedpr.components.transport.Transport;
 import com.webank.wedpr.core.protocol.CertStatusViewEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hadoop.hdfs.net.Peer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -156,6 +157,33 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
         WedprAgency wedprAgency = checkAgencyExist(setWedprAgencyRequest.getAgencyId());
         wedprAgency.setAgencyStatus(setWedprAgencyRequest.getAgencyStatus());
         updateById(wedprAgency);
+    }
+
+    @Override
+    public GetAgencyStatisticsResponse getAgencyStatistics() {
+        int agencyTotalCount = count();
+        int faultAgencyCount = 0;
+//        gateway sdk call getPeers
+        GetAgencyStatisticsResponse response = new GetAgencyStatisticsResponse();
+        response.setAgencyTotalCount(agencyTotalCount);
+        response.setFaultAgencyCount(faultAgencyCount);
+
+        List<AgencyInfo> agencyInfoList = new ArrayList<>();
+
+        AgencyInfo agencyInfo = new AgencyInfo();
+        agencyInfo.setAgencyName("WEBANK");
+        agencyInfo.setAgencyStatus(true);
+
+        List<PeerAgency> peerAgencyList = new ArrayList<>();
+        PeerAgency peerAgency = new PeerAgency();
+        peerAgency.setAgencyName("SGD");
+        peerAgency.setConnectStatus(true);
+        peerAgencyList.add(peerAgency);
+        agencyInfo.setPeerAgencyList(peerAgencyList);
+
+        agencyInfoList.add(agencyInfo);
+        response.setAgencyInfoList(agencyInfoList);
+        return response;
     }
 
     private WedprAgency checkAgencyExist(String agencyId) throws WeDPRException {
