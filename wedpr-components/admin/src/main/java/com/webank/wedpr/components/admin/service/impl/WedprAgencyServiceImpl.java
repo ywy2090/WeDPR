@@ -14,7 +14,6 @@ import com.webank.wedpr.components.admin.response.*;
 import com.webank.wedpr.components.admin.service.WedprAgencyService;
 import com.webank.wedpr.components.admin.service.WedprCertService;
 import com.webank.wedpr.components.token.auth.model.UserToken;
-import com.webank.wedpr.components.transport.Transport;
 import com.webank.wedpr.core.protocol.CertStatusViewEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
@@ -22,7 +21,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.hdfs.net.Peer;
+import com.webank.wedpr.sdk.jni.generated.Error;
+import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
+import com.webank.wedpr.sdk.jni.transport.handlers.GetPeersCallback;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -38,6 +39,7 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
         implements WedprAgencyService {
 
     @Autowired private WedprCertService wedprCertService;
+    @Autowired private WeDPRTransport weDPRTransport;
 
     public String createOrUpdateAgency(
             CreateOrUpdateWedprAgencyRequest createOrUpdateWedprAgencyRequest, UserToken userToken)
@@ -164,6 +166,13 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
         int agencyTotalCount = count();
         int faultAgencyCount = 0;
 //        gateway sdk call getPeers
+        GetPeersCallback getPeersCallback = new GetPeersCallback() {
+            @Override
+            public void onPeersInfo(Error error, String s) {
+
+            }
+        };
+        weDPRTransport.asyncGetPeers(getPeersCallback);
         GetAgencyStatisticsResponse response = new GetAgencyStatisticsResponse();
         response.setAgencyTotalCount(agencyTotalCount);
         response.setFaultAgencyCount(faultAgencyCount);

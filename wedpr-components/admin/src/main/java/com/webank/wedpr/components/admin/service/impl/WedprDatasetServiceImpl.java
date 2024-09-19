@@ -19,7 +19,10 @@ import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.dataset.message.ListDatasetResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,8 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
 
     @Value("${dashbord.decimalPlaces:0}")
     private Integer decimalPlaces;
+    @Value("${dashbord.limitSize:5}")
+    private Integer limitSize;
 
     @Autowired private WedprJobDatasetRelationService wedprJobDatasetRelationService;
 
@@ -149,10 +154,12 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
             agencyDatasetTypeStatistic.setDatasetTypeStatistic(datasetTypeStatisticsList);
             agencyDatasetTypeStatisticList.add(agencyDatasetTypeStatistic);
         }
+        Collections.sort(agencyDatasetTypeStatisticList, (o1, o2) -> o2.getTotalCount()-o1.getTotalCount());
+        List<AgencyDatasetTypeStatistic> sortedAgencyDatasetTypeStatisticList = agencyDatasetTypeStatisticList.stream().limit(limitSize).collect(Collectors.toList());
         GetDatasetStatisticsResponse response = new GetDatasetStatisticsResponse();
         response.setDatasetOverview(datasetOverview);
         response.setDatasetTypeStatistic(datasetTypeStatisticList);
-        response.setAgencyDatasetTypeStatistic(agencyDatasetTypeStatisticList);
+        response.setAgencyDatasetTypeStatistic(sortedAgencyDatasetTypeStatisticList);
         return response;
     }
 
@@ -161,10 +168,27 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
             GetDatasetDateLineRequest getDatasetDateLineRequest) {
         String startTime = getDatasetDateLineRequest.getStartTime();
         String endTime = getDatasetDateLineRequest.getEndTime();
+
         List<WedprAgency> wedprAgencyList = wedprAgencyService.list();
-        List<AgencyDatasetStat> agencyDatasetStatList = new ArrayList<>();
+        ArrayList<AgencyDatasetTypeStatistic> agencyDatasetTypeStatisticList =
+                new ArrayList<>(wedprAgencyList.size());
         for (WedprAgency wedprAgency : wedprAgencyList) {
             String agencyName = wedprAgency.getAgencyName();
+            Dataset dataset1 = datasetMapper.datasetAgencyStatistic(agencyName);
+            AgencyDatasetTypeStatistic agencyDatasetTypeStatistic =
+                    new AgencyDatasetTypeStatistic();
+            agencyDatasetTypeStatistic.setAgencyName(agencyName);
+            agencyDatasetTypeStatistic.setTotalCount(0);
+            if (dataset1 != null) {
+                agencyDatasetTypeStatistic.setTotalCount(dataset1.getCount());
+            }
+            agencyDatasetTypeStatisticList.add(agencyDatasetTypeStatistic);
+        }
+        Collections.sort(agencyDatasetTypeStatisticList, (o1, o2) -> o2.getTotalCount()-o1.getTotalCount());
+        List<AgencyDatasetTypeStatistic> sortedAgencyDatasetTypeStatisticList = agencyDatasetTypeStatisticList.stream().limit(limitSize).collect(Collectors.toList());
+        List<AgencyDatasetStat> agencyDatasetStatList = new ArrayList<>();
+        for (AgencyDatasetTypeStatistic agencyDatasetTypeStatistic : sortedAgencyDatasetTypeStatisticList) {
+            String agencyName = agencyDatasetTypeStatistic.getAgencyName();
             List<Dataset> datasetList =
                     datasetMapper.getDatasetDateLine(agencyName, startTime, endTime);
             AgencyDatasetStat agencyDatasetStat = new AgencyDatasetStat();

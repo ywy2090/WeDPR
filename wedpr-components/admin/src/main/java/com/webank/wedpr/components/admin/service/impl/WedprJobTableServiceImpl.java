@@ -16,7 +16,10 @@ import com.webank.wedpr.core.protocol.JobStatus;
 import com.webank.wedpr.core.protocol.JobType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,9 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
 
     @Value("${dashbord.decimalPlaces:0}")
     private Integer decimalPlaces;
+
+    @Value("${dashbord.limitSize:5}")
+    private Integer limitSize;
 
     @Autowired private WedprJobTableMapper wedprJobTableMapper;
 
@@ -136,10 +142,12 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
             agencyJobTypeStatistic.setJobTypeStatistic(jobTypeStatisticsList);
             agencyJobTypeStatisticList.add(agencyJobTypeStatistic);
         }
+        Collections.sort(agencyJobTypeStatisticList, (o1, o2) -> o2.getTotalCount()-o1.getTotalCount());
+        List<AgencyJobTypeStatistic> sortedAgencyJobTypeStatisticList = agencyJobTypeStatisticList.stream().limit(limitSize).collect(Collectors.toList());
         GetJobStatisticsResponse response = new GetJobStatisticsResponse();
         response.setJobOverview(jobOverview);
         response.setJobTypeStatistic(jobTypeStatisticList);
-        response.setAgencyJobTypeStatistic(agencyJobTypeStatisticList);
+        response.setAgencyJobTypeStatistic(sortedAgencyJobTypeStatisticList);
         return response;
     }
 
