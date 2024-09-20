@@ -12,26 +12,25 @@
  * the License.
  *
  */
-package com.webank.wedpr.components.task.plugin.api;
+package com.webank.wedpr.core.protocol.task;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.webank.wedpr.components.uuid.generator.WeDPRUuidGenerator;
-import java.io.Serializable;
+import com.webank.wedpr.core.utils.BaseRequest;
+import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.util.StringUtils;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class TaskExecutionContext implements Serializable {
+public class TaskExecutionContext implements BaseRequest {
     private static final long serialVersionUID = -1L;
 
     // the taskID
-    protected String taskID = WeDPRUuidGenerator.generateID();
+    protected String taskID;
     // the workflowID of the task
     protected String workflowID;
     // the taskType
@@ -50,17 +49,15 @@ public class TaskExecutionContext implements Serializable {
         return startTime;
     }
 
-    public void setTaskID(String taskID) {
-        if (StringUtils.isEmpty(taskID)) {
-            return;
-        }
-        this.taskID = taskID;
-    }
-
     public void setStartTime(Long startTime) {
         if (startTime == null || startTime == 0) {
             return;
         }
         this.startTime = startTime;
+    }
+
+    @Override
+    public String serialize() throws Exception {
+        return ObjectMapperFactory.getObjectMapper().writeValueAsString(this);
     }
 }

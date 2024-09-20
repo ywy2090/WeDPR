@@ -14,9 +14,9 @@
  */
 package com.webank.wedpr.core.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.lang3.StringUtils;
 
-public class WeDPRResponse {
+public class WeDPRResponse implements BaseResponse {
     private Integer code;
     private String msg;
     private Object data;
@@ -58,8 +58,21 @@ public class WeDPRResponse {
         this.data = data;
     }
 
-    public String serialize() throws JsonProcessingException {
+    @Override
+    public Boolean statusOk() {
+        return code.equals(Constant.WEDPR_SUCCESS);
+    }
+
+    @Override
+    public String serialize() throws Exception {
         return ObjectMapperFactory.getObjectMapper().writeValueAsString(this);
+    }
+
+    public static WeDPRResponse deserialize(String data) throws Exception {
+        if (StringUtils.isBlank(data)) {
+            return null;
+        }
+        return ObjectMapperFactory.getObjectMapper().readValue(data, WeDPRResponse.class);
     }
 
     @Override

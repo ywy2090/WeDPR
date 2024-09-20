@@ -16,12 +16,15 @@
 package com.webank.wedpr.components.integration.jupyter.dao;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.webank.wedpr.components.integration.jupyter.core.JupyterSetting;
 import com.webank.wedpr.components.integration.jupyter.core.JupyterStatus;
 import com.webank.wedpr.components.uuid.generator.WeDPRUuidGenerator;
+import com.webank.wedpr.core.utils.Common;
 import com.webank.wedpr.core.utils.TimeRange;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -32,10 +35,12 @@ public class JupyterInfoDO extends TimeRange {
     private String agency;
     private String accessEntry;
     private String setting;
+    @JsonIgnore private JupyterSetting jupyterSetting;
     private String status;
     private String createTime;
     private String lastUpdateTime;
     @JsonIgnore private JupyterStatus jupyterStatus;
+    private String jupyterAccessUrl;
 
     public JupyterInfoDO() {}
 
@@ -63,5 +68,43 @@ public class JupyterInfoDO extends TimeRange {
             return;
         }
         this.status = jupyterStatus.getStatus();
+    }
+
+    public String getSetting() {
+        return setting;
+    }
+
+    public void setSetting(String setting) {
+        this.setting = setting;
+        this.jupyterSetting = JupyterSetting.deserialize(setting);
+        generateJupyterAccessUrl();
+    }
+
+    public JupyterSetting getJupyterSetting() {
+        return jupyterSetting;
+    }
+
+    public void setJupyterSetting(JupyterSetting jupyterSetting) {
+        this.jupyterSetting = jupyterSetting;
+        this.setting = jupyterSetting.serialize();
+        generateJupyterAccessUrl();
+    }
+
+    public void setJupyterAccessUrl(String jupyterAccessUrl) {
+        if (StringUtils.isBlank(jupyterAccessUrl)) {
+            return;
+        }
+        this.jupyterAccessUrl = jupyterAccessUrl;
+    }
+
+    protected void generateJupyterAccessUrl() {
+        if (this.jupyterSetting == null) {
+            return;
+        }
+        this.jupyterAccessUrl =
+                Common.getUrl(
+                        String.format(
+                                "%s:%s/lab?",
+                                this.getAccessEntry(), this.jupyterSetting.getListenPort()));
     }
 }

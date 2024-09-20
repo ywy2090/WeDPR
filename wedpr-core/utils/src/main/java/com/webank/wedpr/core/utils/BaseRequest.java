@@ -13,8 +13,8 @@
  *
  */
 
-package com.webank.wedpr.components.http.client.model;
+package com.webank.wedpr.core.utils;
 
-public interface BaseResponseFactory {
-    public BaseResponse build(String data) throws Exception;
+public interface BaseRequest {
+    public abstract String serialize() throws Exception;
 }

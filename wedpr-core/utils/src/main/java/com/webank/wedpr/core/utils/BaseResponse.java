@@ -12,15 +12,11 @@
  * the License.
  *
  */
-package com.webank.wedpr.components.task.plugin.shell;
 
-import com.webank.wedpr.components.task.plugin.api.TaskBuilder;
-import com.webank.wedpr.components.task.plugin.api.TaskInterface;
-import com.webank.wedpr.core.protocol.task.TaskExecutionContext;
+package com.webank.wedpr.core.utils;
 
-public class ShellTaskBuilder implements TaskBuilder {
-    @Override
-    public TaskInterface createTask(TaskExecutionContext context) {
-        return new ShellTask(context);
-    }
+public interface BaseResponse {
+    public abstract Boolean statusOk();
+
+    public abstract String serialize() throws Exception;
 }

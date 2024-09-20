@@ -14,7 +14,7 @@
  */
 package com.webank.wedpr.components.task.plugin.api.model;
 
-import com.webank.wedpr.components.task.plugin.api.TaskResponse;
+import com.webank.wedpr.core.protocol.task.TaskResponse;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,5 +29,14 @@ public class CommandTaskResponse extends TaskResponse {
 
     public CommandTaskResponse(String taskID) {
         super(taskID);
+    }
+
+    public void setExitCode(Integer exitCode) {
+        this.exitCode = exitCode;
+        if (this.exitCode == 0) {
+            this.success = true;
+            return;
+        }
+        this.success = false;
     }
 }

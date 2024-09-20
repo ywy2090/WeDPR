@@ -12,21 +12,10 @@
  * the License.
  *
  */
-package com.webank.wedpr.components.task.plugin.api;
+package com.webank.wedpr.core.protocol.task;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TaskResponse {
-    protected String taskID;
-    protected Boolean success;
-    protected String resultDetail;
-
-    public TaskResponse(String taskID) {
-        this.taskID = taskID;
-    }
+/** interface used to check and handle the parameter */
+public interface Parameters {
+    // check the parameter
+    void checkParameters();
 }
