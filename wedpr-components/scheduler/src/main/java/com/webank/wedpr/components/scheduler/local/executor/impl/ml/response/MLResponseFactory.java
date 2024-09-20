@@ -13,13 +13,14 @@
  *
  */
 
-package com.webank.wedpr.components.scheduler;
+package com.webank.wedpr.components.scheduler.local.executor.impl.ml.response;
 
-import com.webank.wedpr.components.project.dao.JobDO;
-import java.util.List;
+import com.webank.wedpr.components.http.client.model.BaseResponse;
+import com.webank.wedpr.components.http.client.model.BaseResponseFactory;
 
-public interface Scheduler {
-    void batchKillJobs(List<JobDO> jobs);
-
-    void batchRunJobs(List<JobDO> jobs);
+public class MLResponseFactory implements BaseResponseFactory {
+    @Override
+    public BaseResponse build(String data) throws Exception {
+        return MLResponse.deserialize(data);
+    }
 }
