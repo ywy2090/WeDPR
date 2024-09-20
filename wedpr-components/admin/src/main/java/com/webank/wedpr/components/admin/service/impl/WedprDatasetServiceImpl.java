@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -40,6 +39,7 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
 
     @Value("${dashbord.decimalPlaces:0}")
     private Integer decimalPlaces;
+
     @Value("${dashbord.limitSize:5}")
     private Integer limitSize;
 
@@ -154,8 +154,14 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
             agencyDatasetTypeStatistic.setDatasetTypeStatistic(datasetTypeStatisticsList);
             agencyDatasetTypeStatisticList.add(agencyDatasetTypeStatistic);
         }
-        Collections.sort(agencyDatasetTypeStatisticList, (o1, o2) -> o2.getTotalCount()-o1.getTotalCount());
-        List<AgencyDatasetTypeStatistic> sortedAgencyDatasetTypeStatisticList = agencyDatasetTypeStatisticList.stream().limit(limitSize).collect(Collectors.toList());
+        Collections.sort(
+                agencyDatasetTypeStatisticList,
+                (o1, o2) -> o2.getTotalCount() - o1.getTotalCount());
+        List<AgencyDatasetTypeStatistic> sortedAgencyDatasetTypeStatisticList =
+                agencyDatasetTypeStatisticList
+                        .stream()
+                        .limit(limitSize)
+                        .collect(Collectors.toList());
         GetDatasetStatisticsResponse response = new GetDatasetStatisticsResponse();
         response.setDatasetOverview(datasetOverview);
         response.setDatasetTypeStatistic(datasetTypeStatisticList);
@@ -184,10 +190,17 @@ public class WedprDatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset>
             }
             agencyDatasetTypeStatisticList.add(agencyDatasetTypeStatistic);
         }
-        Collections.sort(agencyDatasetTypeStatisticList, (o1, o2) -> o2.getTotalCount()-o1.getTotalCount());
-        List<AgencyDatasetTypeStatistic> sortedAgencyDatasetTypeStatisticList = agencyDatasetTypeStatisticList.stream().limit(limitSize).collect(Collectors.toList());
+        Collections.sort(
+                agencyDatasetTypeStatisticList,
+                (o1, o2) -> o2.getTotalCount() - o1.getTotalCount());
+        List<AgencyDatasetTypeStatistic> sortedAgencyDatasetTypeStatisticList =
+                agencyDatasetTypeStatisticList
+                        .stream()
+                        .limit(limitSize)
+                        .collect(Collectors.toList());
         List<AgencyDatasetStat> agencyDatasetStatList = new ArrayList<>();
-        for (AgencyDatasetTypeStatistic agencyDatasetTypeStatistic : sortedAgencyDatasetTypeStatisticList) {
+        for (AgencyDatasetTypeStatistic agencyDatasetTypeStatistic :
+                sortedAgencyDatasetTypeStatisticList) {
             String agencyName = agencyDatasetTypeStatistic.getAgencyName();
             List<Dataset> datasetList =
                     datasetMapper.getDatasetDateLine(agencyName, startTime, endTime);

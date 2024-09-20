@@ -17,13 +17,14 @@ import com.webank.wedpr.components.token.auth.model.UserToken;
 import com.webank.wedpr.core.protocol.CertStatusViewEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.webank.wedpr.sdk.jni.generated.Error;
 import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
 import com.webank.wedpr.sdk.jni.transport.handlers.GetPeersCallback;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -165,13 +166,12 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
     public GetAgencyStatisticsResponse getAgencyStatistics() {
         int agencyTotalCount = count();
         int faultAgencyCount = 0;
-//        gateway sdk call getPeers
-        GetPeersCallback getPeersCallback = new GetPeersCallback() {
-            @Override
-            public void onPeersInfo(Error error, String s) {
-
-            }
-        };
+        //        gateway sdk call getPeers
+        GetPeersCallback getPeersCallback =
+                new GetPeersCallback() {
+                    @Override
+                    public void onPeersInfo(Error error, String s) {}
+                };
         weDPRTransport.asyncGetPeers(getPeersCallback);
         GetAgencyStatisticsResponse response = new GetAgencyStatisticsResponse();
         response.setAgencyTotalCount(agencyTotalCount);
@@ -192,6 +192,24 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
 
         agencyInfoList.add(agencyInfo);
         response.setAgencyInfoList(agencyInfoList);
+        return response;
+    }
+
+    @Override
+    public GetWedprNoCertAgencyListResponse getNoCertAgencyList() {
+        List<WedprAgency> wedprAgencyList = list();
+        List<WedprCert> wedprCertList = wedprCertService.list();
+        List<String> agencyIdList = wedprCertList.stream().map(wedprCert -> wedprCert.getAgencyId()).collect(Collectors.toList());
+        wedprAgencyList.removeIf(wedprAgency -> agencyIdList.contains(wedprAgency.getAgencyId()));
+        GetWedprNoCertAgencyListResponse response = new GetWedprNoCertAgencyListResponse();
+        List<WedprAgencyWithoutCertDTO> wedprAgencyDTOList = new ArrayList<>(wedprAgencyList.size());
+        for (WedprAgency wedprAgency : wedprAgencyList) {
+            WedprAgencyWithoutCertDTO wedprAgencyWithoutCertDTO = new WedprAgencyWithoutCertDTO();
+            wedprAgencyWithoutCertDTO.setAgencyId(wedprAgency.getAgencyId());
+            wedprAgencyWithoutCertDTO.setAgencyName(wedprAgency.getAgencyName());
+            wedprAgencyDTOList.add(wedprAgencyWithoutCertDTO);
+        }
+        response.setAgencyList(wedprAgencyDTOList);
         return response;
     }
 

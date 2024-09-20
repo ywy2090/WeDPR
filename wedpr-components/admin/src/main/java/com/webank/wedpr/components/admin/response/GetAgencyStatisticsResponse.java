@@ -1,8 +1,7 @@
 package com.webank.wedpr.components.admin.response;
 
-import lombok.Data;
-
 import java.util.List;
+import lombok.Data;
 
 /** Created by caryliao on 2024/9/10 9:26 */
 @Data

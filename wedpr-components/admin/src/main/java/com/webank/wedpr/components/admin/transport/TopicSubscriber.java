@@ -15,10 +15,9 @@ import com.webank.wedpr.sdk.jni.generated.Error;
 import com.webank.wedpr.sdk.jni.transport.IMessage;
 import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
 import com.webank.wedpr.sdk.jni.transport.handlers.MessageDispatcherCallback;
+import com.webank.wedpr.sdk.jni.transport.handlers.MessageErrorCallback;
 import java.io.IOException;
 import java.util.List;
-
-import com.webank.wedpr.sdk.jni.transport.handlers.MessageErrorCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -73,13 +72,18 @@ public class TopicSubscriber implements CommandLineRunner {
                             }
                         }
                         // TODO send response message
-                        MessageErrorCallback messageErrorCallback = new MessageErrorCallback() {
-                            @Override
-                            public void onError(Error error) {
-                                log.error("Error code:{}, message:{}", error.errorCode(), error.errorMessage());
-                            }
-                        };
-                        weDPRTransport.asyncSendResponse(null, "traceId",  payload, 0, messageErrorCallback);
+                        MessageErrorCallback messageErrorCallback =
+                                new MessageErrorCallback() {
+                                    @Override
+                                    public void onError(Error error) {
+                                        log.error(
+                                                "Error code:{}, message:{}",
+                                                error.errorCode(),
+                                                error.errorMessage());
+                                    }
+                                };
+                        weDPRTransport.asyncSendResponse(
+                                null, "traceId", payload, 0, messageErrorCallback);
                     }
                 });
     }
@@ -116,13 +120,18 @@ public class TopicSubscriber implements CommandLineRunner {
                             }
                         }
                         // TODO send response message
-                        MessageErrorCallback messageErrorCallback = new MessageErrorCallback() {
-                            @Override
-                            public void onError(Error error) {
-                                log.error("Error code:{}, message:{}", error.errorCode(), error.errorMessage());
-                            }
-                        };
-                        weDPRTransport.asyncSendResponse(null, "traceId",  payload, 0, messageErrorCallback);
+                        MessageErrorCallback messageErrorCallback =
+                                new MessageErrorCallback() {
+                                    @Override
+                                    public void onError(Error error) {
+                                        log.error(
+                                                "Error code:{}, message:{}",
+                                                error.errorCode(),
+                                                error.errorMessage());
+                                    }
+                                };
+                        weDPRTransport.asyncSendResponse(
+                                null, "traceId", payload, 0, messageErrorCallback);
                     }
                 });
     }
@@ -152,14 +161,23 @@ public class TopicSubscriber implements CommandLineRunner {
                                 wedprJobTableService.updateById(wedprJobTable);
                             }
                         }
-                        MessageErrorCallback messageErrorCallback = new MessageErrorCallback() {
-                            @Override
-                            public void onError(Error error) {
-                                log.error("Error code:{}, message:{}", error.errorCode(), error.errorMessage());
-                            }
-                        };
+                        MessageErrorCallback messageErrorCallback =
+                                new MessageErrorCallback() {
+                                    @Override
+                                    public void onError(Error error) {
+                                        log.error(
+                                                "Error code:{}, message:{}",
+                                                error.errorCode(),
+                                                error.errorMessage());
+                                    }
+                                };
                         IMessage.IMessageHeader messageHeader = message.getHeader();
-                        weDPRTransport.asyncSendResponse(messageHeader.getSrcNode(), messageHeader.getTraceID(),  payload, 0, messageErrorCallback);
+                        weDPRTransport.asyncSendResponse(
+                                messageHeader.getSrcNode(),
+                                messageHeader.getTraceID(),
+                                payload,
+                                0,
+                                messageErrorCallback);
                     }
                 });
     }

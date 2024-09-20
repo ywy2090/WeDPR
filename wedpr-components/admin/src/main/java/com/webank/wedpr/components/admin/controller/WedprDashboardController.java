@@ -92,8 +92,7 @@ public class WedprDashboardController {
         try {
             // check user permission
             UserToken userToken = Utils.checkPermission(request);
-            GetAgencyStatisticsResponse response =
-                    wedprAgencyService.getAgencyStatistics();
+            GetAgencyStatisticsResponse response = wedprAgencyService.getAgencyStatistics();
             return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
         } catch (Exception e) {
             log.error("getAgencyStatistics error", e);
