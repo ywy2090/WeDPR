@@ -199,6 +199,8 @@ public class SQLExecutor {
                 fieldList.add(columnName);
             }
 
+            callback.onReadRowData(fieldList, null);
+
             // set stream query
             preparedStatement.setFetchSize(Integer.MIN_VALUE);
             ResultSet resultSet = preparedStatement.executeQuery(sql);
