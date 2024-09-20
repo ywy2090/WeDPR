@@ -13,13 +13,11 @@
  *
  */
 
-package com.webank.wedpr.components.scheduler;
+package com.webank.wedpr.components.scheduler.local.executor.callback;
 
 import com.webank.wedpr.components.project.dao.JobDO;
-import java.util.List;
+import com.webank.wedpr.components.scheduler.local.executor.ExecuteResult;
 
-public interface Scheduler {
-    void batchKillJobs(List<JobDO> jobs);
-
-    void batchRunJobs(List<JobDO> jobs);
+public interface TaskFinishedHandler {
+    public abstract void onFinish(JobDO jobDO, ExecuteResult result);
 }

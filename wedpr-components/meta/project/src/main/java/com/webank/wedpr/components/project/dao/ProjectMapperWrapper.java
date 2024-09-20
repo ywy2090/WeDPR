@@ -164,7 +164,7 @@ public class ProjectMapperWrapper {
     public void insertJob(JobDO jobDO) {
         String id = jobDO.getId();
 
-        logger.info(" => insert job, jobID: {}", id);
+        // logger.info(" ## insert job, jobID: {}", id);
 
         this.projectMapper.insertJobInfo(jobDO);
 

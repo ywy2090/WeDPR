@@ -13,13 +13,19 @@
  *
  */
 
-package com.webank.wedpr.components.scheduler;
+package com.webank.wedpr.components.scheduler.local.executor.impl.model;
 
-import com.webank.wedpr.components.project.dao.JobDO;
-import java.util.List;
+public enum AlgorithmType {
+    WEDPR_TRAIN("Train"),
+    WEDPR_PREDICT("Predict");
 
-public interface Scheduler {
-    void batchKillJobs(List<JobDO> jobs);
+    private final String type;
 
-    void batchRunJobs(List<JobDO> jobs);
+    AlgorithmType(String type) {
+        this.type = type;
+    }
+
+    public String getType() {
+        return this.type;
+    }
 }

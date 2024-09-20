@@ -13,13 +13,10 @@
  *
  */
 
-package com.webank.wedpr.components.scheduler;
+package com.webank.wedpr.components.scheduler.local.service;
 
-import com.webank.wedpr.components.project.dao.JobDO;
-import java.util.List;
-
-public interface Scheduler {
-    void batchKillJobs(List<JobDO> jobs);
-
-    void batchRunJobs(List<JobDO> jobs);
+public interface SchedulerService {
+    // query the job detail
+    public abstract Object queryJobDetail(String user, String agency, String jobID)
+            throws Exception;
 }
