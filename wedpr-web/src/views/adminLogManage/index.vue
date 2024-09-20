@@ -25,7 +25,7 @@
         <el-form-item prop="createTime" label="生成时间：">
           <el-date-picker
             style="width: 344px"
-            value-format="yyyy-MM-dd hh:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
             v-model="searchForm.createTime"
             type="datetimerange"
             range-separator="至"

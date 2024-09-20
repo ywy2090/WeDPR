@@ -3,7 +3,7 @@
     <div class="top">
       <div class="back"><img @click="backHome" src="~Assets/images/back.png" alt="" /></div>
       <div class="title">管理监控平台</div>
-      <div class="time">2024 年 06 月 04 日 星期二 12:34:05</div>
+      <div class="time">{{ dateStr }}</div>
     </div>
     <div class="bottom">
       <div class="left slide-con">
@@ -11,24 +11,26 @@
           <div class="img-container">
             <img src="~Assets/images/lead-data.png" alt="" />
           </div>
-          <el-progress style="width: 160px" :stroke-width="8" :percentage="datasetUseInfo.usedProportion" :show-text="false"></el-progress
-          ><span class="ell rate" :title="`已使用${datasetUseInfo.usedCount}/${datasetUseInfo.totalCount}`">
-            已使用{{ datasetUseInfo.usedCount }}/{{ datasetUseInfo.totalCount }}</span
-          >
+          <div class="percent-conatiner">
+            <el-progress style="width: 160px" :stroke-width="8" :percentage="Number(datasetUseInfo.usedProportion)" :show-text="false"></el-progress
+            ><span class="ell rate" :title="`已使用${datasetUseInfo.usedCount}/${datasetUseInfo.totalCount}`">
+              已使用{{ datasetUseInfo.usedCount }}/{{ datasetUseInfo.totalCount }}&nbsp;&nbsp;{{ Math.floor((datasetUseInfo.usedCount * 100) / datasetUseInfo.totalCount) }}%</span
+            >
+          </div>
         </div>
         <div class="chart-container">
           <div class="chart-con circle">
             <div id="circle-chart" class="chart"></div>
             <div class="data-table">
               <ul class="head">
-                <li>分类</li>
+                <li class="type">分类</li>
                 <li>个数</li>
                 <li>使用率</li>
               </ul>
               <ul v-for="item in datasetTypeStatisticTableData" :key="item.datasetType">
-                <li>{{ item.datasetType }}</li>
+                <li class="type"><span :style="{ backgroundColor: item.color }"></span>{{ item.datasetType }}</li>
                 <li>{{ item.count }}</li>
-                <li>{{ item.usedProportion }}</li>
+                <li>{{ item.usedProportion }}%</li>
               </ul>
             </div>
           </div>
@@ -42,6 +44,10 @@
         </div>
       </div>
       <div class="center">
+        <div class="agency-info">
+          <p><span></span>共接入机构：4</p>
+          <p class="error"><span></span>故障机构：1</p>
+        </div>
         <div id="graph-chart" class="chart"></div>
         <div class="notice-con">
           <div class="msg-table">
@@ -77,10 +83,12 @@
           <div class="img-container">
             <img style="width: 108px" src="~Assets/images/job_sat.png" alt="" />
           </div>
-          <el-progress style="width: 160px" :stroke-width="8" :percentage="jobOverview.successProportion" :show-text="false"></el-progress
-          ><span class="ell rate" :title="`成功执行任务${jobOverview.successCount}/${jobOverview.totalCount}`">
-            成功执行任务{{ jobOverview.successCount }}/{{ jobOverview.totalCount }}</span
-          >
+          <div class="percent-container">
+            <el-progress style="width: 160px" :stroke-width="8" :percentage="Number(jobOverview.successProportion)" :show-text="false"></el-progress
+            ><span class="ell rate" :title="`成功执行任务${jobOverview.successCount}/${jobOverview.totalCount}`">
+              成功执行任务{{ jobOverview.successCount }}/{{ jobOverview.totalCount }}&nbsp;&nbsp;{{ Math.floor((jobOverview.successCount * 100) / jobOverview.totalCount) }}%</span
+            >
+          </div>
         </div>
         <div class="chart-container">
           <div class="chart-con circle">
@@ -108,6 +116,7 @@ import { mapGetters } from 'vuex'
 import { dashboardManageServer, logManageServer } from 'Api'
 import { jobStatusMap, actionMap, actionScreenStatus } from 'Utils/constant.js'
 import dayjs from 'dayjs'
+import { colorList, circleOption, barOption, lineOption, circleJobOption, barJobOption, lineJobOption, graphChartOption } from './chartsSetting.js'
 export default {
   name: 'HomePage',
   props: {},
@@ -140,435 +149,6 @@ export default {
       myJobBarChart: null,
       graphChart: null,
       resourceTypeMap: {},
-      circleOption: {
-        tooltip: {
-          trigger: 'item'
-        },
-        series: [
-          {
-            name: '来源',
-            type: 'pie',
-            radius: ['60%', '90%'],
-            avoidLabelOverlap: false,
-            label: {
-              show: false,
-              position: 'center'
-            },
-            emphasis: {
-              label: {
-                show: true,
-                fontSize: 40,
-                fontWeight: 'bold'
-              }
-            },
-            labelLine: {
-              show: false
-            },
-            data: [
-              //   { value: 1048, name: 'CSV文件' },
-              //   { value: 735, name: 'EXCEL文件' },
-              //   { value: 580, name: '数据库' },
-              //   { value: 484, name: 'HIVE' },
-              //   { value: 300, name: 'HDFS' }
-            ]
-          }
-        ]
-      },
-      barOption: {
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            // Use axis to trigger tooltip
-            type: 'shadow' // 'shadow' as default; can also be 'line' or 'shadow'
-          }
-        },
-        legend: {
-          left: 'center',
-          bottom: -6,
-          textStyle: {
-            color: 'white'
-          },
-          icon: 'circle'
-        },
-        grid: {
-          left: 0, // 图表距离容器左侧多少距离
-          right: 10, // 图表距离容器右侧侧多少距离
-          bottom: 30, // 图表距离容器上面多少距离
-          top: 10, // 图表距离容器下面多少距离
-          containLabel: true // 防止标签溢出
-        },
-        xAxis: {
-          type: 'value',
-          axisLine: {
-            lineStyle: {
-              color: '#EFF4F9'
-            }
-          },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          }
-        },
-        yAxis: {
-          type: 'category',
-          axisLine: {
-            lineStyle: {
-              color: '#EFF4F9'
-            }
-          },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          },
-          textStyle: {
-            color: 'white'
-          },
-          data: []
-        },
-        series: []
-      },
-      lineOption: {
-        xAxis: {
-          type: 'category',
-          data: ['星期1', '星期2', '星期3', '星期4', '星期5', '星期6', '星期7'],
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          }
-        },
-        tooltip: {
-          trigger: 'axis'
-        },
-        grid: {
-          show: true, // 是否显示图表背景网格
-          left: 0, // 图表距离容器左侧多少距离
-          right: 10, // 图表距离容器右侧侧多少距离
-          bottom: 30, // 图表距离容器上面多少距离
-          top: 10, // 图表距离容器下面多少距离
-          containLabel: true // 防止标签溢出
-        },
-        smooth: true,
-        legend: {
-          data: ['机构1', '机构2', '机构3'],
-          textStyle: {
-            color: 'white'
-          },
-          left: 'center',
-          bottom: -6,
-          icon: 'circle',
-          type: 'scroll',
-          orient: 'horizontal' // vertical
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          }
-        },
-        series: [
-          {
-            data: [1, 2, 20, 4, 5, 6, 7], // 具体数据
-            type: 'line', // 设置图表类型为折线图
-            name: '机构1', // 图表名称
-            smooth: true // 是否将折线设置为平滑曲线
-          },
-          {
-            data: [1, 6, 3, 4, 15, 6, 9], // 具体数据
-            type: 'line', // 设置图表类型为折线图
-            name: '机构2', // 图表名称
-            smooth: true // 是否将折线设置为平滑曲线
-          },
-          {
-            data: [1, 4, 3, 4, 9, 6, 17], // 具体数据
-            type: 'line', // 设置图表类型为折线图
-            name: '机构3', // 图表名称
-            smooth: true // 是否将折线设置为平滑曲线
-          }
-        ]
-      },
-      circleJobOption: {
-        legend: {
-          orient: 'vertical',
-          right: '40px',
-          top: 'center',
-          textStyle: {
-            color: 'white'
-          },
-          icon: 'circle'
-        },
-        series: [
-          {
-            name: '来源',
-            type: 'pie',
-            radius: ['60%', '90%'],
-            avoidLabelOverlap: false,
-            label: {
-              show: false,
-              position: 'center'
-            },
-            center: ['30%', '50%'],
-            emphasis: {
-              label: {
-                show: true,
-                fontSize: 40,
-                fontWeight: 'bold'
-              }
-            },
-            labelLine: {
-              show: false
-            },
-            data: [
-              //   { value: 1048, name: 'CSV文件' },
-              //   { value: 735, name: 'EXCEL文件' },
-              //   { value: 580, name: '数据库' },
-              //   { value: 484, name: 'HIVE' },
-              //   { value: 300, name: 'HDFS' }
-            ]
-          }
-        ],
-        tooltip: {
-          // trigger 设置触发类型，默认数据触发，可选值：'item' ¦ 'axis'
-          trigger: 'item'
-        }
-      },
-      barJobOption: {
-        tooltip: {
-          trigger: 'axis',
-          axisPointer: {
-            // Use axis to trigger tooltip
-            type: 'shadow' // 'shadow' as default; can also be 'line' or 'shadow'
-          }
-        },
-        legend: {
-          left: 'center',
-          bottom: -6,
-          textStyle: {
-            color: 'white'
-          },
-          icon: 'circle'
-        },
-        grid: {
-          left: 0, // 图表距离容器左侧多少距离
-          right: 10, // 图表距离容器右侧侧多少距离
-          bottom: 30, // 图表距离容器上面多少距离
-          top: 10, // 图表距离容器下面多少距离
-          containLabel: true // 防止标签溢出
-        },
-        xAxis: {
-          type: 'value',
-          axisLine: {
-            lineStyle: {
-              color: '#EFF4F9'
-            }
-          },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          }
-        },
-        yAxis: {
-          type: 'category',
-          axisLine: {
-            lineStyle: {
-              color: '#EFF4F9'
-            }
-          },
-          textStyle: {
-            color: 'white'
-          },
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          },
-          data: []
-        },
-        series: []
-      },
-      lineJobOption: {
-        xAxis: {
-          type: 'category',
-          data: ['星期1', '星期2', '星期3', '星期4', '星期5', '星期6', '星期7'],
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          }
-        },
-        tooltip: {
-          trigger: 'axis'
-        },
-        grid: {
-          show: true, // 是否显示图表背景网格
-          left: 0, // 图表距离容器左侧多少距离
-          right: 10, // 图表距离容器右侧侧多少距离
-          bottom: 30, // 图表距离容器上面多少距离
-          top: 10, // 图表距离容器下面多少距离
-          containLabel: true // 防止标签溢出
-        },
-        smooth: true,
-        legend: {
-          data: ['机构1', '机构2', '机构3'],
-          textStyle: {
-            color: 'white'
-          },
-          left: 'center',
-          bottom: -6,
-          icon: 'circle',
-          type: 'scroll',
-          orient: 'horizontal' // vertical
-        },
-        yAxis: {
-          type: 'value',
-          splitLine: {
-            show: true,
-            lineStyle: {
-              color: ['#262A32'],
-              width: 1,
-              type: 'solid'
-            }
-          }
-        },
-        series: [
-          {
-            data: [1, 2, 20, 4, 5, 6, 7], // 具体数据
-            type: 'line', // 设置图表类型为折线图
-            name: '机构1', // 图表名称
-            smooth: true // 是否将折线设置为平滑曲线
-          },
-          {
-            data: [1, 6, 3, 4, 15, 6, 9], // 具体数据
-            type: 'line', // 设置图表类型为折线图
-            name: '机构2', // 图表名称
-            smooth: true // 是否将折线设置为平滑曲线
-          },
-          {
-            data: [1, 4, 3, 4, 9, 6, 17], // 具体数据
-            type: 'line', // 设置图表类型为折线图
-            name: '机构3', // 图表名称
-            smooth: true // 是否将折线设置为平滑曲线
-          }
-        ]
-      },
-      graphChartOption: {
-        title: {
-          text: 'Basic Graph'
-        },
-        tooltip: {},
-        animationDurationUpdate: 1500,
-        animationEasingUpdate: 'quinticInOut',
-        series: [
-          {
-            type: 'graph',
-            layout: 'none',
-            symbolSize: 50,
-            roam: true,
-            label: {
-              show: true
-            },
-            edgeSymbol: ['circle', 'arrow'],
-            edgeSymbolSize: [4, 10],
-            edgeLabel: {
-              fontSize: 20
-            },
-            data: [
-              {
-                name: 'Node 1',
-                x: 300,
-                y: 300
-              },
-              {
-                name: 'Node 2',
-                x: 800,
-                y: 300
-              },
-              {
-                name: 'Node 3',
-                x: 550,
-                y: 100
-              },
-              {
-                name: 'Node 4',
-                x: 550,
-                y: 500
-              }
-            ],
-            // links: [],
-            links: [
-              {
-                source: 0,
-                target: 1,
-                symbolSize: [5, 20],
-                label: {
-                  show: true
-                },
-                lineStyle: {
-                  width: 5,
-                  curveness: 0.2
-                }
-              },
-              {
-                source: 'Node 2',
-                target: 'Node 1',
-                label: {
-                  show: true
-                },
-                lineStyle: {
-                  curveness: 0.2
-                }
-              },
-              {
-                source: 'Node 1',
-                target: 'Node 3'
-              },
-              {
-                source: 'Node 2',
-                target: 'Node 3'
-              },
-              {
-                source: 'Node 2',
-                target: 'Node 4'
-              },
-              {
-                source: 'Node 1',
-                target: 'Node 4'
-              }
-            ],
-            lineStyle: {
-              opacity: 0.9,
-              width: 2,
-              curveness: 0
-            }
-          }
-        ]
-      },
       dataReferOverviewList: [
         {
           type: 'CSV文件',
@@ -607,7 +187,9 @@ export default {
         successProportion: 0
       },
       datasetTypeStatisticTableData: [],
-      logInfoList: []
+      logInfoList: [],
+      dateStr: '',
+      getTimeTimer: null
     }
   },
   computed: {
@@ -623,6 +205,7 @@ export default {
   },
   created() {
     this.queryRecordSyncStatus()
+    this.getCurrentDateTimeChinese()
   },
 
   mounted() {
@@ -639,8 +222,21 @@ export default {
       that.myJobBarChart && that.myJobBarChart.resize()
       that.graphChart && that.graphChart.resize()
     }
+    this.getTimeTimer = setInterval(this.getCurrentDateTimeChinese)
   },
   methods: {
+    getCurrentDateTimeChinese() {
+      const date = new Date()
+      const year = date.getFullYear()
+      const month = date.getMonth() + 1 // 月份从0开始
+      const day = date.getDate()
+      const dayOfWeek = date.getDay()
+      const hour = date.getHours()
+      const minute = date.getMinutes()
+      const second = date.getSeconds()
+      const daysOfWeek = ['星期天', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+      this.dateStr = `${year} 年 ${month} 月 ${day} 日 ${daysOfWeek[dayOfWeek]} ${hour}:${minute}:${second}`
+    },
     initData() {
       this.getDatasetInfo()
       this.getDatasetLineData()
@@ -688,50 +284,50 @@ export default {
       const chartDom = document.getElementById('circle-chart')
       if (chartDom) {
         this.myDataCircleChart = echarts.init(chartDom)
-        this.myDataCircleChart && this.myDataCircleChart.setOption(this.circleOption)
+        this.myDataCircleChart && this.myDataCircleChart.setOption(circleOption)
       }
     },
     initBarData() {
       const chartDom = document.getElementById('bar-chart')
       if (chartDom) {
         this.myDataBarChart = echarts.init(chartDom)
-        this.myDataBarChart && this.myDataBarChart.setOption(this.barOption)
+        this.myDataBarChart && this.myDataBarChart.setOption(barOption)
       }
     },
     initLineData() {
       const chartDom = document.getElementById('line-chart')
       if (chartDom) {
         this.myDataLineChart = echarts.init(chartDom)
-        this.myDataLineChart && this.myDataLineChart.setOption(this.lineOption)
+        this.myDataLineChart && this.myDataLineChart.setOption(lineOption)
       }
     },
     initJobCircleData() {
       const chartDom = document.getElementById('job-circle-chart')
       if (chartDom) {
         this.myJobCircleChart = echarts.init(chartDom)
-        console.log(this.circleJobOption, ' this.circleJobOption')
-        this.myJobCircleChart && this.myJobCircleChart.setOption(this.circleJobOption)
+        console.log(circleJobOption, ' circleJobOption')
+        this.myJobCircleChart && this.myJobCircleChart.setOption(circleJobOption)
       }
     },
     initJobBarData() {
       const chartDom = document.getElementById('job-bar-chart')
       if (chartDom) {
         this.myDataBarChart = echarts.init(chartDom)
-        this.myDataBarChart && this.myDataBarChart.setOption(this.barJobOption)
+        this.myDataBarChart && this.myDataBarChart.setOption(barJobOption)
       }
     },
     initJobLineData() {
       const chartDom = document.getElementById('job-line-chart')
       if (chartDom) {
         this.myDataLineChart = echarts.init(chartDom)
-        this.myDataLineChart && this.myDataLineChart.setOption(this.lineJobOption)
+        this.myDataLineChart && this.myDataLineChart.setOption(lineJobOption)
       }
     },
     initGraphChart() {
       const chartDom = document.getElementById('graph-chart')
       if (chartDom) {
         this.graphChart = echarts.init(chartDom)
-        this.graphChart && this.graphChart.setOption(this.graphChartOption)
+        this.graphChart && this.graphChart.setOption(graphChartOption)
       }
     },
     backHome() {
@@ -754,21 +350,33 @@ export default {
       if (res.code === 0 && res.data) {
         const { datasetOverview = {}, datasetTypeStatistic = [], agencyDatasetTypeStatistic = [] } = res.data
         this.datasetUseInfo = { ...datasetOverview } // progeress
-        this.datasetTypeStatisticTableData = datasetTypeStatistic // 饼图
-        this.circleOption.series[0].data = datasetTypeStatistic.map((v) => {
+        const sortedData = datasetTypeStatistic.sort((a, b) => b.count - a.count)
+        this.datasetTypeStatisticTableData = sortedData.map((v, i) => {
           return {
-            name: v.datasetType,
-            value: v.count
+            ...v,
+            color: colorList[i % colorList.length]
           }
         })
+        // 饼图
+        circleOption.series[0].data = sortedData
+          .map((v) => {
+            return {
+              name: v.datasetType,
+              value: v.count
+            }
+          })
+          .filter((v) => v.value)
+        console.log(circleOption.series[0].data, ' circleOption.series[0].data ')
         this.initCircleData()
-        const agencyNameList = agencyDatasetTypeStatistic.map((v) => v.agencyName)
-        this.barOption.yAxis.data = agencyNameList
+        // 去除数据集总数为0的机构
+        const dataFiltered = agencyDatasetTypeStatistic.filter((v) => v.totalCount).reverse()
+        const agencyNameList = dataFiltered.map((v) => v.agencyName)
+        barOption.yAxis.data = agencyNameList
         const datasetTypeList = datasetTypeStatistic.map((v) => v.datasetType)
         console.log(datasetTypeList, 'datasetTypeList')
-        this.barOption.series = datasetTypeList.map((dataType) => {
+        barOption.series = datasetTypeList.map((dataType) => {
           const countList = []
-          agencyDatasetTypeStatistic.forEach((agencyData) => {
+          dataFiltered.forEach((agencyData) => {
             const { datasetTypeStatistic } = agencyData
             const data = datasetTypeStatistic.filter((data) => data.datasetType === dataType)
             if (data.length) {
@@ -782,18 +390,14 @@ export default {
             name: dataType,
             type: 'bar',
             stack: 'total',
-            label: {
-              show: true
-            },
+            barWidth: 12,
             emphasis: {
               focus: 'series'
-            },
-            itemStyle: {
-              barWidth: 6 // 设置柱子粗细
             },
             data: countList
           }
         })
+        console.log(barOption.series, 'barOption.series')
         this.initBarData()
         console.log(agencyDatasetTypeStatistic)
         // console.log(datasetTypeList)
@@ -820,10 +424,9 @@ export default {
             smooth: true // 是否将折线设置为平滑曲线
           }
         })
-        this.lineOption.xAxis.data = dateList
-        this.lineOption.legend.data = agencylist
-        this.lineOption.legend.left = agencylist.length > 5 ? '20px' : 'center'
-        this.lineOption.series = series
+        lineOption.xAxis.data = dateList
+        lineOption.legend.data = agencylist
+        lineOption.series = series
         this.initLineData()
       }
     },
@@ -834,30 +437,34 @@ export default {
       if (res.code === 0 && res.data) {
         const { jobOverview = {}, jobTypeStatistic = [], agencyJobTypeStatistic = [] } = res.data
         this.jobOverview = { ...jobOverview } // progeress
-        this.circleJobOption.series[0].data = jobTypeStatistic.map((v) => {
-          return {
-            name: v.jobType,
-            value: v.count
-          }
-        })
-        const seriesData = this.circleJobOption.series[0].data
-        this.circleJobOption.legend.formatter = function (name) {
+        circleJobOption.series[0].data = jobTypeStatistic
+          .map((v) => {
+            return {
+              name: v.jobType,
+              value: v.count
+            }
+          })
+          .filter((v) => v.value)
+        const seriesData = circleJobOption.series[0].data
+        circleJobOption.legend.formatter = function (name) {
           let tarValue
           for (let i = 0; i < seriesData.length; i++) {
             if (seriesData[i].name === name) {
               tarValue = seriesData[i].value
             }
           }
-          return `${name}  ${tarValue}个`
+          return `${name}       ${tarValue}个`
         }
         this.initJobCircleData()
-        const agencyNameList = agencyJobTypeStatistic.map((v) => v.agencyName)
-        this.barJobOption.yAxis.data = agencyNameList
+        // 去除数据集总数为0的机构
+        const dataFiltered = agencyJobTypeStatistic.filter((v) => v.totalCount).reverse()
+        const agencyNameList = dataFiltered.map((v) => v.agencyName)
+        barJobOption.yAxis.data = agencyNameList
         const jobTypeList = jobTypeStatistic.map((v) => v.jobType)
         console.log(jobTypeList, 'jobTypeList')
-        this.barJobOption.series = jobTypeList.map((jobType) => {
+        barJobOption.series = jobTypeList.map((jobType) => {
           const countList = []
-          agencyJobTypeStatistic.forEach((agencyData) => {
+          dataFiltered.forEach((agencyData) => {
             const { jobTypeStatistic } = agencyData
             const data = jobTypeStatistic.filter((data) => data.jobType === jobType)
             if (data.length) {
@@ -869,10 +476,8 @@ export default {
           return {
             name: jobType,
             type: 'bar',
+            barWidth: 12,
             stack: 'total',
-            label: {
-              show: true
-            },
             emphasis: {
               focus: 'series'
             },
@@ -909,11 +514,10 @@ export default {
             smooth: true // 是否将折线设置为平滑曲线
           }
         })
-        this.lineJobOption.xAxis.data = dateList
-        this.lineJobOption.legend.data = jobTypeList
-        this.lineJobOption.legend.left = jobTypeList.length > 5 ? '20px' : 'center'
-        this.lineJobOption.series = series
-        console.log(this.lineJobOption, 'this.lineJobOption')
+        lineJobOption.xAxis.data = dateList
+        lineJobOption.legend.data = jobTypeList
+        lineJobOption.series = series
+        console.log(lineJobOption, 'lineJobOption')
         this.initJobLineData()
       }
     },
@@ -942,6 +546,9 @@ export default {
     goDataListPage() {
       this.$router.push({ path: 'dataManage' })
     }
+  },
+  destroyed() {
+    this.getTimeTimer && clearInterval(this.getTimeTimer)
   }
 }
 </script>
@@ -1005,7 +612,6 @@ div.screen {
             height: auto;
           }
         }
-
         .el-progress {
           width: 160px;
           display: inline-block;
@@ -1035,6 +641,18 @@ div.screen {
             overflow: hidden;
             text-overflow: ellipsis;
             width: 33%;
+          }
+          li.type {
+            text-align: left;
+            text-indent: 8px;
+            span {
+              display: inline-block;
+              width: 6px;
+              height: 6px;
+              border-radius: 50%;
+              transform: translateY(-2px);
+              margin-right: 4px;
+            }
           }
         }
         .head {
@@ -1082,8 +700,29 @@ div.screen {
       width: 40%;
       height: 100%;
       padding: 0 24px;
+      position: relative;
       #graph-chart {
         height: calc(100% - 134px);
+      }
+      .agency-info {
+        position: absolute;
+        left: 44px;
+        top: 32px;
+        p {
+          color: #95989d;
+          span {
+            display: inline-block;
+            background: #467de8;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            transform: translateY(-2px);
+            margin-right: 4px;
+          }
+        }
+        p.error span {
+          background-color: #ff4d4f;
+        }
       }
       .notice-con {
         height: 133px;

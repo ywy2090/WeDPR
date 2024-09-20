@@ -10,6 +10,8 @@ const queryProject = (params) => http.post('/project/queryProjectByCondition', p
 const adminQueryProject = (params) => http.get('/admin/listProject', params)
 // 管理员查询项目内任务列表
 const adminQuerylistJobInProject = (params) => http.get('/admin/listJob', params)
+// 管理员查询项目内任务列表
+const adminQueryJobsByDatasetId = (params) => http.get('/admin/queryJobsByDatasetId', params)
 // 删除项目
 const deleteProject = (params) => http.post('/project/deleteProject', params)
 // 提交任务
@@ -30,5 +32,6 @@ export default {
   submitJob,
   queryRecordSyncStatus,
   queryJobOverview,
-  queryJobsByDatasetID
+  queryJobsByDatasetID,
+  adminQueryJobsByDatasetId
 }

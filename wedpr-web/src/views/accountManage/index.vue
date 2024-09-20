@@ -109,6 +109,9 @@ export default {
   },
   methods: {
     ...mapMutations([SET_USERINFO]),
+    reset() {
+      this.$refs.searchForm.resetFields()
+    },
     // 查询
     queryHandle() {
       this.$refs.searchForm.validate((valid) => {

@@ -14,7 +14,7 @@
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
           <el-date-picker
-            value-format="yyyy-MM-dd hh:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
             v-model="searchForm.createTime"
             type="datetimerange"
             range-separator="至"
@@ -127,7 +127,7 @@ export default {
       })
     },
     goDetail(row) {
-      this.$router.push({ path: '/projectDetail', query: { projectId: row.id } })
+      this.$router.push({ path: '/projectDetail', query: { projectName: row.name } })
     },
     async getProjectNameSelect(projectName) {
       if (!projectName) {

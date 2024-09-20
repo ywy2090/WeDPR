@@ -56,7 +56,7 @@ import formCard from '@/components/formCard.vue'
 import { jobManageServer, settingManageServer, projectManageServer, dataManageServer } from 'Api'
 import { jobEnum } from 'Utils/constant.js'
 export default {
-  name: 'serverCreate',
+  name: 'pirServerCreate',
   components: {
     formCard
   },

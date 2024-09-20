@@ -157,7 +157,7 @@
             <el-table size="small" :data="jobSettingForm.selectedData" :border="true" class="table-wrap">
               <el-table-column label="角色" prop="ownerAgencyName" show-overflow-tooltip>
                 <template>
-                  <el-tag color="#4CA9EC" style="color: white" size="small">参与方</el-tag>
+                  <el-tag color="#4CA9EC" style="color: white" size="small">标签方</el-tag>
                 </template>
               </el-table-column>
 
@@ -181,13 +181,25 @@
               style="width: 480px"
               :show-all-levels="false"
               :options="pirOptions"
+              :emitPath="false"
               v-model="jobSettingForm.dataFields"
               :props="{ multiple: true }"
+              @change="handleFieldsChange(data)"
+              :popper-class="hide"
               clearable
             ></el-cascader>
           </el-form-item>
-          <el-form-item label="字段值：" prop="dataValue" label-width="120px">
-             <el-input size="small" v-model="item.dataValue" style="width: 140px" />
+          <el-form-item
+            v-if="jobSettingForm.queryType === 2 && jobSettingForm.fieldsValueList && jobSettingForm.fieldsValueList.length"
+            label="字段值："
+            prop="fieldsValueList"
+            label-width="120px"
+          >
+            <el-form-item style="margin-bottom: 10px" :prop="`fieldsValueList.${index}.label`" :key="index" v-for="(fields, index) in jobSettingForm.fieldsValueList">
+              <el-input size="small" v-model="fields.value" placeholder="请输入字段值" style="width: 480px">
+                <template slot="prepend">{{ fields.label }} </template>
+              </el-input>
+            </el-form-item>
           </el-form-item>
         </formCard>
       </el-form>
@@ -261,7 +273,7 @@ export default {
         sql: '',
         queryType: 1,
         dataFields: [],
-        dataValue: []
+        fieldsValueList: []
       },
       jobSettingFormRules: {
         receiver: [{ required: true, message: '结果接收方不能为空', trigger: 'blur' }],
@@ -379,7 +391,7 @@ export default {
         })
         return [
           {
-            value: 1,
+            value: 0,
             label: '所有字段',
             children
           }
@@ -390,6 +402,16 @@ export default {
     }
   },
   methods: {
+    handleFieldsChange() {
+      console.log(this.jobSettingForm.dataFields, 'handleChange')
+      this.jobSettingForm.fieldsValueList = this.jobSettingForm.dataFields.map((v) => {
+        return {
+          value: '',
+          label: v[1]
+        }
+      })
+      console.log(this.jobSettingForm.fieldsValueList, 'this.jobSettingForm.fieldsValueList')
+    },
     checkJobData() {
       this.$refs.jobSettingForm.validate((valid) => {
         if (valid) {
@@ -802,6 +824,10 @@ div.lead-mode {
   ::v-deep .el-step__icon {
     width: 36px;
     height: 36px;
+  }
+  ::v-deep .el-input-group__prepend {
+    width: 84px;
+    text-align: center;
   }
 }
 </style>

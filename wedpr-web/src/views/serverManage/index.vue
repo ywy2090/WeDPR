@@ -8,18 +8,21 @@
           </el-select>
         </el-form-item>
         <el-form-item prop="owner" label="发布用户：">
-          <el-input style="width: 120px" v-model="searchForm.owner" placeholder="请输入"> </el-input>
+          <el-input clearable style="width: 160px" v-model="searchForm.owner" placeholder="请输入"> </el-input>
         </el-form-item>
         <el-form-item prop="serviceName" label="服务名称：">
-          <el-input style="width: 120px" v-model="searchForm.serviceName" placeholder="请输入"> </el-input>
+          <el-input clearable style="width: 160pxcredential / query" v-model="searchForm.serviceName" placeholder="请输入"> </el-input>
         </el-form-item>
         <el-form-item prop="createDate" label="发布时间：">
-          <el-date-picker style="width: 160px" v-model="searchForm.createDate" type="date" placeholder="请选择日期"> </el-date-picker>
+          <el-date-picker clearable value-format="yyyy-MM-dd" style="width: 160px" v-model="searchForm.createDate" type="date" placeholder="请选择日期"> </el-date-picker>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="queryFlag" @click="queryHandle">
             {{ queryFlag ? '查询中...' : '查询' }}
           </el-button>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="default" :loading="queryFlag" @click="reset"> 重置 </el-button>
         </el-form-item>
         <div class="op-container">
           <div class="btn" @click="creatPsi"><img class="icon-btn" src="~Assets/images/lead icon_service1.png" alt="" /> 发布匿踪查询服务</div>
@@ -42,7 +45,7 @@
             服务类型：<span class="count">{{ item.serviceType }}</span>
           </dd>
           <dd>
-            创建时间：<span>{{ item.createDate }}</span>
+            创建时间：<span>{{ item.createTime }}</span>
           </dd>
         </dl>
         <div class="edit">
@@ -85,19 +88,11 @@ export default {
       },
       pageData: {
         page_offset: 1,
-        page_size: 20
+        page_size: 8
       },
       total: 10,
       queryFlag: false,
-      tableData: [
-        {
-          owner: 'flyhuang',
-          agency: 'SGD',
-          serverId: '9876',
-          serviceName: '我的pir服务',
-          createDate: '2024-09-03'
-        }
-      ],
+      tableData: [],
       loadingFlag: false,
       showAddModal: false
     }
@@ -106,10 +101,12 @@ export default {
     ...mapGetters(['agencyList', 'userId', 'agencyId'])
   },
   created() {
-    // this.getPublishList()
-    console.log(this.userId, this.agencyId)
+    this.getPublishList()
   },
   methods: {
+    reset() {
+      this.$refs.searchForm.resetFields()
+    },
     // 查询
     queryHandle() {
       this.$refs.searchForm.validate((valid) => {
@@ -122,16 +119,16 @@ export default {
         }
       })
     },
-    // 删除账户
+    // 删除服务
     showDeleteModal(serverData) {
-      const { serverId } = serverData
+      const { serviceId } = serverData
       this.$confirm('确认删除服务吗?', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       })
         .then(() => {
-          this.deleteServer({ serverId })
+          this.deleteServer({ serviceId })
         })
         .catch(() => {})
     },
@@ -169,14 +166,14 @@ export default {
       this.getPublishList()
     },
     creatPsi() {
-      this.$router.push({ path: '/serverCreate', query: { type: 'PIR' } })
+      this.$router.push({ path: '/pirServerCreate' })
     },
     creatModel() {
-      this.$router.push({ path: '/serverCreate', query: { type: 'MODEL' } })
+      this.$router.push({ path: '/modelServerCreate' })
     },
     getDetail(data) {
-      const { serviceId } = data
-      this.$router.push({ path: '/serverDetail', query: { serviceId } })
+      const { serviceId, type } = data
+      this.$router.push({ path: '/serverDetail', query: { serviceId, serverType: type } })
     },
     applyData(item) {
       const { serviceId } = item
@@ -184,7 +181,7 @@ export default {
     },
     modifyData(item) {
       const { serviceId } = item
-      this.$router.push({ path: '/serverCreate', query: { type: 'edit', serviceId } })
+      this.$router.push({ path: '/pirServerCreate', query: { type: 'edit', serviceId } })
     }
   }
 }

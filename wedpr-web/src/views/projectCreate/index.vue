@@ -41,7 +41,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['userId'])
+    ...mapGetters(['userId', 'authorization'])
   },
   methods: {
     // 获取项目详情
@@ -65,14 +65,17 @@ export default {
         this.$router.push({ path: '/projectManage' })
       }
     },
+
     async getJupterLink(params) {
       const res = await jupyterManageServer.getJupterLink(params)
       console.log(res)
       if (res.code === 0 && res.data) {
         const { jupyters = [] } = res.data
         if (jupyters.length) {
-          const { url } = jupyters[0]
-          window.open(url)
+          const { url = 'http://139.159.202.235:9401/lab' } = jupyters[0]
+          window.open(url + '?Authorization=' + this.authorization)
+        } else {
+          window.open('http://139.159.202.235:9401/lab?Authorization=' + this.authorization)
         }
       }
     },

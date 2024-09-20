@@ -1,6 +1,6 @@
 <template>
-  <el-dialog width="652px" title="申请调用" @close="handleClose" :visible="showApplyModal">
-    <div class="form-con">
+  <el-dialog :width="accessKeyList.length ? '652px' : '420px'" title="申请调用" @close="handleClose" :visible="showApplyModal">
+    <div v-if="accessKeyList.length" class="form-con">
       <div class="key-info" v-if="selectedAccessKey && selectedAccessKey.accessKeyID">
         <ul>
           <li>AccessID：</li>
@@ -23,6 +23,7 @@
         </el-form-item>
       </el-form>
     </div>
+    <div class="noak" v-else><i class="el-icon-warning" />暂无启用中的Accesskey，去创建?</div>
     <div slot="footer" class="dialog-footer">
       <el-button @click="handleClose">取 消</el-button>
       <el-button v-if="selectedAccessKey && selectedAccessKey.accessKeyID" :loading="loading" type="primary" @click="copy">复制</el-button>
@@ -124,11 +125,15 @@ export default {
       }
     },
     handleOk() {
-      this.$refs.dataForm.validate((valid) => {
-        if (valid) {
-          this.selectedAccessKey = this.dataForm.accessKey
-        }
-      })
+      if (this.accessKeyList.length) {
+        this.$refs.dataForm.validate((valid) => {
+          if (valid) {
+            this.selectedAccessKey = this.dataForm.accessKey
+          }
+        })
+      } else {
+        this.$router.push({ path: 'accessKeyManage' })
+      }
     }
   }
 }
@@ -172,6 +177,14 @@ div.form-con {
     ul:first-child {
       margin-bottom: 10px;
     }
+  }
+}
+div.noak {
+  text-align: center;
+  i {
+    font-size: 16px;
+    margin-right: 4px;
+    transform: translateY(1px);
   }
 }
 </style>

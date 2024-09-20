@@ -41,31 +41,33 @@
         </div>
       </div>
     </div>
-    <div class="con">
-      <div class="title-radius">使用记录</div>
+    <div v-if="serviceInfo.owner === userId && serviceInfo.agency === agencyId">
+      <div class="con">
+        <div class="title-radius">使用记录</div>
+      </div>
+      <div class="tableContent autoTableWrap" v-if="total">
+        <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
+          <el-table-column label="调用ID" prop="invokeId" />
+          <el-table-column label="调用机构" prop="invokeAgency" />
+          <el-table-column label="调用用户" prop="invokeUser" />
+          <el-table-column label="申请时间" prop="applyTime" />
+          <el-table-column label="有效期至" prop="expireTime" />
+          <el-table-column label="任务状态" prop="status">
+            <template v-slot="scope">
+              <el-tag size="small" v-if="scope.row.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
+              <el-tag size="small" v-else-if="scope.row.status == 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
+              <el-tag size="small" v-else-if="scope.row.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
+              <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+        <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
+      </div>
+      <el-empty v-if="!total" :image-size="120" description="暂无数据">
+        <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
+      </el-empty>
     </div>
-    <div class="tableContent autoTableWrap" v-if="total">
-      <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
-        <el-table-column label="调用ID" prop="invokeId" />
-        <el-table-column label="调用机构" prop="invokeAgency" />
-        <el-table-column label="调用用户" prop="invokeUser" />
-        <el-table-column label="申请时间" prop="applyTime" />
-        <el-table-column label="有效期至" prop="expireTime" />
-        <el-table-column label="任务状态" prop="status">
-          <template v-slot="scope">
-            <el-tag size="small" v-if="scope.row.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
-            <el-tag size="small" v-else-if="scope.row.status == 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
-            <el-tag size="small" v-else-if="scope.row.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
-            <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-      <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
-    </div>
-    <el-empty v-if="!total" :image-size="120" description="暂无数据">
-      <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
-    </el-empty>
-    <div class="sub-con">
+    <div class="sub-con" v-else>
       <el-button size="medium" type="primary" @click="subApply"> 申请调用 </el-button>
     </div>
     <serverApply :serviceId="serviceId" :showApplyModal="showApplyModal" @closeModal="closeModal" @handlOK="handlOK" />
@@ -125,7 +127,7 @@ export default {
     this.showApplyModal = type === 'apply'
   },
   computed: {
-    ...mapGetters(['algList'])
+    ...mapGetters(['algList', 'agencyId'])
   },
   methods: {
     handleData(key) {
@@ -153,8 +155,8 @@ export default {
       console.log(res)
       if (res.code === 0 && res.data) {
         const { wedprPublishedService = {} } = res.data
-        const { serviceConfig = {} } = wedprPublishedService
-        const { datasetId, exists = [], values = [] } = serviceConfig
+        const { serviceConfig = '' } = wedprPublishedService
+        const { datasetId, exists = [], values = [] } = JSON.parse(serviceConfig)
         const ruleDes = this.handleRuleDes(exists, values)
         this.serviceInfo = { ...wedprPublishedService, datasetId, ruleDes }
         this.getServerUseRecord()

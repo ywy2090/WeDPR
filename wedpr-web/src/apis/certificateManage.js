@@ -2,8 +2,10 @@ import http from '../utils/http'
 
 // 获取证书列表
 const getCertList = (params) => http.get('/admin/getCertList', params)
-// 获取证书列表
+// 获取证书详情
 const getCertDetail = (params) => http.get('/admin/getCsrDetail/' + params.certId, params)
+// 获取证书列表
+const getNoCertAgencyList = (params) => http.get('/admin/getNoCertAgencyList/', params)
 // 新增编辑证书
 const createCert = (params) => http.post('/admin/createCert', params)
 // 删除证书
@@ -19,5 +21,6 @@ export default {
   deleteCert,
   setCert,
   downloadCert,
-  getCertDetail
+  getCertDetail,
+  getNoCertAgencyList
 }

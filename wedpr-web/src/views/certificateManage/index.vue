@@ -16,7 +16,7 @@
               clearable
               style="width: 344px"
               type="datetimerange"
-              value-format="yyyy-MM-dd hh:mm:ss"
+              value-format="yyyy-MM-dd HH:mm:ss"
               v-model="searchForm.createTime"
               range-separator="至"
               start-placeholder="开始日期"

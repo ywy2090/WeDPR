@@ -326,7 +326,7 @@ export default {
       }
     },
     async queryProject() {
-      const res = await projectManageServer.queryProject({ project: { id: '' }, pageNum: 1, pageSize: 1 })
+      const res = await projectManageServer.queryProject({ project: { id: '' }, pageNum: 1, pageSize: 5 })
       this.loadingFlag = false
       if (res.code === 0 && res.data) {
         const { total } = res.data
