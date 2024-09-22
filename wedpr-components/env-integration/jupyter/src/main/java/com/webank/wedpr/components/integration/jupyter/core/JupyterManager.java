@@ -20,8 +20,8 @@ import com.webank.wedpr.components.integration.jupyter.dao.JupyterInfoDO;
 import com.webank.wedpr.components.integration.jupyter.dao.JupyterMapper;
 import com.webank.wedpr.components.meta.sys.config.dao.SysConfigMapper;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
-import com.webank.wedpr.core.protocol.task.TaskResponse;
 import com.webank.wedpr.core.utils.WeDPRException;
+import com.webank.wedpr.core.utils.WeDPRResponse;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +79,7 @@ public class JupyterManager {
             }
             // stop the jupyter
             JupyterInfoDO stoppedJupyter = jupyterList.get(0);
-            TaskResponse response = this.jupyterClient.stop(stoppedJupyter);
+            WeDPRResponse response = this.jupyterClient.stop(stoppedJupyter);
             logger.info(
                     "stopJupyter success, user: {}, agency: {}, jupyter: {}, response: {}",
                     user,
@@ -153,7 +153,14 @@ public class JupyterManager {
         // try to obtain the jupyter
         // Note: allocateJupyter will throw exception when allocate failed
         JupyterInfoDO allocatedJupyter = jupyterHostSetting.allocateJupyter(user, agency);
-        this.jupyterClient.create(allocatedJupyter);
+        try {
+            this.jupyterClient.create(allocatedJupyter);
+        } catch (Exception e) {
+            // delete the record if start failed
+            this.jupyterMapper.deleteJupyterInfo(allocatedJupyter.getId(), user);
+            throw e;
+        }
+
         logger.info(
                 "Allocate the jupyter success, make it as ready, jupyterInfo: {}",
                 allocatedJupyter.toString());
