@@ -70,7 +70,7 @@
     </select>
     <select id="queryAllConfig" resultMap="SysConfigMap">
         select `config_key`, `config_value`, `create_time`, `last_update_time`
-        from wedpr_config_table order by `last_update_time` desc
+        from wedpr_config_table where `report_status` = 0 order by `last_update_time` desc
     </select>
     <select id="getConfigCount" resultType = "java.lang.Long">
         select count(*) from wedpr_config_table;

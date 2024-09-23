@@ -11,6 +11,7 @@ import com.webank.wedpr.components.project.dao.ProjectMapper;
 import com.webank.wedpr.components.report.handler.*;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.protocol.ReportStatusEnum;
+import com.webank.wedpr.core.protocol.TransportComponentEnum;
 import com.webank.wedpr.core.protocol.TransportTopicEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
@@ -60,10 +61,12 @@ public class ReportQuartzJob implements Job {
         SysConfigReportMessageHandler sysConfigReportMessageHandler =
                 new SysConfigReportMessageHandler(sysConfigMapper);
         List<SysConfigDO> sysConfigDOList = sysConfigMapper.queryAllConfig();
+        log.info("report sysConfigDOList:{}", sysConfigDOList);
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(sysConfigDOList);
-        weDPRTransport.asyncSendMessageByAgency(
+        weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.SYS_CONFIG_REPORT.name(),
                 agency,
+                TransportComponentEnum.REPORT.name(),
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),
@@ -78,10 +81,12 @@ public class ReportQuartzJob implements Job {
         jobDatasetDO.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
         jobDatasetDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<JobDatasetDO> jobDatasetDOList = projectMapper.queryJobDatasetInfo(jobDatasetDO);
+        log.info("report jobDatasetDOList:{}", jobDatasetDOList);
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(jobDatasetDOList);
-        weDPRTransport.asyncSendMessageByAgency(
+        weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.JOB_DATASET_REPORT.name(),
                 agency,
+                TransportComponentEnum.REPORT.name(),
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),
@@ -96,10 +101,12 @@ public class ReportQuartzJob implements Job {
         jobDO.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
         jobDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<JobDO> jobDOList = projectMapper.queryJobs(false, jobDO, null);
+        log.info("report jobDOList:{}", jobDOList);
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(jobDOList);
-        weDPRTransport.asyncSendMessageByAgency(
+        weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.JOB_REPORT.name(),
                 agency,
+                TransportComponentEnum.REPORT.name(),
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),
@@ -114,10 +121,12 @@ public class ReportQuartzJob implements Job {
         projectDO.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
         projectDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<ProjectDO> projectDOList = projectMapper.queryProject(false, projectDO);
+        log.info("report projectDOList:{}", projectDOList);
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(projectDOList);
-        weDPRTransport.asyncSendMessageByAgency(
+        weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.PROJECT_REPORT.name(),
                 agency,
+                TransportComponentEnum.REPORT.name(),
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),

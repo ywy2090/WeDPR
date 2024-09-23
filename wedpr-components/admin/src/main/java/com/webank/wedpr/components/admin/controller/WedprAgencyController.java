@@ -88,8 +88,7 @@ public class WedprAgencyController {
         try {
             // check user permission
             Utils.checkPermission(request);
-            GetWedprNoCertAgencyListResponse response =
-                    wedprAgencyService.getNoCertAgencyList();
+            GetWedprNoCertAgencyListResponse response = wedprAgencyService.getNoCertAgencyList();
             return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
         } catch (Exception e) {
             log.error("get agency without cert error", e);

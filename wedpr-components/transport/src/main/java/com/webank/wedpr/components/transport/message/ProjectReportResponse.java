@@ -1,4 +1,4 @@
-package com.webank.wedpr.components.report.handler;
+package com.webank.wedpr.components.transport.message;
 
 import java.util.List;
 import lombok.Data;

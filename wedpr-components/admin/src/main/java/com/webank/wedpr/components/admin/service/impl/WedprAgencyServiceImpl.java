@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -36,6 +36,7 @@ import org.springframework.util.StringUtils;
  * @since 2024-08-22
  */
 @Service
+@Slf4j
 public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, WedprAgency>
         implements WedprAgencyService {
 
@@ -170,7 +171,9 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
         GetPeersCallback getPeersCallback =
                 new GetPeersCallback() {
                     @Override
-                    public void onPeersInfo(Error error, String s) {}
+                    public void onPeersInfo(Error error, String s) {
+                        log.info("onPeersInfo:{}, error:{}", s, error);
+                    }
                 };
         weDPRTransport.asyncGetPeers(getPeersCallback);
         GetAgencyStatisticsResponse response = new GetAgencyStatisticsResponse();
@@ -199,10 +202,15 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
     public GetWedprNoCertAgencyListResponse getNoCertAgencyList() {
         List<WedprAgency> wedprAgencyList = list();
         List<WedprCert> wedprCertList = wedprCertService.list();
-        List<String> agencyIdList = wedprCertList.stream().map(wedprCert -> wedprCert.getAgencyId()).collect(Collectors.toList());
+        List<String> agencyIdList =
+                wedprCertList
+                        .stream()
+                        .map(wedprCert -> wedprCert.getAgencyId())
+                        .collect(Collectors.toList());
         wedprAgencyList.removeIf(wedprAgency -> agencyIdList.contains(wedprAgency.getAgencyId()));
         GetWedprNoCertAgencyListResponse response = new GetWedprNoCertAgencyListResponse();
-        List<WedprAgencyWithoutCertDTO> wedprAgencyDTOList = new ArrayList<>(wedprAgencyList.size());
+        List<WedprAgencyWithoutCertDTO> wedprAgencyDTOList =
+                new ArrayList<>(wedprAgencyList.size());
         for (WedprAgency wedprAgency : wedprAgencyList) {
             WedprAgencyWithoutCertDTO wedprAgencyWithoutCertDTO = new WedprAgencyWithoutCertDTO();
             wedprAgencyWithoutCertDTO.setAgencyId(wedprAgency.getAgencyId());

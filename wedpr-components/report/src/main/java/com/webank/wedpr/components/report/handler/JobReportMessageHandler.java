@@ -2,6 +2,7 @@ package com.webank.wedpr.components.report.handler;
 
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapper;
+import com.webank.wedpr.components.transport.message.JobReportResponse;
 import com.webank.wedpr.core.protocol.ReportStatusEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
