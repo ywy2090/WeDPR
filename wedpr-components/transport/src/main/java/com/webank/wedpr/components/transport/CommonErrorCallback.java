@@ -13,18 +13,18 @@
  *
  */
 
-package com.webank.wedpr.components.report.handler;
+package com.webank.wedpr.components.transport;
 
 import com.webank.wedpr.sdk.jni.generated.Error;
 import com.webank.wedpr.sdk.jni.transport.handlers.MessageErrorCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ErrorCallback extends MessageErrorCallback {
-    private static final Logger logger = LoggerFactory.getLogger(ErrorCallback.class);
+public class CommonErrorCallback extends MessageErrorCallback {
+    private static final Logger logger = LoggerFactory.getLogger(CommonErrorCallback.class);
     private final String method;
 
-    public ErrorCallback(String method) {
+    public CommonErrorCallback(String method) {
         this.method = method;
     }
 

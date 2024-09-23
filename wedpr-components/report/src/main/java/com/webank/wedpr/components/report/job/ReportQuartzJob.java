@@ -9,6 +9,7 @@ import com.webank.wedpr.components.project.dao.JobDatasetDO;
 import com.webank.wedpr.components.project.dao.ProjectDO;
 import com.webank.wedpr.components.project.dao.ProjectMapper;
 import com.webank.wedpr.components.report.handler.*;
+import com.webank.wedpr.components.transport.CommonErrorCallback;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.protocol.ReportStatusEnum;
 import com.webank.wedpr.core.protocol.TransportComponentEnum;
@@ -73,7 +74,7 @@ public class ReportQuartzJob implements Job {
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),
-                new ErrorCallback("reportSysConfig"),
+                new CommonErrorCallback("reportSysConfig"),
                 sysConfigReportMessageHandler);
     }
 
@@ -96,7 +97,7 @@ public class ReportQuartzJob implements Job {
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),
-                new ErrorCallback("reportSysConfig"),
+                new CommonErrorCallback("reportSysConfig"),
                 jobDatasetRelationReportMessageHandler);
     }
 
@@ -119,7 +120,7 @@ public class ReportQuartzJob implements Job {
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),
-                new ErrorCallback("reportJobInfo"),
+                new CommonErrorCallback("reportJobInfo"),
                 jobReportMessageHandler);
     }
 
@@ -142,7 +143,7 @@ public class ReportQuartzJob implements Job {
                 payload,
                 0,
                 WeDPRCommonConfig.getReportTimeout(),
-                new ErrorCallback("reportProjectInfo"),
+                new CommonErrorCallback("reportProjectInfo"),
                 projectReportMessageHandler);
     }
 }
