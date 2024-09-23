@@ -13,6 +13,7 @@ import com.webank.wedpr.sdk.jni.transport.handlers.MessageCallback;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ public class SysConfigReportMessageHandler extends MessageCallback {
             SysConfigReportResponse sysConfigReportResponse =
                     ObjectMapperFactory.getObjectMapper()
                             .readValue(payload, SysConfigReportResponse.class);
-            if (Constant.WEDPR_SUCCESS == sysConfigReportResponse.getCode()) {
+            if (Objects.equals(Constant.WEDPR_SUCCESS, sysConfigReportResponse.getCode())) {
                 // report ok ,then set report status to 1
                 List<String> configKeyList = sysConfigReportResponse.getConfigKeyList();
                 ArrayList<SysConfigDO> sysConfigDOList = new ArrayList<>();

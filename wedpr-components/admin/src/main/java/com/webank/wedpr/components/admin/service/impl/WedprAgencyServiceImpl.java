@@ -174,7 +174,7 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
                 new GetPeersCallback() {
                     @SneakyThrows
                     @Override
-                    public void onPeersInfo(Error error, String gatewayAgencyStr) {
+                    public void onPeers(Error error, String gatewayAgencyStr) {
                         log.info("gatewayAgencyStr:{}, error:{}", gatewayAgencyStr, error);
                         gatewayAgencyInfo =
                                 ObjectMapperFactory.getObjectMapper()

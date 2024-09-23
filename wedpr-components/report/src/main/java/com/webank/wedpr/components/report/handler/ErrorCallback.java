@@ -29,7 +29,7 @@ public class ErrorCallback extends MessageErrorCallback {
     }
 
     @Override
-    public void onError(Error error) {
+    public void onErrorResult(Error error) {
         if (error == null || error.errorCode() == 0) {
             return;
         }

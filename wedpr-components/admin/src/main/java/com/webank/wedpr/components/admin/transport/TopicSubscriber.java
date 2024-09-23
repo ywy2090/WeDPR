@@ -2,6 +2,7 @@ package com.webank.wedpr.components.admin.transport;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.webank.wedpr.components.admin.entity.WedprJobDatasetRelation;
 import com.webank.wedpr.components.admin.entity.WedprJobTable;
 import com.webank.wedpr.components.admin.entity.WedprProjectTable;
@@ -71,9 +72,10 @@ public class TopicSubscriber implements CommandLineRunner {
                         SysConfigReportResponse response = new SysConfigReportResponse();
                         try {
                             sysConfigDOList =
-                                    (List<SysConfigDO>)
-                                            ObjectMapperFactory.getObjectMapper()
-                                                    .readValue(payload, List.class);
+                                    ObjectMapperFactory.getObjectMapper()
+                                            .readValue(
+                                                    payload,
+                                                    new TypeReference<List<SysConfigDO>>() {});
                         } catch (IOException e) {
                             log.warn("parse message error", e);
                             response.setCode(Constant.WEDPR_FAILED);
