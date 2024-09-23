@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class TopicSubscriber implements CommandLineRunner {
+    private static final Logger logger = LoggerFactory.getLogger(TopicSubscriber.class);
     @Autowired private WeDPRTransport weDPRTransport;
 
     @Autowired private WedprProjectTableService wedprProjectTableService;
@@ -46,6 +49,8 @@ public class TopicSubscriber implements CommandLineRunner {
     public void run(String... args) throws Exception {
         try {
             weDPRTransport.registerComponent(TransportComponentEnum.REPORT.name());
+            logger.info(
+                    "TopicSubscriber: registerComponent: {}", TransportComponentEnum.REPORT.name());
             subscribeProjectTopic();
             subscribeJobTopic();
             subscribeJobDatasetRelationTopic();
