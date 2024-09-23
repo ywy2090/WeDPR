@@ -62,6 +62,9 @@ public class ReportQuartzJob implements Job {
                 new SysConfigReportMessageHandler(sysConfigMapper);
         List<SysConfigDO> sysConfigDOList = sysConfigMapper.queryAllConfig();
         log.info("report sysConfigDOList:{}", sysConfigDOList);
+        if (sysConfigDOList.isEmpty()) {
+            return;
+        }
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(sysConfigDOList);
         weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.SYS_CONFIG_REPORT.name(),
@@ -82,6 +85,9 @@ public class ReportQuartzJob implements Job {
         jobDatasetDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<JobDatasetDO> jobDatasetDOList = projectMapper.queryJobDatasetInfo(jobDatasetDO);
         log.info("report jobDatasetDOList:{}", jobDatasetDOList);
+        if (jobDatasetDOList.isEmpty()) {
+            return;
+        }
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(jobDatasetDOList);
         weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.JOB_DATASET_REPORT.name(),
@@ -102,6 +108,9 @@ public class ReportQuartzJob implements Job {
         jobDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<JobDO> jobDOList = projectMapper.queryJobs(false, jobDO, null);
         log.info("report jobDOList:{}", jobDOList);
+        if (jobDOList.isEmpty()) {
+            return;
+        }
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(jobDOList);
         weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.JOB_REPORT.name(),
@@ -122,6 +131,9 @@ public class ReportQuartzJob implements Job {
         projectDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<ProjectDO> projectDOList = projectMapper.queryProject(false, projectDO);
         log.info("report projectDOList:{}", projectDOList);
+        if (projectDOList.isEmpty()) {
+            return;
+        }
         byte[] payload = ObjectMapperFactory.getObjectMapper().writeValueAsBytes(projectDOList);
         weDPRTransport.asyncSendMessageByComponent(
                 TransportTopicEnum.PROJECT_REPORT.name(),

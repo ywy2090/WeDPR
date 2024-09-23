@@ -16,6 +16,7 @@ import com.webank.wedpr.components.admin.service.WedprCertService;
 import com.webank.wedpr.components.token.auth.model.UserToken;
 import com.webank.wedpr.core.protocol.CertStatusViewEnum;
 import com.webank.wedpr.core.utils.Constant;
+import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import com.webank.wedpr.core.utils.WeDPRException;
 import com.webank.wedpr.sdk.jni.generated.Error;
 import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
 
     @Autowired private WedprCertService wedprCertService;
     @Autowired private WeDPRTransport weDPRTransport;
+    private GatewayAgencyInfo gatewayAgencyInfo;
 
     public String createOrUpdateAgency(
             CreateOrUpdateWedprAgencyRequest createOrUpdateWedprAgencyRequest, UserToken userToken)
@@ -167,12 +170,15 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
     public GetAgencyStatisticsResponse getAgencyStatistics() {
         int agencyTotalCount = count();
         int faultAgencyCount = 0;
-        //        gateway sdk call getPeers
         GetPeersCallback getPeersCallback =
                 new GetPeersCallback() {
+                    @SneakyThrows
                     @Override
-                    public void onPeersInfo(Error error, String s) {
-                        log.info("onPeersInfo:{}, error:{}", s, error);
+                    public void onPeersInfo(Error error, String gatewayAgencyStr) {
+                        log.info("gatewayAgencyStr:{}, error:{}", gatewayAgencyStr, error);
+                        gatewayAgencyInfo =
+                                ObjectMapperFactory.getObjectMapper()
+                                        .readValue(gatewayAgencyStr, GatewayAgencyInfo.class);
                     }
                 };
         weDPRTransport.asyncGetPeers(getPeersCallback);
@@ -181,7 +187,7 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
         response.setFaultAgencyCount(faultAgencyCount);
 
         List<AgencyInfo> agencyInfoList = new ArrayList<>();
-
+        log.info("gatewayAgencyInfo:{}", gatewayAgencyInfo);
         AgencyInfo agencyInfo = new AgencyInfo();
         agencyInfo.setAgencyName("WEBANK");
         agencyInfo.setAgencyStatus(true);
