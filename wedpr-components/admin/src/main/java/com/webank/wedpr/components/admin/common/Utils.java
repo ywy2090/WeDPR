@@ -25,6 +25,8 @@ import org.springframework.util.StringUtils;
 /** Created by caryliao on 2024/8/22 22:29 */
 @Slf4j
 public class Utils {
+    public static final String CERT_SCRIPT_NAME = "cert_tool.zip";
+
     public static UserToken checkPermission(HttpServletRequest request) throws WeDPRException {
         UserToken userToken = TokenUtils.getLoginUser(request);
         String username = userToken.getUsername();
@@ -179,5 +181,17 @@ public class Utils {
         decimalFormat.setRoundingMode(java.math.RoundingMode.HALF_UP);
         int percentRate = 100;
         return decimalFormat.format(result * percentRate);
+    }
+
+    public static byte[] readInputStream(InputStream inStream) throws IOException {
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int len = -1;
+        while ((len = inStream.read(buffer)) != -1) {
+            outStream.write(buffer, 0, len);
+        }
+        outStream.close();
+        inStream.close();
+        return outStream.toByteArray();
     }
 }

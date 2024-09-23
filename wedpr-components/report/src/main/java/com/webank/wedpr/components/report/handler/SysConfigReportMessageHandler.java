@@ -2,6 +2,7 @@ package com.webank.wedpr.components.report.handler;
 
 import com.webank.wedpr.components.meta.sys.config.dao.SysConfigDO;
 import com.webank.wedpr.components.meta.sys.config.dao.SysConfigMapper;
+import com.webank.wedpr.components.transport.message.SysConfigReportResponse;
 import com.webank.wedpr.core.protocol.ReportStatusEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;

@@ -160,4 +160,23 @@ public class WedprCertController {
             return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
         }
     }
+
+    /**
+     * 下载证书生成脚本
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/downloadCertTool")
+    public WeDPRResponse downloadCertTool(HttpServletRequest request) {
+        try {
+            // check user permission
+            UserToken userToken = Utils.checkPermission(request);
+            DownloadCertToolResponse response = wedprCertService.downloadCertScript();
+            return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
+        } catch (Exception e) {
+            log.error("download agency cert tool error", e);
+            return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
+        }
+    }
 }

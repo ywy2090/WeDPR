@@ -78,6 +78,25 @@ public class WedprAgencyController {
     }
 
     /**
+     * 查询没有证书的机构列表
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/getNoCertAgencyList")
+    public WeDPRResponse getNoCertAgencyList(HttpServletRequest request) {
+        try {
+            // check user permission
+            Utils.checkPermission(request);
+            GetWedprNoCertAgencyListResponse response = wedprAgencyService.getNoCertAgencyList();
+            return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
+        } catch (Exception e) {
+            log.error("get agency without cert error", e);
+            return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
+        }
+    }
+
+    /**
      * 查询机构详情
      *
      * @param agencyId

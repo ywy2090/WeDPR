@@ -3,10 +3,8 @@ package com.webank.wedpr.components.admin.controller;
 import com.webank.wedpr.components.admin.common.Utils;
 import com.webank.wedpr.components.admin.request.GetDatasetDateLineRequest;
 import com.webank.wedpr.components.admin.request.GetJobDateLineRequest;
-import com.webank.wedpr.components.admin.response.GetDatasetLineResponse;
-import com.webank.wedpr.components.admin.response.GetDatasetStatisticsResponse;
-import com.webank.wedpr.components.admin.response.GetJobLineResponse;
-import com.webank.wedpr.components.admin.response.GetJobStatisticsResponse;
+import com.webank.wedpr.components.admin.response.*;
+import com.webank.wedpr.components.admin.service.WedprAgencyService;
 import com.webank.wedpr.components.admin.service.WedprDatasetService;
 import com.webank.wedpr.components.admin.service.WedprJobTableService;
 import com.webank.wedpr.components.token.auth.model.UserToken;
@@ -31,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class WedprDashboardController {
     @Autowired private WedprDatasetService wedprDatasetService;
     @Autowired private WedprJobTableService wedprJobTableService;
+    @Autowired private WedprAgencyService wedprAgencyService;
 
     @GetMapping("/dataset")
     public WeDPRResponse getDatasetStatistics(HttpServletRequest request) {
@@ -84,6 +83,19 @@ public class WedprDashboardController {
             return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
         } catch (Exception e) {
             log.error("getJobDateLine error", e);
+            return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
+        }
+    }
+
+    @GetMapping("/agency")
+    public WeDPRResponse getAgencyStatistics(HttpServletRequest request) {
+        try {
+            // check user permission
+            UserToken userToken = Utils.checkPermission(request);
+            GetAgencyStatisticsResponse response = wedprAgencyService.getAgencyStatistics();
+            return new WeDPRResponse(Constant.WEDPR_SUCCESS, Constant.WEDPR_SUCCESS_MSG, response);
+        } catch (Exception e) {
+            log.error("getAgencyStatistics error", e);
             return new WeDPRResponse(Constant.WEDPR_FAILED, e.getMessage());
         }
     }

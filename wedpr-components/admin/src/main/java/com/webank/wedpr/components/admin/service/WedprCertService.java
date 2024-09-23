@@ -5,6 +5,7 @@ import com.webank.wedpr.components.admin.entity.WedprCert;
 import com.webank.wedpr.components.admin.request.GetWedprCertListRequest;
 import com.webank.wedpr.components.admin.request.SetAgencyCertRequest;
 import com.webank.wedpr.components.admin.response.DownloadCertResponse;
+import com.webank.wedpr.components.admin.response.DownloadCertToolResponse;
 import com.webank.wedpr.components.admin.response.GetWedprCertDetailResponse;
 import com.webank.wedpr.components.admin.response.GetWedprCertListResponse;
 import com.webank.wedpr.core.utils.WeDPRException;
@@ -31,4 +32,6 @@ public interface WedprCertService extends IService<WedprCert> {
     GetWedprCertDetailResponse getAgencyCsrDetail(String certId) throws WeDPRException;
 
     DownloadCertResponse downloadCert(String certId) throws WeDPRException;
+
+    DownloadCertToolResponse downloadCertScript() throws WeDPRException;
 }
