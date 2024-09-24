@@ -2,6 +2,7 @@ package com.webank.wedpr.components.admin.transport;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.webank.wedpr.components.admin.entity.WedprJobDatasetRelation;
 import com.webank.wedpr.components.admin.entity.WedprJobTable;
 import com.webank.wedpr.components.admin.entity.WedprProjectTable;
@@ -10,6 +11,7 @@ import com.webank.wedpr.components.admin.service.WedprJobTableService;
 import com.webank.wedpr.components.admin.service.WedprProjectTableService;
 import com.webank.wedpr.components.meta.sys.config.dao.SysConfigDO;
 import com.webank.wedpr.components.meta.sys.config.service.SysConfigService;
+import com.webank.wedpr.components.transport.CommonErrorCallback;
 import com.webank.wedpr.components.transport.message.JobDatasetReportResponse;
 import com.webank.wedpr.components.transport.message.JobReportResponse;
 import com.webank.wedpr.components.transport.message.ProjectReportResponse;
@@ -18,15 +20,15 @@ import com.webank.wedpr.core.protocol.TransportComponentEnum;
 import com.webank.wedpr.core.protocol.TransportTopicEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
-import com.webank.wedpr.sdk.jni.generated.Error;
 import com.webank.wedpr.sdk.jni.transport.IMessage;
 import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
 import com.webank.wedpr.sdk.jni.transport.handlers.MessageDispatcherCallback;
-import com.webank.wedpr.sdk.jni.transport.handlers.MessageErrorCallback;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class TopicSubscriber implements CommandLineRunner {
+    private static final Logger logger = LoggerFactory.getLogger(TopicSubscriber.class);
     @Autowired private WeDPRTransport weDPRTransport;
 
     @Autowired private WedprProjectTableService wedprProjectTableService;
@@ -46,6 +49,8 @@ public class TopicSubscriber implements CommandLineRunner {
     public void run(String... args) throws Exception {
         try {
             weDPRTransport.registerComponent(TransportComponentEnum.REPORT.name());
+            logger.info(
+                    "TopicSubscriber: registerComponent: {}", TransportComponentEnum.REPORT.name());
             subscribeProjectTopic();
             subscribeJobTopic();
             subscribeJobDatasetRelationTopic();
@@ -66,16 +71,16 @@ public class TopicSubscriber implements CommandLineRunner {
                         SysConfigReportResponse response = new SysConfigReportResponse();
                         try {
                             sysConfigDOList =
-                                    (List<SysConfigDO>)
-                                            ObjectMapperFactory.getObjectMapper()
-                                                    .readValue(payload, List.class);
+                                    ObjectMapperFactory.getObjectMapper()
+                                            .readValue(
+                                                    payload,
+                                                    new TypeReference<List<SysConfigDO>>() {});
                         } catch (IOException e) {
                             log.warn("parse message error", e);
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
                         List<String> configKeyList = new ArrayList<>();
-                        MessageErrorCallback messageErrorCallback = null;
                         byte[] responsePayload = null;
                         try {
                             for (SysConfigDO sysConfigDO : sysConfigDOList) {
@@ -89,16 +94,6 @@ public class TopicSubscriber implements CommandLineRunner {
                                 }
                                 configKeyList.add(configKey);
                             }
-                            messageErrorCallback =
-                                    new MessageErrorCallback() {
-                                        @Override
-                                        public void onError(Error error) {
-                                            log.error(
-                                                    "Error code:{}, message:{}",
-                                                    error.errorCode(),
-                                                    error.errorMessage());
-                                        }
-                                    };
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setConfigKeyList(configKeyList);
@@ -116,7 +111,7 @@ public class TopicSubscriber implements CommandLineRunner {
                                 messageHeader.getTraceID(),
                                 responsePayload,
                                 0,
-                                messageErrorCallback);
+                                new CommonErrorCallback("asyncSendSysConfigResponse"));
                     }
                 });
     }
@@ -128,20 +123,22 @@ public class TopicSubscriber implements CommandLineRunner {
                     @Override
                     public void onMessage(IMessage message) {
                         byte[] payload = message.getPayload();
-                        List<WedprJobDatasetRelation> wedprJobDatasetRelationList = null;
+                        List<WedprJobDatasetRelation> wedprJobDatasetRelationList =
+                                new ArrayList<>();
                         JobDatasetReportResponse response = new JobDatasetReportResponse();
                         try {
                             wedprJobDatasetRelationList =
-                                    (List<WedprJobDatasetRelation>)
-                                            ObjectMapperFactory.getObjectMapper()
-                                                    .readValue(payload, List.class);
+                                    ObjectMapperFactory.getObjectMapper()
+                                            .readValue(
+                                                    payload,
+                                                    new TypeReference<
+                                                            List<WedprJobDatasetRelation>>() {});
                         } catch (IOException e) {
                             log.warn("parse message error", e);
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
                         List<String> jobIdList = new ArrayList<>();
-                        MessageErrorCallback messageErrorCallback = null;
                         byte[] responsePayload = null;
                         try {
                             for (WedprJobDatasetRelation wedprJobDatasetRelation :
@@ -160,16 +157,6 @@ public class TopicSubscriber implements CommandLineRunner {
                                 }
                                 jobIdList.add(jobId);
                             }
-                            messageErrorCallback =
-                                    new MessageErrorCallback() {
-                                        @Override
-                                        public void onError(Error error) {
-                                            log.error(
-                                                    "Error code:{}, message:{}",
-                                                    error.errorCode(),
-                                                    error.errorMessage());
-                                        }
-                                    };
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setJobIdList(jobIdList);
@@ -187,7 +174,7 @@ public class TopicSubscriber implements CommandLineRunner {
                                 messageHeader.getTraceID(),
                                 responsePayload,
                                 0,
-                                messageErrorCallback);
+                                new CommonErrorCallback("asyncSendResponseForDataset"));
                     }
                 });
     }
@@ -203,16 +190,16 @@ public class TopicSubscriber implements CommandLineRunner {
                         JobReportResponse response = new JobReportResponse();
                         try {
                             wedprJobTableList =
-                                    (List<WedprJobTable>)
-                                            ObjectMapperFactory.getObjectMapper()
-                                                    .readValue(payload, List.class);
+                                    ObjectMapperFactory.getObjectMapper()
+                                            .readValue(
+                                                    payload,
+                                                    new TypeReference<List<WedprJobTable>>() {});
                         } catch (IOException e) {
                             log.warn("parse message error", e);
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
                         List<String> jobIdList = new ArrayList<>();
-                        MessageErrorCallback messageErrorCallback = null;
                         byte[] responsePayload = null;
                         try {
                             for (WedprJobTable wedprJobTable : wedprJobTableList) {
@@ -226,16 +213,6 @@ public class TopicSubscriber implements CommandLineRunner {
                                 }
                                 jobIdList.add(jobId);
                             }
-                            messageErrorCallback =
-                                    new MessageErrorCallback() {
-                                        @Override
-                                        public void onError(Error error) {
-                                            log.error(
-                                                    "Error code:{}, message:{}",
-                                                    error.errorCode(),
-                                                    error.errorMessage());
-                                        }
-                                    };
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setJobIdList(jobIdList);
@@ -253,7 +230,7 @@ public class TopicSubscriber implements CommandLineRunner {
                                 messageHeader.getTraceID(),
                                 responsePayload,
                                 0,
-                                messageErrorCallback);
+                                new CommonErrorCallback("asyncSendResponseForJobSync"));
                     }
                 });
     }
@@ -269,16 +246,17 @@ public class TopicSubscriber implements CommandLineRunner {
                         ProjectReportResponse response = new ProjectReportResponse();
                         try {
                             wedprProjectTableList =
-                                    (List<WedprProjectTable>)
-                                            ObjectMapperFactory.getObjectMapper()
-                                                    .readValue(payload, List.class);
+                                    ObjectMapperFactory.getObjectMapper()
+                                            .readValue(
+                                                    payload,
+                                                    new TypeReference<
+                                                            List<WedprProjectTable>>() {});
                         } catch (IOException e) {
                             log.warn("parse message error", e);
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
                         List<String> projectIdList = new ArrayList<>();
-                        MessageErrorCallback messageErrorCallback = null;
                         byte[] responsePayload = null;
                         try {
                             for (WedprProjectTable wedprProjectTable : wedprProjectTableList) {
@@ -292,16 +270,6 @@ public class TopicSubscriber implements CommandLineRunner {
                                 }
                                 projectIdList.add(projectId);
                             }
-                            messageErrorCallback =
-                                    new MessageErrorCallback() {
-                                        @Override
-                                        public void onError(Error error) {
-                                            log.error(
-                                                    "Error code:{}, message:{}",
-                                                    error.errorCode(),
-                                                    error.errorMessage());
-                                        }
-                                    };
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setProjectIdList(projectIdList);
@@ -319,7 +287,7 @@ public class TopicSubscriber implements CommandLineRunner {
                                 messageHeader.getTraceID(),
                                 responsePayload,
                                 0,
-                                messageErrorCallback);
+                                new CommonErrorCallback("asyncSendResponseForProjectSync"));
                     }
                 });
     }
