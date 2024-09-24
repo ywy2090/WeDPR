@@ -11,6 +11,7 @@ import com.webank.wedpr.components.admin.response.GetWedprAgencyListResponse;
 import com.webank.wedpr.components.admin.response.GetWedprNoCertAgencyListResponse;
 import com.webank.wedpr.components.token.auth.model.UserToken;
 import com.webank.wedpr.core.utils.WeDPRException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 服务类
@@ -32,7 +33,8 @@ public interface WedprAgencyService extends IService<WedprAgency> {
 
     void setWedprAgency(SetWedprAgencyRequest setWedprAgencyRequest) throws WeDPRException;
 
-    GetAgencyStatisticsResponse getAgencyStatistics();
+    GetAgencyStatisticsResponse getAgencyStatistics()
+            throws ExecutionException, InterruptedException;
 
     GetWedprNoCertAgencyListResponse getNoCertAgencyList();
 }
