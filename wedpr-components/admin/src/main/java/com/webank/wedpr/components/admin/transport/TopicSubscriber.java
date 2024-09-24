@@ -66,6 +66,7 @@ public class TopicSubscriber implements CommandLineRunner {
                 new MessageDispatcherCallback() {
                     @Override
                     public void onMessage(IMessage message) {
+                        log.info("receive sys config report");
                         byte[] payload = message.getPayload();
                         List<SysConfigDO> sysConfigDOList = null;
                         SysConfigReportResponse response = new SysConfigReportResponse();
@@ -80,6 +81,7 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
+                        log.debug("report wedprSysConfigDOList:{}", sysConfigDOList);
                         List<String> configKeyList = new ArrayList<>();
                         byte[] responsePayload = null;
                         try {
@@ -122,6 +124,7 @@ public class TopicSubscriber implements CommandLineRunner {
                 new MessageDispatcherCallback() {
                     @Override
                     public void onMessage(IMessage message) {
+                        log.info("receive job dataset relation report");
                         byte[] payload = message.getPayload();
                         List<WedprJobDatasetRelation> wedprJobDatasetRelationList =
                                 new ArrayList<>();
@@ -138,6 +141,9 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
+                        log.debug(
+                                "report wedprJobDatasetRelationList:{}",
+                                wedprJobDatasetRelationList);
                         List<String> jobIdList = new ArrayList<>();
                         byte[] responsePayload = null;
                         try {
@@ -185,6 +191,7 @@ public class TopicSubscriber implements CommandLineRunner {
                 new MessageDispatcherCallback() {
                     @Override
                     public void onMessage(IMessage message) {
+                        log.info("receive job report");
                         byte[] payload = message.getPayload();
                         List<WedprJobTable> wedprJobTableList = null;
                         JobReportResponse response = new JobReportResponse();
@@ -199,6 +206,7 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
+                        log.debug("report wedprJobTableList:{}", wedprJobTableList);
                         List<String> jobIdList = new ArrayList<>();
                         byte[] responsePayload = null;
                         try {
@@ -241,6 +249,7 @@ public class TopicSubscriber implements CommandLineRunner {
                 new MessageDispatcherCallback() {
                     @Override
                     public void onMessage(IMessage message) {
+                        log.info("receive project report");
                         byte[] payload = message.getPayload();
                         List<WedprProjectTable> wedprProjectTableList = null;
                         ProjectReportResponse response = new ProjectReportResponse();
@@ -256,6 +265,7 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
+                        log.debug("report wedprProjectTableList:{}", wedprProjectTableList);
                         List<String> projectIdList = new ArrayList<>();
                         byte[] responsePayload = null;
                         try {

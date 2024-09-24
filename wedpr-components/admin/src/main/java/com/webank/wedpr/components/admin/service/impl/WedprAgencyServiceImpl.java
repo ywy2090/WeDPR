@@ -24,8 +24,11 @@ import com.webank.wedpr.sdk.jni.transport.handlers.GetPeersCallback;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,7 +47,6 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
 
     @Autowired private WedprCertService wedprCertService;
     @Autowired private WeDPRTransport weDPRTransport;
-    private GatewayAgencyInfo gatewayAgencyInfo;
 
     public String createOrUpdateAgency(
             CreateOrUpdateWedprAgencyRequest createOrUpdateWedprAgencyRequest, UserToken userToken)
@@ -167,40 +169,57 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
     }
 
     @Override
-    public GetAgencyStatisticsResponse getAgencyStatistics() {
-        int agencyTotalCount = count();
+    public GetAgencyStatisticsResponse getAgencyStatistics()
+            throws ExecutionException, InterruptedException {
+        int totalAgencyCount = count();
         int faultAgencyCount = 0;
+        CompletableFuture<GatewayAgencyInfo> futureGatewayAgencyInfo = new CompletableFuture<>();
         GetPeersCallback getPeersCallback =
                 new GetPeersCallback() {
-                    @SneakyThrows
                     @Override
                     public void onPeers(Error error, String gatewayAgencyStr) {
-                        log.info("gatewayAgencyStr:{}, error:{}", gatewayAgencyStr, error);
-                        gatewayAgencyInfo =
-                                ObjectMapperFactory.getObjectMapper()
-                                        .readValue(gatewayAgencyStr, GatewayAgencyInfo.class);
+                        log.debug("gatewayAgencyStr:{}, error:{}", gatewayAgencyStr, error);
+                        if (error != null) {
+                            futureGatewayAgencyInfo.completeExceptionally(
+                                    new WeDPRException(error.errorMessage()));
+                        } else {
+                            try {
+                                GatewayAgencyInfo gatewayAgencyInfo =
+                                        ObjectMapperFactory.getObjectMapper()
+                                                .readValue(
+                                                        gatewayAgencyStr, GatewayAgencyInfo.class);
+                                futureGatewayAgencyInfo.complete(gatewayAgencyInfo);
+                            } catch (Exception e) {
+                                log.error(
+                                        "Error parsing gatewayAgencyStr: {}", gatewayAgencyStr, e);
+                                futureGatewayAgencyInfo.completeExceptionally(e);
+                            }
+                        }
                     }
                 };
         weDPRTransport.asyncGetPeers(getPeersCallback);
-        GetAgencyStatisticsResponse response = new GetAgencyStatisticsResponse();
-        response.setAgencyTotalCount(agencyTotalCount);
-        response.setFaultAgencyCount(faultAgencyCount);
-
-        List<AgencyInfo> agencyInfoList = new ArrayList<>();
+        GatewayAgencyInfo gatewayAgencyInfo = futureGatewayAgencyInfo.get();
         log.info("gatewayAgencyInfo:{}", gatewayAgencyInfo);
-        AgencyInfo agencyInfo = new AgencyInfo();
-        agencyInfo.setAgencyName("WEBANK");
-        agencyInfo.setAgencyStatus(true);
-
-        List<PeerAgency> peerAgencyList = new ArrayList<>();
-        PeerAgency peerAgency = new PeerAgency();
-        peerAgency.setAgencyName("SGD");
-        peerAgency.setConnectStatus(true);
-        peerAgencyList.add(peerAgency);
-        agencyInfo.setPeerAgencyList(peerAgencyList);
-
-        agencyInfoList.add(agencyInfo);
-        response.setAgencyInfoList(agencyInfoList);
+        GetAgencyStatisticsResponse response = new GetAgencyStatisticsResponse();
+        List<GatewayAgencyPeer> gatewayAgencyPeerList = gatewayAgencyInfo.getPeers();
+        int agencyPeerCount = gatewayAgencyPeerList.size();
+        faultAgencyCount = totalAgencyCount - agencyPeerCount;
+        response.setTotalAgencyCount(totalAgencyCount);
+        response.setFaultAgencyCount(faultAgencyCount);
+        response.setAgencyAdmin(gatewayAgencyInfo.getAgency());
+        Set<String> agencyPeerSet = new TreeSet<>();
+        Set<String> agencyFaultSet = new TreeSet<>();
+        List<WedprAgency> wedprAgencyList = list();
+        for (GatewayAgencyPeer gatewayAgencyPeer : gatewayAgencyPeerList) {
+            agencyPeerSet.add(gatewayAgencyPeer.getAgency());
+            wedprAgencyList.removeIf(
+                    agency -> agency.getAgencyName().equals(gatewayAgencyPeer.getAgency()));
+        }
+        for (WedprAgency wedprAgency : wedprAgencyList) {
+            agencyFaultSet.add(wedprAgency.getAgencyName());
+        }
+        response.setAgencyPeerList(agencyPeerSet);
+        response.setAgencyFaultList(agencyFaultSet);
         return response;
     }
 

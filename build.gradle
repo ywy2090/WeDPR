@@ -296,8 +296,20 @@ subprojects {
                 into "dist/conf"
             }
             copy {
-                from file("bin/")
+                from file("bin/start.sh")
                 into "dist/"
+            }
+            copy {
+                from file("bin/stop.sh")
+                into "dist/"
+            }
+            copy {
+                from file("bin/cert_script.sh")
+                into "dist/conf/"
+            }
+            copy {
+                from file("bin/package_cert_tool.sh")
+                into "dist/conf/"
             }
             copy {
                 from configurations.runtime
