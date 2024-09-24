@@ -178,7 +178,7 @@ public class WedprAgencyServiceImpl extends ServiceImpl<WedprAgencyMapper, Wedpr
                 new GetPeersCallback() {
                     @Override
                     public void onPeers(Error error, String gatewayAgencyStr) {
-                        log.info("gatewayAgencyStr:{}, error:{}", gatewayAgencyStr, error);
+                        log.debug("gatewayAgencyStr:{}, error:{}", gatewayAgencyStr, error);
                         if (error != null) {
                             futureGatewayAgencyInfo.completeExceptionally(
                                     new WeDPRException(error.errorMessage()));
