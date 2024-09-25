@@ -105,6 +105,7 @@ public class ReportQuartzJob implements Job {
         JobReportMessageHandler jobReportMessageHandler =
                 new JobReportMessageHandler(projectMapper);
         JobDO jobDO = new JobDO();
+        jobDO.setId(null);
         jobDO.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
         jobDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<JobDO> jobDOList = projectMapper.queryJobs(false, jobDO, null);
@@ -128,6 +129,7 @@ public class ReportQuartzJob implements Job {
         ProjectReportMessageHandler projectReportMessageHandler =
                 new ProjectReportMessageHandler(projectMapper);
         ProjectDO projectDO = new ProjectDO();
+        projectDO.setId(null);
         projectDO.setReportStatus(ReportStatusEnum.NO_REPORT.getReportStatus());
         projectDO.setLimitItems(Constant.DEFAULT_REPORT_PAGE_SIZE);
         List<ProjectDO> projectDOList = projectMapper.queryProject(false, projectDO);
