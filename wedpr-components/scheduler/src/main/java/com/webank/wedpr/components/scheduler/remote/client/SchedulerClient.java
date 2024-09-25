@@ -117,7 +117,7 @@ public class SchedulerClient implements SchedulerClientApi {
         }
 
         QueryJobResponse queryJobResponse =
-                ObjectMapperFactory.getObjectReader().readValue(response, QueryJobResponse.class);
+                ObjectMapperFactory.getObjectMapper().readValue(response, QueryJobResponse.class);
 
         if (queryJobResponse.getErrorCode() != SCHEDULER_SERVICE_RESPONSE_OK) {
             logger.error(
@@ -133,14 +133,13 @@ public class SchedulerClient implements SchedulerClientApi {
                     jobId,
                     queryJobResponse);
 
-            JobData data = queryJobResponse.getData();
+            String status = queryJobResponse.getData().getStatus();
 
-            ExecuteResult.ResultStatus resultStatus =
-                    ExecuteResult.ResultStatus.valueOf(queryJobResponse.getData().getStatus());
+            ExecuteResult.ResultStatus resultStatus = ExecuteResult.ResultStatus.valueOf(status);
 
             ExecuteResult executeResult = new ExecuteResult();
             executeResult.setResultStatus(resultStatus);
-            executeResult.setMsg("");
+            executeResult.setMsg(resultStatus.name());
 
             return executeResult;
         }

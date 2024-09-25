@@ -53,13 +53,13 @@ public class RemoteSchedulerImpl implements Scheduler {
                 new SchedulerClient(
                         "", SchedulerConfig.getMaxTotalConnection(), SchedulerConfig.buildConfig());
 
-        JobWorkFlowBuilderManager workflowBuilderManagerJob =
+        JobWorkFlowBuilderManager jobWorkflowBuilderManager =
                 new JobWorkFlowBuilderManager(fileMetaBuilder, fileStorageInterface, jobChecker);
 
         this.workflowOrchestrator =
-                new WorkFlowOrchestrator(workflowBuilderManagerJob, fileMetaBuilder, jobChecker);
+                new WorkFlowOrchestrator(jobWorkflowBuilderManager, fileMetaBuilder, jobChecker);
 
-        workflowBuilderManagerJob.initialize();
+        jobWorkflowBuilderManager.initialize();
 
         this.queryStatusWorker.scheduleAtFixedRate(
                 this::queryAllJobStatus, 0, queryStatusIntervalMs, TimeUnit.MILLISECONDS);
@@ -73,11 +73,9 @@ public class RemoteSchedulerImpl implements Scheduler {
 
         int proceedingJobsSize = proceedingJobs.size();
         if (proceedingJobsSize > 0) {
-            logger.info(
-                    "## remote scheduler query all jobs status proceeding jobs size: {}",
-                    proceedingJobsSize);
+            logger.info("## query all jobs status proceeding jobs size: {}", proceedingJobsSize);
         } else {
-            logger.info("## remote scheduler query all jobs status, no jobs is proceeding");
+            logger.info("## query all jobs status, no jobs is proceeding");
         }
     }
 
@@ -111,13 +109,16 @@ public class RemoteSchedulerImpl implements Scheduler {
         try {
             ExecuteResult executeResult = schedulerClient.queryJob(jobId);
             if (executeResult.finished()) {
-                logger.info("## remote scheduler job is finished, jobId: {}", jobId);
+                logger.info("## job is finished, jobId: {}, result: {}", jobId, executeResult);
                 executiveContext.onTaskFinished(executeResult);
                 proceedingJobs.remove(executiveContext);
+            } else if (logger.isDebugEnabled()) {
+                logger.debug(
+                        "## query status for job, jobId: {}, result: {}", jobId, executeResult);
             }
         } catch (Exception e) {
             logger.error(
-                    "## remote scheduler query status for job failed, job: {}, error: ",
+                    "## query status for job failed, job: {}, error: ",
                     executiveContext.getJob().toString(),
                     e);
             executiveContext.onTaskFinished(
@@ -143,13 +144,10 @@ public class RemoteSchedulerImpl implements Scheduler {
                     new ExecutiveContext(
                             jobDO, this::onJobFinish, jobDO.getTaskID(), projectMapperWrapper));
 
-            logger.info("remote scheduler post for run job successfully, jobId: {}", jobDO.getId());
+            logger.info("post for run job successfully, jobId: {}", jobDO.getId());
 
         } catch (Exception e) {
-            logger.error(
-                    "remote scheduler post for run job exception, jobId: {}, e: ",
-                    jobDO.getId(),
-                    e);
+            logger.error("post for run job exception, jobId: {}, e: ", jobDO.getId(), e);
             // set the job status to failed
             this.projectMapperWrapper.updateSingleJobStatus(null, null, jobDO, JobStatus.RunFailed);
         }
@@ -159,13 +157,11 @@ public class RemoteSchedulerImpl implements Scheduler {
         try {
             schedulerClient.killJob(jobDO.getId());
 
-            logger.info(
-                    "remote scheduler post for kill job successfully, jobId: {}", jobDO.getId());
+            logger.info("post for kill job successfully, jobId: {}", jobDO.getId());
             // set the job status to failed
             this.projectMapperWrapper.updateSingleJobStatus(null, null, jobDO, JobStatus.Killed);
         } catch (Exception e) {
-            logger.error(
-                    "remote scheduler post for kill job failed, jobId: {}, e: ", jobDO.getId(), e);
+            logger.error("post for kill job failed, jobId: {}, e: ", jobDO.getId(), e);
             // set the job status to failed
             this.projectMapperWrapper.updateSingleJobStatus(
                     null, null, jobDO, JobStatus.KillFailed);
@@ -177,14 +173,11 @@ public class RemoteSchedulerImpl implements Scheduler {
             this.projectMapperWrapper.updateFinalJobResult(
                     jobDO, JobStatus.RunFailed, result.serialize());
 
-            logger.info(
-                    "remote scheduler update job status to failed, jobId {}, result: {}",
-                    jobDO.getId(),
-                    result);
+            logger.info("update job status to failed, jobId {}, result: {}", jobDO.getId(), result);
 
         } catch (Exception e) {
             logger.error(
-                    "remote scheduler update job status to failed exception, jobId {}, result: {}, e: ",
+                    "update job status to failed exception, jobId {}, result: {}, e: ",
                     jobDO.getId(),
                     result,
                     e);
@@ -197,12 +190,10 @@ public class RemoteSchedulerImpl implements Scheduler {
                     jobDO, JobStatus.RunSuccess, result.serialize());
 
             logger.info(
-                    "remote scheduler update job status to success, jobId {}, result: {}",
-                    jobDO.getId(),
-                    result);
+                    "update job status to success, jobId {}, result: {}", jobDO.getId(), result);
         } catch (Exception e) {
             logger.error(
-                    "remote scheduler update job status to success exception, jobId {}, result: {}, e: ",
+                    "update job status to success exception, jobId {}, result: {}, e: ",
                     jobDO.getId(),
                     result,
                     e);

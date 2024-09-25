@@ -22,9 +22,9 @@ import lombok.SneakyThrows;
 @Data
 public class ExecuteResult {
     public enum ResultStatus {
-        RUNNING("RUNNING"),
+        RUNNING("Running"),
         SUCCESS("SUCCESS"),
-        FAILED("FAILURE");
+        FAILED("Failed");
         private final String status;
 
         ResultStatus(String status) {

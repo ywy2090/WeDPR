@@ -22,8 +22,8 @@ public class WorkFlowNode {
         workflowUpstream.setIndex(upstream);
         upstreams.add(workflowUpstream);
 
-        if (logger.isInfoEnabled()) {
-            logger.info("add upstream: {}", upstream);
+        if (logger.isDebugEnabled()) {
+            logger.debug("add upstream: {}", upstream);
         }
     }
 

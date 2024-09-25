@@ -21,6 +21,7 @@ import com.webank.wedpr.components.scheduler.local.executor.impl.ml.MLExecutorPa
 import com.webank.wedpr.components.scheduler.local.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.scheduler.local.executor.impl.psi.PSIExecutorParamChecker;
 import com.webank.wedpr.core.protocol.JobType;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Scope;
 
 @Configuration
 @AutoConfigureAfter(FileMetaBuilderConfig.class)
+@Data
 public class JobCheckerConfig {
     private static final Logger logger = LoggerFactory.getLogger(JobCheckerConfig.class);
     @Autowired private FileMetaBuilder fileMetaBuilder;

@@ -300,8 +300,12 @@ public class ProjectServiceImpl implements ProjectService {
             validateUserPermissionToDatasets(user, agency, datasetList);
 
             this.projectMapperWrapper.insertJob(request.getJob());
+
+            String jobId = request.getJob().getId();
+
             logger.info(
-                    "submitJob, user: {}, agency: {}, datasetIDs: {}, detail: {}",
+                    "## submitJob, jobId: {}, user: {}, agency: {}, datasetIDs: {}, detail: {}",
+                    jobId,
                     user,
                     agency,
                     datasetList,

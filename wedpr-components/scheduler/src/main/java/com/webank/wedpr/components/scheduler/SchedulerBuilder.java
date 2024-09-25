@@ -47,7 +47,7 @@ public class SchedulerBuilder {
         try {
             String agency = WeDPRCommonConfig.getAgency();
 
-            logger.info("create SchedulerTask, agency: {}", agency);
+            logger.info("## create SchedulerTask, agency: {}", agency);
 
             Scheduler scheduler =
                     buildScheduler(

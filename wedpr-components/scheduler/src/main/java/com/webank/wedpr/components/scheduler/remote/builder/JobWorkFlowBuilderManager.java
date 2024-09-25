@@ -29,6 +29,10 @@ public class JobWorkFlowBuilderManager {
     private final FileStorageInterface storage;
     private final JobChecker jobChecker;
 
+    public JobChecker getJobChecker() {
+        return jobChecker;
+    }
+
     protected Map<String, JobWorkFlowBuilderApi> jobWorkFlowBuilderMap = new ConcurrentHashMap<>();
 
     protected Map<String, List<WorkFlowBuilderDependencyHandler>> jobWorkFlowDependencyHandlerMap =
@@ -111,7 +115,7 @@ public class JobWorkFlowBuilderManager {
                 });
 
         registerJobWorkFlowDependencyHandler(
-                JobType.MLPreprocessing.getType(),
+                JobType.FeatureEngineer.getType(),
                 (jobDO, workflow, upstream) -> {
                     jobDO.setType(jobDO.getOriginalJobType());
                     ModelJobParam modelJobParam = (ModelJobParam) jobDO.getJobParam();
@@ -175,11 +179,7 @@ public class JobWorkFlowBuilderManager {
     public void registerJobWorkFlowDependencyHandler(
             String jobType, WorkFlowBuilderDependencyHandler workFlowBuilderDependencyHandler) {
         List<WorkFlowBuilderDependencyHandler> workFlowBuilderDependencyHandlers =
-                jobWorkFlowDependencyHandlerMap.get(jobType);
-        if (workFlowBuilderDependencyHandlers == null) {
-            workFlowBuilderDependencyHandlers = new ArrayList<>();
-            workFlowBuilderDependencyHandlers.add(workFlowBuilderDependencyHandler);
-        }
+                jobWorkFlowDependencyHandlerMap.computeIfAbsent(jobType, k -> new ArrayList<>());
 
         workFlowBuilderDependencyHandlers.add(workFlowBuilderDependencyHandler);
     }

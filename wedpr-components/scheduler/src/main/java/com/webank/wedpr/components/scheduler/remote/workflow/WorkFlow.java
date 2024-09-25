@@ -2,7 +2,7 @@ package com.webank.wedpr.components.scheduler.remote.workflow;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import lombok.Data;
 import org.slf4j.Logger;
@@ -40,17 +40,14 @@ public class WorkFlow {
         WorkFlowNode workflowNode = new WorkFlowNode();
         workflowNode.setIndex(index);
         workflowNode.setType(type);
-        workflowNode.setArgs(Arrays.asList(args));
+        workflowNode.setArgs(Collections.singletonList(args));
 
         if (upstreams != null && !upstreams.isEmpty()) {
-            upstreams.forEach(
-                    upstream -> {
-                        workflowNode.addUpstream(upstream);
-                    });
+            upstreams.forEach(workflowNode::addUpstream);
         }
 
-        logger.info("add workflow node: {}", workflowNode);
         workflow.add(workflowNode);
+        logger.debug("add workflow jobId: {}, node: {}", jobId, workflowNode);
 
         return workflowNode;
     }

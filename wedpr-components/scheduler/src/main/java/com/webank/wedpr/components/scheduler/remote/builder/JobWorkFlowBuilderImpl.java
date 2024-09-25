@@ -11,12 +11,12 @@ import java.util.List;
 public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
 
     private final Executor executor;
-    private final JobWorkFlowBuilderManager workflowBuilderManagerJob;
+    private final JobWorkFlowBuilderManager jobWorkflowBuilderManager;
 
     public JobWorkFlowBuilderImpl(
-            Executor executor, JobWorkFlowBuilderManager workflowBuilderManagerJob) {
+            Executor executor, JobWorkFlowBuilderManager jobWorkflowBuilderManager) {
         this.executor = executor;
-        this.workflowBuilderManagerJob = workflowBuilderManagerJob;
+        this.jobWorkflowBuilderManager = jobWorkflowBuilderManager;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
 
         WorkFlowNode workflowNode = addWorkFlowNode(workflow, jobDO.getJobType(), args);
         List<WorkFlowBuilderDependencyHandler> depsHandlers =
-                workflowBuilderManagerJob.getHandler(jobDO.getJobType());
+                jobWorkflowBuilderManager.getHandler(jobDO.getJobType());
         if (depsHandlers == null) {
             return;
         }
@@ -42,7 +42,7 @@ public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
         WorkFlowNode workflowNode = addWorkFlowNode(workflow, jobDO.getJobType(), args);
 
         List<WorkFlowBuilderDependencyHandler> handlers =
-                workflowBuilderManagerJob.getHandler(jobDO.getJobType());
+                jobWorkflowBuilderManager.getHandler(jobDO.getJobType());
         if (handlers == null) {
             return;
         }

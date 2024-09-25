@@ -16,15 +16,23 @@ public class WorkFlowOrchestrator implements WorkFlowOrchestratorApi {
 
     private static final Logger logger = LoggerFactory.getLogger(WorkFlowOrchestrator.class);
 
-    private JobWorkFlowBuilderManager workflowBuilderManagerJob = null;
+    private JobWorkFlowBuilderManager jobWorkflowBuilderManager = null;
     private FileMetaBuilder fileMetaBuilder = null;
     private JobChecker jobChecker = null;
 
+    public JobChecker getJobChecker() {
+        return jobChecker;
+    }
+
+    public void setJobChecker(JobChecker jobChecker) {
+        this.jobChecker = jobChecker;
+    }
+
     public WorkFlowOrchestrator(
-            JobWorkFlowBuilderManager workflowBuilderManagerJob,
+            JobWorkFlowBuilderManager jobWorkflowBuilderManager,
             FileMetaBuilder fileMetaBuilder,
             JobChecker jobChecker) {
-        this.workflowBuilderManagerJob = workflowBuilderManagerJob;
+        this.jobWorkflowBuilderManager = jobWorkflowBuilderManager;
         this.fileMetaBuilder = fileMetaBuilder;
         this.jobChecker = jobChecker;
     }
@@ -45,6 +53,11 @@ public class WorkFlowOrchestrator implements WorkFlowOrchestratorApi {
 
         WorkFlow workflow = new WorkFlow(jobId);
 
+        if (jobDO.getOriginalJobType() == null) {
+            jobDO.setOriginalJobType(jobDO.getType());
+        }
+
+        jobDO.setOriginalJobType(jobDO.getType());
         if (JobType.isPSIJob(jobType)) {
             buildPSIWorkFlow(jobDO, workflow);
         } else if (JobType.isMPCJob(jobType)) {
@@ -62,7 +75,7 @@ public class WorkFlowOrchestrator implements WorkFlowOrchestratorApi {
     public void buildPSIWorkFlow(JobDO jobDO, WorkFlow workflow) throws Exception {
         String jobType = jobDO.getJobType();
         //        logger.info("build PSI workflow, jobId: {}", jobDO.getId());
-        workflowBuilderManagerJob.getJobWorkFlowBuilder(jobType).buildWorkFlow(jobDO, workflow);
+        jobWorkflowBuilderManager.getJobWorkFlowBuilder(jobType).buildWorkFlow(jobDO, workflow);
     }
 
     // MPC
@@ -90,7 +103,7 @@ public class WorkFlowOrchestrator implements WorkFlowOrchestratorApi {
             jobDO.setJobType(JobType.MLPreprocessing.getType());
         }
 
-        workflowBuilderManagerJob
+        jobWorkflowBuilderManager
                 .getJobWorkFlowBuilder(jobDO.getJobType())
                 .buildWorkFlow(jobDO, workflow);
     }
