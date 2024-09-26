@@ -53,9 +53,9 @@ public class WorkFlowOrchestrator implements WorkFlowOrchestratorApi {
 
         WorkFlow workflow = new WorkFlow(jobId);
 
-        if (jobDO.getOriginalJobType() == null) {
-            jobDO.setOriginalJobType(jobDO.getType());
-        }
+        //        if (jobDO.getOriginalJobType() == null) {
+        //            jobDO.setOriginalJobType(jobDO.getType());
+        //        }
 
         jobDO.setOriginalJobType(jobDO.getType());
         if (JobType.isPSIJob(jobType)) {

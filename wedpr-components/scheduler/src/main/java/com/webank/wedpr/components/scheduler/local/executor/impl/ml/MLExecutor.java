@@ -48,6 +48,8 @@ public class MLExecutor implements Executor {
 
     @Override
     public Object prepare(JobDO jobDO) throws Exception {
+        ModelJobRequest modelJobRequest = (ModelJobRequest) jobDO.getJobRequest();
+        modelJobRequest.setTaskID(jobDO.getTaskID());
         return jobDO.getJobRequest();
     }
 

@@ -79,11 +79,6 @@ public class ModelJobRequest implements BaseRequest {
         this.setLabelProvider(modelJobRequest.getLabelProvider());
     }
 
-    public ModelJobRequest(String jobID, String taskType) {
-        this.jobID = jobID;
-        this.taskType = taskType;
-    }
-
     public String getJobID() {
         return jobID;
     }
