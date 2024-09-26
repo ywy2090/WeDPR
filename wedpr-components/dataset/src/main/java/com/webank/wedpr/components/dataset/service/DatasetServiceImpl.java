@@ -526,6 +526,7 @@ public class DatasetServiceImpl implements DatasetServiceApi {
 
                 List<Dataset> datasetList =
                         datasetMapper.queryVisibleDatasetsForUser(
+                                user,
                                 agency,
                                 userSubject,
                                 userGroupSubjectList,

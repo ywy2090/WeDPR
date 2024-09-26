@@ -19,7 +19,7 @@ import com.webank.wedpr.components.project.dao.JobDO;
 import java.util.List;
 
 public interface Scheduler {
-    public abstract void batchKillJobs(List<JobDO> jobs);
+    void batchKillJobs(List<JobDO> jobs);
 
-    public abstract void batchRunJobs(List<JobDO> jobs);
+    void batchRunJobs(List<JobDO> jobs);
 }

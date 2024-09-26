@@ -33,6 +33,7 @@ public interface DatasetMapper extends BaseMapper<Dataset> {
      * @return
      */
     List<Dataset> queryVisibleDatasetsForUser(
+            @Param("loginUser") String loginUser,
             @Param("loginAgency") String loginAgency,
             @Param("loginUserSubject") String loginUserSubject,
             @Param("loginUserGroupSubjectList") List<String> loginUserGroupSubjectList,
