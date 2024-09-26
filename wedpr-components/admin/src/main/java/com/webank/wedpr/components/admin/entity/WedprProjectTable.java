@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * @author caryliao
@@ -27,7 +26,7 @@ public class WedprProjectTable implements Serializable {
 
     @ApiModelProperty(value = "项目描述")
     @TableField("`desc`")
-    private String desc;
+    private String projectDesc;
 
     @ApiModelProperty(value = "项目属主")
     private String owner;
@@ -45,10 +44,10 @@ public class WedprProjectTable implements Serializable {
     private Integer reportStatus;
 
     @ApiModelProperty(value = "项目创建时间")
-    private LocalDateTime createTime;
+    private String createTime;
 
     @ApiModelProperty(value = "项目更新时间")
-    private LocalDateTime lastUpdateTime;
+    private String lastUpdateTime;
 
     public String getId() {
         return id;
@@ -66,12 +65,12 @@ public class WedprProjectTable implements Serializable {
         this.name = name;
     }
 
-    public String getDesc() {
-        return desc;
+    public String getProjectDesc() {
+        return projectDesc;
     }
 
-    public void setDesc(String desc) {
-        this.desc = desc;
+    public void setProjectDesc(String projectDesc) {
+        this.projectDesc = projectDesc;
     }
 
     public String getOwner() {
@@ -114,19 +113,19 @@ public class WedprProjectTable implements Serializable {
         this.reportStatus = reportStatus;
     }
 
-    public LocalDateTime getCreateTime() {
+    public String getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(LocalDateTime createTime) {
+    public void setCreateTime(String createTime) {
         this.createTime = createTime;
     }
 
-    public LocalDateTime getLastUpdateTime() {
+    public String getLastUpdateTime() {
         return lastUpdateTime;
     }
 
-    public void setLastUpdateTime(LocalDateTime lastUpdateTime) {
+    public void setLastUpdateTime(String lastUpdateTime) {
         this.lastUpdateTime = lastUpdateTime;
     }
 
@@ -138,7 +137,7 @@ public class WedprProjectTable implements Serializable {
                 + ", name="
                 + name
                 + ", desc="
-                + desc
+                + projectDesc
                 + ", owner="
                 + owner
                 + ", ownerAgency="

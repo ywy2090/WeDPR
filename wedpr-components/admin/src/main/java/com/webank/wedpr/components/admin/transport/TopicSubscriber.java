@@ -81,7 +81,7 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
-                        log.debug("report wedprSysConfigDOList:{}", sysConfigDOList);
+                        log.info("report wedprSysConfigDOList:{}", sysConfigDOList);
                         List<String> configKeyList = new ArrayList<>();
                         byte[] responsePayload = null;
                         try {
@@ -99,6 +99,8 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_SUCCESS);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setConfigKeyList(configKeyList);
+                            log.info("report sys config ok, response:{}", response);
+                            log.info("report configKeyList size:{}", configKeyList.size());
                             responsePayload =
                                     ObjectMapperFactory.getObjectMapper()
                                             .writeValueAsBytes(response);
@@ -145,7 +147,7 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
-                        log.debug(
+                        log.info(
                                 "report wedprJobDatasetRelationList:{}",
                                 wedprJobDatasetRelationList);
                         List<String> jobIdList = new ArrayList<>();
@@ -167,9 +169,11 @@ public class TopicSubscriber implements CommandLineRunner {
                                 }
                                 jobIdList.add(jobId);
                             }
-                            response.setCode(Constant.WEDPR_FAILED);
+                            response.setCode(Constant.WEDPR_SUCCESS);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setJobIdList(jobIdList);
+                            log.info("report job dataset relation ok, response:{}", response);
+                            log.info("report jobIdList size:{}", jobIdList.size());
                             responsePayload =
                                     ObjectMapperFactory.getObjectMapper()
                                             .writeValueAsBytes(response);
@@ -210,7 +214,7 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
-                        log.debug("report wedprJobTableList:{}", wedprJobTableList);
+                        log.info("report wedprJobTableList:{}", wedprJobTableList);
                         List<String> jobIdList = new ArrayList<>();
                         byte[] responsePayload = null;
                         try {
@@ -225,9 +229,11 @@ public class TopicSubscriber implements CommandLineRunner {
                                 }
                                 jobIdList.add(jobId);
                             }
-                            response.setCode(Constant.WEDPR_FAILED);
+                            response.setCode(Constant.WEDPR_SUCCESS);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setJobIdList(jobIdList);
+                            log.info("report job ok, response:{}", response);
+                            log.info("report jobIdList size:{}", jobIdList.size());
                             responsePayload =
                                     ObjectMapperFactory.getObjectMapper()
                                             .writeValueAsBytes(response);
@@ -269,7 +275,7 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("parse message error" + e.getMessage());
                         }
-                        log.debug("report wedprProjectTableList:{}", wedprProjectTableList);
+                        log.info("report wedprProjectTableList:{}", wedprProjectTableList);
                         List<String> projectIdList = new ArrayList<>();
                         byte[] responsePayload = null;
                         try {
@@ -284,9 +290,11 @@ public class TopicSubscriber implements CommandLineRunner {
                                 }
                                 projectIdList.add(projectId);
                             }
-                            response.setCode(Constant.WEDPR_FAILED);
+                            response.setCode(Constant.WEDPR_SUCCESS);
                             response.setMsg(Constant.WEDPR_SUCCESS_MSG);
                             response.setProjectIdList(projectIdList);
+                            log.info("report project ok, response:{}", response);
+                            log.info("report projectIdList size:{}", projectIdList.size());
                             responsePayload =
                                     ObjectMapperFactory.getObjectMapper()
                                             .writeValueAsBytes(response);
