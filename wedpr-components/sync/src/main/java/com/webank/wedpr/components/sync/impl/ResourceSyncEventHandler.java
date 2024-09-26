@@ -53,6 +53,15 @@ public class ResourceSyncEventHandler {
                     status);
             return;
         }
+
+        if (logs == null) {
+            logger.info(
+                    "WeDPRResourceSyncEventSubCallback: receive null logs response, eventSubId: {}, status: {}",
+                    eventSubId,
+                    status);
+            return;
+        }
+
         threadPoolService
                 .getThreadPool()
                 .execute(

@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum JobType {
     PSI("PSI"),
+    MPC("MPC"),
     ML_PSI("ML_PSI"),
     MLPreprocessing("PREPROCESSING"),
     FeatureEngineer("FEATURE_ENGINEERING"),
@@ -57,6 +58,10 @@ public enum JobType {
 
     public static Boolean isPSIJob(String jobType) {
         return jobType.compareToIgnoreCase(PSI.getType()) == 0;
+    }
+
+    public static Boolean isMPCJob(String jobType) {
+        return jobType.compareToIgnoreCase(MPC.getType()) == 0;
     }
 
     public static JobType deserialize(String type) {

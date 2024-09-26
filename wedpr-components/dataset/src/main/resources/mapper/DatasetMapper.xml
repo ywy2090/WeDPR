@@ -127,6 +127,28 @@
             <if test="ownerAgency != null and ownerAgency.trim() != ''">
                 AND t1.owner_agency_name = #{ownerAgency}
             </if>
+
+            <if test="loginAgency != null and loginAgency.trim() != ''">
+                <if test="loginUser != null and loginUser.trim() != ''">
+                    AND (
+                            (
+                                t1.owner_user_name = #{loginUser}
+                                AND
+                                t1.owner_agency_name = #{loginAgency})
+                            OR
+                            (
+                                (
+                                    t1.owner_user_name != #{loginUser}
+                                    OR
+                                    t1.owner_agency_name != #{loginAgency}
+                                )
+                                AND
+                                t1.status = 0
+                            )
+                        )
+                </if>
+            </if>
+
         ORDER BY
           t1.create_at DESC
     </select>

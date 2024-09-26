@@ -17,11 +17,14 @@ package com.webank.wedpr.components.scheduler;
 
 import com.webank.wedpr.components.project.JobChecker;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
-import com.webank.wedpr.components.scheduler.core.SchedulerImpl;
-import com.webank.wedpr.components.scheduler.core.SchedulerTaskImpl;
-import com.webank.wedpr.components.scheduler.executor.ExecutorManager;
-import com.webank.wedpr.components.scheduler.executor.impl.ExecutorManagerImpl;
-import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.local.config.SchedulerTaskConfig;
+import com.webank.wedpr.components.scheduler.local.core.SchedulerTaskImpl;
+import com.webank.wedpr.components.scheduler.local.executor.ExecutorManager;
+import com.webank.wedpr.components.scheduler.local.executor.impl.ExecutorManagerImpl;
+import com.webank.wedpr.components.scheduler.local.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.local.impl.LocalSchedulerImpl;
+import com.webank.wedpr.components.scheduler.remote.config.SchedulerConfig;
+import com.webank.wedpr.components.scheduler.remote.impl.RemoteSchedulerImpl;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.components.sync.ResourceSyncer;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
@@ -32,9 +35,9 @@ import org.slf4j.LoggerFactory;
 
 public class SchedulerBuilder {
     private static final Logger logger = LoggerFactory.getLogger(SchedulerBuilder.class);
-    private static final String workerName = "scheduler";
+    private static final String WORKER_NAME = "scheduler";
 
-    public static SchedulerTaskImpl build(
+    public static SchedulerTaskImpl buildSchedulerTask(
             ProjectMapperWrapper projectMapperWrapper,
             FileStorageInterface storage,
             ResourceSyncer resourceSyncer,
@@ -42,9 +45,47 @@ public class SchedulerBuilder {
             JobChecker jobChecker)
             throws Exception {
         try {
-            logger.info("create SchedulerTask");
-            ThreadPoolService schedulerWorker =
-                    new ThreadPoolService(workerName, SchedulerTaskConfig.getWorkerQueueSize());
+            String agency = WeDPRCommonConfig.getAgency();
+
+            logger.info("## create SchedulerTask, agency: {}", agency);
+
+            Scheduler scheduler =
+                    buildScheduler(
+                            agency, projectMapperWrapper, storage, fileMetaBuilder, jobChecker);
+
+            SchedulerTaskImpl schedulerTask =
+                    new SchedulerTaskImpl(projectMapperWrapper, resourceSyncer, scheduler);
+            logger.info("create SchedulerTask success");
+            return schedulerTask;
+        } catch (Exception e) {
+            logger.error("create SchedulerTask failed, error: ", e);
+            throw new WeDPRException("Create SchedulerTask failed for " + e.getMessage(), e);
+        }
+    }
+
+    public static Scheduler buildScheduler(
+            String agency,
+            ProjectMapperWrapper projectMapperWrapper,
+            FileStorageInterface storage,
+            FileMetaBuilder fileMetaBuilder,
+            JobChecker jobChecker) {
+        boolean enableRemoteScheduler = SchedulerConfig.getEnableRemoteScheduler();
+
+        logger.info("## build scheduler, enable remote scheduler: {}", enableRemoteScheduler);
+
+        ThreadPoolService schedulerWorker =
+                new ThreadPoolService(WORKER_NAME, SchedulerTaskConfig.getWorkerQueueSize());
+
+        if (enableRemoteScheduler) {
+            return new RemoteSchedulerImpl(
+                    agency,
+                    SchedulerTaskConfig.getQueryJobStatusIntervalMs(),
+                    schedulerWorker,
+                    projectMapperWrapper,
+                    jobChecker,
+                    storage,
+                    fileMetaBuilder);
+        } else {
             // create and start the executorManager
             ExecutorManager executorManager =
                     new ExecutorManagerImpl(
@@ -53,22 +94,15 @@ public class SchedulerBuilder {
                             storage,
                             jobChecker,
                             projectMapperWrapper);
-            ;
-            SchedulerImpl schedulerImpl =
-                    new SchedulerImpl(
-                            WeDPRCommonConfig.getAgency(),
-                            executorManager,
-                            schedulerWorker,
-                            projectMapperWrapper,
-                            jobChecker,
-                            fileMetaBuilder);
-            SchedulerTaskImpl scheduler =
-                    new SchedulerTaskImpl(projectMapperWrapper, resourceSyncer, schedulerImpl);
-            logger.info("create SchedulerTask success");
-            return scheduler;
-        } catch (Exception e) {
-            logger.error("create SchedulerTask failed, error: ", e);
-            throw new WeDPRException("Create SchedulerTask failed for " + e.getMessage(), e);
+
+            return new LocalSchedulerImpl(
+                    agency,
+                    executorManager,
+                    schedulerWorker,
+                    projectMapperWrapper,
+                    jobChecker,
+                    storage,
+                    fileMetaBuilder);
         }
     }
 }

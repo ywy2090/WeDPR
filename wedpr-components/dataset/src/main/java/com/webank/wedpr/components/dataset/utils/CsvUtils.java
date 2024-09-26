@@ -190,6 +190,10 @@ public class CsvUtils {
                             csvWriter.println();
                         }
 
+                        if (rowValues == null) {
+                            return;
+                        }
+
                         // write line values
                         for (int i = 0; i < rowValues.size(); ++i) {
                             csvWriter.write(rowValues.get(i));
