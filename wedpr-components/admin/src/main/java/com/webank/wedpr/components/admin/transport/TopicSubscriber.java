@@ -109,14 +109,10 @@ public class TopicSubscriber implements CommandLineRunner {
                             response.setCode(Constant.WEDPR_FAILED);
                             response.setMsg("handle error" + e.getMessage());
                         }
-                        logger.debug(
-                                "asyncSendSysConfigResponse, dstNode: {}, traceID: {}, data: {}",
-                                new String(message.getHeader().getSrcNode()),
-                                message.getHeader().getTraceID(),
-                                response.toString());
+                        IMessage.IMessageHeader messageHeader = message.getHeader();
                         weDPRTransport.asyncSendResponse(
-                                message.getHeader().getSrcNode(),
-                                message.getHeader().getTraceID(),
+                                messageHeader.getSrcNode(),
+                                messageHeader.getTraceID(),
                                 responsePayload,
                                 0,
                                 new CommonErrorCallback("asyncSendSysConfigResponse"));
