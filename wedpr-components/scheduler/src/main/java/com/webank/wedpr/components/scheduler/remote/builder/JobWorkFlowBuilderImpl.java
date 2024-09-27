@@ -6,6 +6,7 @@ import com.webank.wedpr.components.scheduler.local.executor.Executor;
 import com.webank.wedpr.components.scheduler.remote.workflow.WorkFlow;
 import com.webank.wedpr.components.scheduler.remote.workflow.WorkFlowNode;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
+import java.util.Collections;
 import java.util.List;
 
 public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
@@ -23,7 +24,7 @@ public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
     public void buildWorkFlow(JobDO jobDO, WorkFlow workflow) throws Exception {
         Object args = this.prepare(jobDO);
 
-        WorkFlowNode workflowNode = addWorkFlowNode(workflow, jobDO.getJobType(), args);
+        WorkFlowNode workflowNode = addWorkFlowNode(workflow, null, jobDO.getJobType(), args);
         List<WorkFlowBuilderDependencyHandler> depsHandlers =
                 jobWorkflowBuilderManager.getHandler(jobDO.getJobType());
         if (depsHandlers == null) {
@@ -39,7 +40,10 @@ public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
     public void buildWorkFlow(JobDO jobDO, WorkFlow workflow, WorkFlowNode upstream)
             throws Exception {
         Object args = this.prepare(jobDO);
-        WorkFlowNode workflowNode = addWorkFlowNode(workflow, jobDO.getJobType(), args);
+        int index = upstream.getIndex();
+        WorkFlowNode workflowNode =
+                addWorkFlowNode(
+                        workflow, Collections.singletonList(index), jobDO.getJobType(), args);
 
         List<WorkFlowBuilderDependencyHandler> handlers =
                 jobWorkflowBuilderManager.getHandler(jobDO.getJobType());
@@ -52,12 +56,13 @@ public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
         }
     }
 
-    private WorkFlowNode addWorkFlowNode(WorkFlow workflow, String jobType, Object args)
+    private WorkFlowNode addWorkFlowNode(
+            WorkFlow workflow, List<Integer> upstreams, String jobType, Object args)
             throws Exception {
         // args
         String argsAsString = ObjectMapperFactory.getObjectMapper().writeValueAsString(args);
         // workflow build
-        return workflow.addWorkFlowNode(null, jobType, argsAsString);
+        return workflow.addWorkFlowNode(upstreams, jobType, argsAsString);
     }
 
     @Override
