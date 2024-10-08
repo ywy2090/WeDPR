@@ -4,6 +4,8 @@ import com.github.pagehelper.PageInfo;
 import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
 import com.webank.wedpr.components.db.mapper.service.publish.dao.PublishedServiceInfo;
 import com.webank.wedpr.components.db.mapper.service.publish.dao.PublishedServiceMapper;
+import com.webank.wedpr.components.db.mapper.service.publish.model.ServiceStatus;
+import com.webank.wedpr.components.hook.ServiceHook;
 import com.webank.wedpr.components.mybatis.PageHelperWrapper;
 import com.webank.wedpr.components.publish.entity.request.PublishCreateRequest;
 import com.webank.wedpr.components.publish.entity.request.PublishSearchRequest;
@@ -18,7 +20,6 @@ import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
 import com.webank.wedpr.core.utils.WeDPRResponse;
 import java.util.List;
-import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +43,9 @@ public class WedprPublishedServiceServiceImpl implements WedprPublishedServiceSe
     @Autowired
     private PublishSyncerApi publishSyncer;
 
+    @Qualifier("serviceHook")
     @Autowired
-    @Qualifier("datasetAsyncExecutor")
-    private Executor executor;
+    private ServiceHook serviceHook;
 
     @Autowired private DatasetMapper datasetMapper;
     @Autowired private PublishedServiceMapper publishedServiceMapper;
@@ -54,9 +55,18 @@ public class WedprPublishedServiceServiceImpl implements WedprPublishedServiceSe
     public WeDPRResponse createPublishService(String username, PublishCreateRequest publishCreate)
             throws Exception {
         publishCreate.setAgency(WeDPRCommonConfig.getAgency());
-        publishCreate.checkServiceConfig(datasetMapper);
+        publishCreate.checkServiceConfig(datasetMapper, username, WeDPRCommonConfig.getAgency());
+        publishCreate.setStatus(ServiceStatus.Publishing.getStatus());
         this.publishedServiceMapper.insertServiceInfo(publishCreate);
-        publishSyncer.publishSync(publishCreate.serialize());
+        boolean hasHook = this.serviceHook.onPublish(publishCreate.getServiceType(), publishCreate);
+        // without hook, set the status to success directly
+        if (!hasHook) {
+            PublishedServiceInfo updatedServiceInfo =
+                    new PublishedServiceInfo(publishCreate.getServiceId());
+            updatedServiceInfo.setServiceStatus(ServiceStatus.PublishSuccess);
+            this.publishedServiceMapper.updateServiceInfo(updatedServiceInfo);
+        }
+        // Note: only sync the succeed pir service to other agencies
         return new WeDPRResponse(
                 Constant.WEDPR_SUCCESS,
                 Constant.WEDPR_SUCCESS_MSG,
