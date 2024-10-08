@@ -7,8 +7,8 @@ import lombok.Data;
 
 @Data
 public class GetWedprProjectListRequest {
-    private String ownerAgencyName;
-    private String projectName;
+    private String ownerAgency;
+    private String name;
     private String startTime;
     private String endTime;
     private Integer pageNum = Constant.DEFAULT_PAGE_NUM;

@@ -30,8 +30,8 @@ public class WedprProjectTableServiceImpl
     @Override
     public ListProjectResponse listProject(GetWedprProjectListRequest request) {
         LambdaQueryWrapper<WedprProjectTable> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        String ownerAgencyName = request.getOwnerAgencyName();
-        String projectName = request.getProjectName();
+        String ownerAgencyName = request.getOwnerAgency();
+        String projectName = request.getName();
         String startTimeStr = request.getStartTime();
         String endTimeStr = request.getEndTime();
         Integer pageNum = request.getPageNum();
