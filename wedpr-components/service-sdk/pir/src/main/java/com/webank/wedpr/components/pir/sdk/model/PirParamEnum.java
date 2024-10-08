@@ -26,26 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 public class PirParamEnum {
     @Getter
     @AllArgsConstructor
-    public enum SearchType {
-        SearchValue("SearchValue"),
-        SearchExist("SearchExist");
-        private String value;
-
-        public static SearchType deserialize(String value) {
-            if (StringUtils.isBlank(value)) {
-                return null;
-            }
-            for (SearchType searchType : SearchType.values()) {
-                if (searchType.value.compareToIgnoreCase(value) == 0) {
-                    return searchType;
-                }
-            }
-            return null;
-        }
-    }
-
-    @Getter
-    @AllArgsConstructor
     public enum AlgorithmType {
         idFilter("idFilter"),
         idObfuscation("idObfuscation");
