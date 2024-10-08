@@ -13,17 +13,16 @@
  *
  */
 
-package com.webank.wedpr.components.pir.sdk.model;
+package com.webank.wedpr.components.task.plugin.pir.transport;
 
-import lombok.Data;
+import com.webank.wedpr.components.pir.sdk.model.PirQueryRequest;
+import com.webank.wedpr.core.utils.WeDPRResponse;
 
-/**
- * @author zachma
- * @date 2024/9/3
- */
-@Data
-public class ServiceConfigBody {
-    private String datasetId;
-    private String[] exists;
-    private String[] values;
+public interface PirTopicSubscriber {
+    interface QueryHandler {
+        public abstract WeDPRResponse onQuery(PirQueryRequest pirQueryRequest) throws Exception;
+    }
+
+    public abstract void registerService(String serviceID, QueryHandler queryHandler)
+            throws Exception;
 }

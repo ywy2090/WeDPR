@@ -15,6 +15,8 @@
 
 package com.webank.wedpr.components.task.plugin.pir.core;
 
+import com.webank.wedpr.components.task.plugin.pir.model.PirServiceSetting;
+
 public interface PirDatasetConstructor {
-    public abstract void construct(String datasetID) throws Exception;
+    public abstract void construct(PirServiceSetting serviceSetting) throws Exception;
 }

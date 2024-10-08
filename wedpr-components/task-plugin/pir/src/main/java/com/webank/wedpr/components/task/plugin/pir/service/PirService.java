@@ -15,21 +15,18 @@
 
 package com.webank.wedpr.components.task.plugin.pir.service;
 
-import com.webank.wedpr.components.pir.sdk.core.ObfuscateData;
-import com.webank.wedpr.components.pir.sdk.model.PirParamEnum;
+import com.webank.wedpr.components.pir.sdk.model.PirQueryRequest;
+import com.webank.wedpr.components.task.plugin.pir.model.PirServiceSetting;
 import com.webank.wedpr.core.utils.WeDPRResponse;
 
 public interface PirService {
     /**
      * query the data
      *
-     * @param obfuscateData the query parm
-     * @return the result
+     * @param pirQueryRequest the pir query request
+     * @return the query result
      */
-    public abstract WeDPRResponse query(
-            PirParamEnum.AlgorithmType algorithmType,
-            String datasetID,
-            ObfuscateData obfuscateData);
+    public abstract WeDPRResponse query(PirQueryRequest pirQueryRequest);
 
     /**
      * publish pir service
@@ -37,5 +34,5 @@ public interface PirService {
      * @param datasetID the datasetID
      * @return the result
      */
-    public abstract WeDPRResponse publish(String datasetID);
+    public abstract WeDPRResponse publish(String serviceID, PirServiceSetting pirServiceSetting);
 }

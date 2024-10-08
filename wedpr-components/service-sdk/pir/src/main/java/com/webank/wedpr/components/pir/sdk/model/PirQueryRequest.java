@@ -13,11 +13,10 @@
  *
  */
 
-package com.webank.wedpr.components.pir.sdk.core;
+package com.webank.wedpr.components.pir.sdk.model;
 
+import com.webank.wedpr.components.pir.sdk.core.ObfuscateData;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,17 +24,18 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ObfuscateQueryResult {
-    List<OtResult> otResultList = new ArrayList<>();
-    String datasetID;
-    String algorithmType;
+public class PirQueryRequest {
+    private PirQueryParam queryParam;
+    private ObfuscateData obfuscateData;
 
-    public ObfuscateQueryResult(String datasetID, String algorithmType) {
-        this.datasetID = datasetID;
-        this.algorithmType = algorithmType;
+    public String serialize() throws Exception {
+        return ObjectMapperFactory.getObjectMapper().writeValueAsString(this);
     }
 
-    public static ObfuscateQueryResult deserialize(Object data) throws Exception {
-        return ObjectMapperFactory.getObjectMapper().convertValue(data, ObfuscateQueryResult.class);
+    public static PirQueryRequest deserialize(byte[] data) throws Exception {
+        if (data == null) {
+            return null;
+        }
+        return ObjectMapperFactory.getObjectMapper().readValue(data, PirQueryRequest.class);
     }
 }
