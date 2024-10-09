@@ -109,7 +109,7 @@ create table if not exists `wedpr_project_table`(
     `create_time` DATETIME DEFAULT  CURRENT_TIMESTAMP comment "项目创建时间",
     `last_update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP comment "项目更新时间",
     primary key (`id`),
-    unique index name_index(`name`(128)),
+    index name_index(`name`(128)),
     index owner_index(`owner`(128), `owner_agency`(128)),
     index project_type_index(`project_type`(128)),
     index label_index(`label`(128)),
