@@ -23,6 +23,10 @@ project(':wedpr-components-uuid').projectDir = file('wedpr-components/uuid')
 include(':wedpr-components-sys-config')
 project(':wedpr-components-sys-config').projectDir = file('wedpr-components/meta/sys-config')
 
+include(':wedpr-components-loadbalancer')
+project(':wedpr-components-loadbalancer').projectDir = file('wedpr-components/meta/loadbalancer')
+
+
 include(":wedpr-components-blockchain")
 project(":wedpr-components-blockchain").projectDir = file("wedpr-components/blockchain")
 

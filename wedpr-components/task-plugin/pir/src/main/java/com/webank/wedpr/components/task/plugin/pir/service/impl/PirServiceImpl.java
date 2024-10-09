@@ -58,8 +58,8 @@ import org.springframework.stereotype.Service;
 public class PirServiceImpl implements PirService {
     private static final Logger logger = LoggerFactory.getLogger(PirServiceImpl.class);
 
-    private @Autowired NativeSQLMapper nativeSQLMapper;
-    private @Autowired DatasetMapper datasetMapper;
+    @Autowired private NativeSQLMapper nativeSQLMapper;
+    @Autowired private DatasetMapper datasetMapper;
     @Autowired private HdfsStorageConfig hdfsConfig;
     @Autowired private LocalStorageConfig localStorageConfig;
 
@@ -98,7 +98,7 @@ public class PirServiceImpl implements PirService {
                 new PublishedServiceInfo(pirQueryRequest.getQueryParam().getServiceId());
         // check the service
         List<PublishedServiceInfo> result =
-                this.publishedServiceMapper.queryPublishedService(condition);
+                this.publishedServiceMapper.queryPublishedService(condition, null);
         if (result == null || result.isEmpty()) {
             throw new WeDPRException(
                     "The service "
