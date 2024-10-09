@@ -14,8 +14,10 @@
 package com.webank.wedpr.core.utils;
 
 public class Constant {
+    public static final String URI_SPLITER = "/";
     public static final String STR_SEPARATOR = ",";
-    public static final String AGENCY_CRT_SUFFIX = "agency.crt";
+    public static final String DEFAULT_IV = "1234567890";
+
     public static final String CERT_SCRIPT_EXECUTE_OK = "successful";
     public static final String ZIP_FILE_SUFFIX = ".zip";
     public static Integer WEDPR_SUCCESS = 0;
@@ -70,4 +72,7 @@ public class Constant {
     public static final String PID_FIELD = "pid";
     public static final String DATE_VAR = "datetime";
     public static final String LOG_POSTFIX = ".log";
+
+    public static final String PUBLISH_ID_PREFIX = "s-";
+    public static final String DEFAULT_JOB_GROUP = "wedpr";
 }
