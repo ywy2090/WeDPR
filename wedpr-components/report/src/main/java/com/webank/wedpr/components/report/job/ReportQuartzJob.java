@@ -52,7 +52,7 @@ public class ReportQuartzJob implements Job {
             reportProjectInfo(adminAgency);
             reportJobInfo(adminAgency);
             reportJobDatasteRelationInfo(adminAgency);
-            reportSysConfig(adminAgency);
+            //            reportSysConfig(adminAgency);
         } catch (Exception e) {
             log.warn("report error", e);
         }

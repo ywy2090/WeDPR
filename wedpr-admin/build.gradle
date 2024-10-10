@@ -4,7 +4,8 @@ plugins {
 }
 
 dependencies {
-    compile project(":wedpr-components-initializer")
-    compile project(":wedpr-components-security")
-    compile project(":wedpr-components-admin")
+    implementation project(":wedpr-components-initializer")
+    implementation project(":wedpr-components-security")
+    implementation project(":wedpr-components-admin")
+    implementation project(":wedpr-components-sync")
 }
