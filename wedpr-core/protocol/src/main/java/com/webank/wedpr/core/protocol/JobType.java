@@ -21,6 +21,7 @@ public enum JobType {
     PSI("PSI"),
     MPC("MPC"),
     ML_PSI("ML_PSI"),
+    MPC_PSI("MPC_PSI"),
     MLPreprocessing("PREPROCESSING"),
     FeatureEngineer("FEATURE_ENGINEERING"),
     XGB_TRAIN("XGB_TRAINING"),

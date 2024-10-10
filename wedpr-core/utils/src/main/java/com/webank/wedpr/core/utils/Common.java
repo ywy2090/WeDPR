@@ -99,6 +99,10 @@ public class Common {
         }
     }
 
+    public static boolean isEmptyStr(String str) {
+        return str == null || str.isEmpty();
+    }
+
     public static boolean isNullStr(String str) {
         if (StringUtils.isBlank(str)) {
             return true;
