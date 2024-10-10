@@ -40,11 +40,11 @@ import org.slf4j.LoggerFactory;
 
 public class PirSDKImpl implements PirSDK {
     private static final Logger logger = LoggerFactory.getLogger(PirSDKImpl.class);
+    private final WeDPRTransport transport;
 
-    // TODO: initialize the transport
-    private WeDPRTransport transport;
-
-    public PirSDKImpl() {}
+    public PirSDKImpl(WeDPRTransport transport) {
+        this.transport = transport;
+    }
 
     @Override
     public Pair<WeDPRResponse, PirResult> query(PirQueryParam queryParam) throws Exception {

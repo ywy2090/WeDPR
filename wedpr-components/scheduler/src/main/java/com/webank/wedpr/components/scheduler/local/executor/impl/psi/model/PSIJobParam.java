@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,6 +111,9 @@ public class PSIJobParam {
     }
 
     public static PSIJobParam deserialize(String data) throws Exception {
+        if (StringUtils.isBlank(data)) {
+            throw new WeDPRException("The PSIJobParam must be non-empty!");
+        }
         return ObjectMapperFactory.getObjectMapper().readValue(data, PSIJobParam.class);
     }
 

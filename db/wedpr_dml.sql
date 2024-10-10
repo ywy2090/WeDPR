@@ -1,5 +1,5 @@
 -- the Wizard algorithm template
-insert into `wedpr_config_table`(`config_key`, `config_value`) values("wedpr_algorithm_templates", '{"version":"1.0","templates":[{"name":"PSI","title":"数据对齐","detail":"","version":"1.0"},{"name":"XGB_TRAINING","title":"SecureLGBM训练","detail":"","version":"1.0"},{"name":"XGB_PREDICTING","title":"SecureLGBM预测","detail":"","version":"1.0"}]}');
+insert into `wedpr_config_table`(`config_key`, `config_value`) values("wedpr_algorithm_templates", '{"version":"1.0","templates":[{"name":"PSI","title":"数据对齐","detail":"","version":"1.0"},{"name":"XGB_TRAINING","title":"SecureLGBM训练","detail":"","version":"1.0"},{"name":"XGB_PREDICTING","title":"SecureLGBM预测","detail":"","version":"1.0"}, {"name":"PIR","title":"匿踪查询","detail":"","version":"1.0"}]}');
 
 
 -- the jupyter related host settings

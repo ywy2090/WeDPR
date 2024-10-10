@@ -16,10 +16,13 @@
 package com.webank.wedpr.components.scheduler;
 
 import com.webank.wedpr.components.project.dao.JobDO;
+import com.webank.wedpr.components.scheduler.local.executor.ExecutorManager;
 import java.util.List;
 
 public interface Scheduler {
     void batchKillJobs(List<JobDO> jobs);
 
     void batchRunJobs(List<JobDO> jobs);
+
+    ExecutorManager getExecutorManager();
 }

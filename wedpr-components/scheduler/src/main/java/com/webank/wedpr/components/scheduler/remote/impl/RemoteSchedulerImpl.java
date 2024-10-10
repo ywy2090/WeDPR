@@ -5,6 +5,7 @@ import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
 import com.webank.wedpr.components.scheduler.Scheduler;
 import com.webank.wedpr.components.scheduler.local.executor.ExecuteResult;
+import com.webank.wedpr.components.scheduler.local.executor.ExecutorManager;
 import com.webank.wedpr.components.scheduler.local.executor.impl.ExecutiveContext;
 import com.webank.wedpr.components.scheduler.local.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.scheduler.remote.WorkFlowOrchestrator;
@@ -206,5 +207,10 @@ public class RemoteSchedulerImpl implements Scheduler {
             return;
         }
         onJobSuccess(jobDO, result);
+    }
+
+    @Override
+    public ExecutorManager getExecutorManager() {
+        return null;
     }
 }

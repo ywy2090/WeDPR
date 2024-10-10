@@ -92,6 +92,11 @@ public class LocalSchedulerImpl implements Scheduler {
         }
     }
 
+    @Override
+    public ExecutorManager getExecutorManager() {
+        return jobOrchestrate.getExecutorManager();
+    }
+
     protected void killJob(JobDO jobDO) {
         long startT = System.currentTimeMillis();
         try {
