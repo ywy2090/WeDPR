@@ -113,7 +113,7 @@ public class SchedulerTaskImpl {
         this.jobSyncer.sync(Constant.SYS_USER, JobSyncer.JobAction.KillAction, jobs.serialize());
     }
 
-    protected void scheduleTasksToRun(int concurrency) throws JsonProcessingException {
+    protected void scheduleTasksToRun(int concurrency) throws Exception {
         logger.info("###### scheduleTasksToRun: {}", concurrency);
         // get the running task number
         Set<JobDO> runningJobs =
@@ -149,14 +149,41 @@ public class SchedulerTaskImpl {
             return;
         }
         // in case of been scheduled more than once
-        List<JobDO> jobList = new ArrayList<>(jobsToRun);
+        List<JobDO> jobsToSync = new ArrayList<>();
+        List<JobDO> jobsToExecute = new ArrayList<>();
+        for (JobDO job : jobsToRun) {
+            if (job.getShouldSync()) {
+                jobsToSync.add(job);
+            } else {
+                jobsToExecute.add(job);
+            }
+        }
+        logger.info(
+                "scheduleTasksToRun, syncJobs: {}, jobsToRun: {}, jobsToSync: {}, jobsToExecute: {}",
+                runningJobSize,
+                jobsToRun.size(),
+                jobsToSync.size(),
+                jobsToExecute.size());
+        syncJobs(jobsToSync);
+        executeJobs(jobsToExecute);
+    }
+
+    protected void executeJobs(List<JobDO> jobList) {
+        if (jobList == null || jobList.isEmpty()) {
+            return;
+        }
+        // execute the jobs
+        this.scheduler.batchRunJobs(jobList);
+    }
+
+    protected void syncJobs(List<JobDO> jobList) throws Exception {
+        // No jobs to sync
+        if (jobList == null || jobList.isEmpty()) {
+            return;
+        }
         this.projectMapperWrapper.batchUpdateJobStatus(
                 null, null, jobList, JobStatus.ChainInProgress);
-        logger.info(
-                "scheduleTasksToRun, runningJobs: {}, jobsToRun: {}",
-                runningJobSize,
-                jobsToRun.size());
-        // this.scheduler.batchRunJobs(new ArrayList<>(jobsToRun));
+
         BatchJobList jobs = new BatchJobList(jobList);
         jobs.resetStatus(JobStatus.Running);
         this.jobSyncer.sync(Constant.SYS_USER, JobSyncer.JobAction.RunAction, jobs.serialize());

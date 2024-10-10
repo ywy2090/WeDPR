@@ -22,12 +22,8 @@ import com.webank.wedpr.components.scheduler.local.executor.ExecuteResult;
 import com.webank.wedpr.components.scheduler.local.executor.Executor;
 import com.webank.wedpr.components.scheduler.local.executor.ExecutorManager;
 import com.webank.wedpr.components.scheduler.local.executor.callback.TaskFinishedHandler;
-import com.webank.wedpr.components.scheduler.local.executor.impl.ml.MLExecutor;
 import com.webank.wedpr.components.scheduler.local.executor.impl.model.FileMetaBuilder;
-import com.webank.wedpr.components.scheduler.local.executor.impl.psi.MLPSIExecutor;
-import com.webank.wedpr.components.scheduler.local.executor.impl.psi.PSIExecutor;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
-import com.webank.wedpr.core.protocol.JobType;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
 import java.util.List;
@@ -56,22 +52,6 @@ public class ExecutorManagerImpl implements ExecutorManager {
             ProjectMapperWrapper projectMapperWrapper) {
         this.queryStatusIntervalMs = queryStatusIntervalMs;
         this.projectMapperWrapper = projectMapperWrapper;
-
-        // register the executor
-        PSIExecutor psiExecutor = new PSIExecutor(storage, fileMetaBuilder, jobChecker);
-        registerExecutor(JobType.PSI.getType(), psiExecutor);
-
-        logger.info("register PSIExecutor success");
-        MLPSIExecutor mlpsiExecutor = new MLPSIExecutor(storage, fileMetaBuilder);
-        registerExecutor(JobType.ML_PSI.getType(), mlpsiExecutor);
-
-        logger.info("register ML-PSIExecutor success");
-        MLExecutor mlExecutor = new MLExecutor();
-        registerExecutor(JobType.MLPreprocessing.getType(), mlExecutor);
-        registerExecutor(JobType.FeatureEngineer.getType(), mlExecutor);
-        registerExecutor(JobType.XGB_TRAIN.getType(), mlExecutor);
-        registerExecutor(JobType.XGB_PREDICT.getType(), mlExecutor);
-        logger.info("register MLExecutor success");
         start();
     }
 
@@ -99,6 +79,11 @@ public class ExecutorManagerImpl implements ExecutorManager {
             Executor executor = getExecutor(executiveContext.getJob().getJobType());
             // Note: unreachable here
             if (executor == null) {
+                proceedingJobs.remove(executiveContext);
+                return;
+            }
+            // the job has already been finished(the sync case)
+            if (executiveContext.getJob().getJobResult().getJobStatus().finished()) {
                 proceedingJobs.remove(executiveContext);
                 return;
             }

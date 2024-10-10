@@ -17,8 +17,10 @@ package com.webank.wedpr.components.scheduler.local.config;
 
 import com.webank.wedpr.components.project.JobChecker;
 import com.webank.wedpr.components.project.dao.JobDO;
+import com.webank.wedpr.components.scheduler.local.executor.ExecutorParamChecker;
 import com.webank.wedpr.components.scheduler.local.executor.impl.ml.MLExecutorParamChecker;
 import com.webank.wedpr.components.scheduler.local.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.local.executor.impl.pir.PirExecutorParamChecker;
 import com.webank.wedpr.components.scheduler.local.executor.impl.psi.PSIExecutorParamChecker;
 import com.webank.wedpr.core.protocol.JobType;
 import lombok.Data;
@@ -45,40 +47,26 @@ public class JobCheckerConfig {
     public JobChecker jobChecker() throws Exception {
         JobChecker jobChecker = new JobChecker();
         // register PSI job param checker
-        registerPSIJobChecker(jobChecker, fileMetaBuilder);
+        registerJobChecker(jobChecker, new PSIExecutorParamChecker(fileMetaBuilder));
         logger.info("registerPSIJobChecker success");
         // register ML job param checker
-        registerMLJobChecker(jobChecker, fileMetaBuilder);
+        registerJobChecker(jobChecker, new MLExecutorParamChecker(fileMetaBuilder));
         logger.info("registerMLJobChecker success");
+        registerJobChecker(jobChecker, new PirExecutorParamChecker());
+        logger.info("registerPirJobChecker success");
         return jobChecker;
     }
 
-    public void registerPSIJobChecker(JobChecker jobChecker, FileMetaBuilder fileMetaBuilder) {
-        PSIExecutorParamChecker psiExecutorParamChecker =
-                new PSIExecutorParamChecker(fileMetaBuilder);
-        // register PSI job param checker
-        for (JobType jobType : psiExecutorParamChecker.getJobTypeList()) {
-            jobChecker.registerJobCheckHandler(
-                    jobType,
-                    new JobChecker.JobCheckHandler() {
-                        @Override
-                        public Object checkAndParseParam(JobDO jobDO) throws Exception {
-                            return psiExecutorParamChecker.checkAndParseJob(jobDO);
-                        }
-                    });
-        }
-    }
-
-    public void registerMLJobChecker(JobChecker jobChecker, FileMetaBuilder fileMetaBuilder) {
-        MLExecutorParamChecker mlExecutorParamChecker = new MLExecutorParamChecker(fileMetaBuilder);
+    protected void registerJobChecker(
+            JobChecker jobChecker, ExecutorParamChecker executorParamChecker) {
         // register ML job param checker
-        for (JobType jobType : mlExecutorParamChecker.getJobTypeList()) {
+        for (JobType jobType : executorParamChecker.getJobTypeList()) {
             jobChecker.registerJobCheckHandler(
                     jobType,
                     new JobChecker.JobCheckHandler() {
                         @Override
                         public Object checkAndParseParam(JobDO jobDO) throws Exception {
-                            return mlExecutorParamChecker.checkAndParseJob(jobDO);
+                            return executorParamChecker.checkAndParseJob(jobDO);
                         }
                     });
         }

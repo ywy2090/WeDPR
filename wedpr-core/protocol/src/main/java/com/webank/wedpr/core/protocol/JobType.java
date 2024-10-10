@@ -24,7 +24,8 @@ public enum JobType {
     MLPreprocessing("PREPROCESSING"),
     FeatureEngineer("FEATURE_ENGINEERING"),
     XGB_TRAIN("XGB_TRAINING"),
-    XGB_PREDICT("XGB_PREDICTING");
+    XGB_PREDICT("XGB_PREDICTING"),
+    PIR("PIR");
 
     private final String type;
 
@@ -34,6 +35,14 @@ public enum JobType {
 
     public String getType() {
         return this.type;
+    }
+
+    public boolean shouldSync() {
+        // The pir job no need to sync
+        if (this.ordinal() == PIR.ordinal()) {
+            return false;
+        }
+        return true;
     }
 
     public boolean mlJob() {
