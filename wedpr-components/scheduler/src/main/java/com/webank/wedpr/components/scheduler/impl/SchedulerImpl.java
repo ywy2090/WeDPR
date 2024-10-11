@@ -60,8 +60,7 @@ public class SchedulerImpl implements SchedulerApi {
             if (!jobDO.isJobParty(this.agency)) {
                 continue;
             }
-            // set the job status to killing
-            this.projectMapperWrapper.updateSingleJobStatus(null, null, jobDO, JobStatus.Killing);
+
             threadPoolService
                     .getThreadPool()
                     .execute(
@@ -103,6 +102,8 @@ public class SchedulerImpl implements SchedulerApi {
     protected void killJob(JobDO jobDO) {
         long startT = System.currentTimeMillis();
         try {
+            // set the job status to killing
+            this.projectMapperWrapper.updateSingleJobStatus(null, null, jobDO, JobStatus.Killing);
             logger.info("begin to killJob, detail: {}", jobDO.toString());
             // get the executor
             this.executorManager.kill(jobDO);
