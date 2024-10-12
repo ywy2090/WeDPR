@@ -1,5 +1,5 @@
 <template>
-  <div class="create-data">
+  <div class="create-server-data">
     <el-form :inline="false" @submit="checkService" :model="serverForm" :rules="serverRules" ref="serverForm" size="small">
       <formCard title="基础信息">
         <el-form-item label-width="96px" label="服务名称：" prop="serviceName">
@@ -30,28 +30,30 @@
         ></we-pagination>
       </formCard>
       <formCard title="设置查询规则">
-        <el-form-item label-width="108px" label="查询存在性：" prop="searchType">
-          <el-select v-model="serverForm.searchType" placeholder="请输入" clearable>
-            <el-option label="全部字段" value="all"></el-option>
-            <el-option label="指定字段" value="some"> </el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item v-if="serverForm.searchType === 'some' && selectedData.fieldsList" label-width="108px" label="指定字段：" prop="exists">
-          <el-select multiple style="width: 480px" v-model="serverForm.exists" placeholder="请选择" clearable>
+        <el-form-item label-width="108px" label="查询主键：" prop="idField">
+          <el-select v-model="serverForm.idField" placeholder="请选择" clearable>
             <el-option :label="item" :value="item" :key="item" v-for="item in selectedData.fieldsList"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label-width="108px" label="查询字段值：" prop="searchFieldsType">
-          <el-select v-model="serverForm.searchFieldsType" placeholder="请输入" clearable>
-            <el-option label="全部字段" value="all"></el-option>
-            <el-option label="指定字段" value="some"> </el-option>
-          </el-select>
+        <el-form-item label-width="108px" label="查询类型：" prop="searchType">
+          <el-checkbox-group v-model="serverForm.searchType">
+            <el-checkbox :label="searchTypeEnum.SearchExists">查询存在性</el-checkbox>
+            <el-checkbox :label="searchTypeEnum.SearchValue">查询字段值</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
-        <el-form-item v-if="serverForm.searchFieldsType === 'some' && selectedData.fieldsList" label-width="108px" label="指定字段：" prop="values">
-          <el-select multiple style="width: 480px" v-model="serverForm.values" placeholder="请选择" clearable>
-            <el-option :label="item" :value="item" :key="item" v-for="item in selectedData.fieldsList"></el-option>
-          </el-select>
-        </el-form-item>
+        <div v-if="serverForm.searchType.includes(searchTypeEnum.SearchValue)">
+          <el-form-item label-width="108px" label="查询字段值：" prop="searchFieldsType">
+            <el-select v-model="serverForm.searchFieldsType" placeholder="请输入" clearable>
+              <el-option label="全部字段" value="all"></el-option>
+              <el-option label="指定字段" value="some"> </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="serverForm.searchFieldsType === 'some'" label-width="108px" label="指定字段：" prop="accessibleValueQueryFields">
+            <el-select multiple style="width: 480px" v-model="serverForm.accessibleValueQueryFields" placeholder="请选择" clearable>
+              <el-option :label="item" :value="item" :key="item" v-for="item in selectedData.fieldsList"></el-option>
+            </el-select>
+          </el-form-item>
+        </div>
       </formCard>
     </el-form>
     <div>
@@ -66,7 +68,7 @@ import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import dataCard from '@/components/dataCard.vue'
 import { serviceManageServer, dataManageServer } from 'Api'
 import wePagination from '@/components/wePagination.vue'
-// import { handleParamsValid } from 'Utils/index.js'
+import { searchTypeEnum, serviceTypeEnum } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 export default {
   name: 'pirServerCreate',
@@ -81,10 +83,10 @@ export default {
       serverForm: {
         serviceName: '',
         serviceDesc: '',
-        searchType: '',
+        searchType: [],
         searchFieldsType: '',
-        exists: [],
-        values: []
+        idField: '',
+        accessibleValueQueryFields: []
       },
       pageData: {
         page_offset: 1,
@@ -101,12 +103,14 @@ export default {
       type: '',
       dataList: [],
       selectedData: {},
-      serviceId: ''
+      serviceId: '',
+      searchTypeEnum
     }
   },
 
   created() {
     const { type, serviceId } = this.$route.query
+    console.log(searchTypeEnum, 'searchTypeEnum')
     this.type = type
     if (this.type === 'edit') {
       this.serviceId = serviceId
@@ -133,10 +137,17 @@ export default {
             trigger: 'blur'
           }
         ],
+        idField: [
+          {
+            required: true,
+            message: '请选择查询主键',
+            trigger: 'blur'
+          }
+        ],
         searchType: [
           {
             required: true,
-            message: '请选择查询存在性',
+            message: '请选择查询类型',
             trigger: 'blur'
           }
         ],
@@ -147,16 +158,9 @@ export default {
             trigger: 'blur'
           }
         ],
-        values: [
+        accessibleValueQueryFields: [
           {
             required: this.serverForm.searchFieldsType === 'some',
-            message: '请输入查询字段',
-            trigger: 'blur'
-          }
-        ],
-        exists: [
-          {
-            required: this.serverForm.searchType === 'some',
             message: '请输入查询字段',
             trigger: 'blur'
           }
@@ -169,19 +173,19 @@ export default {
     async queryService() {
       this.loadingFlag = true
       const { serviceId } = this
-      const res = await serviceManageServer.getServerDetail({ serviceId })
+      const params = { condition: {}, serviceIdList: [serviceId], pageNum: 1, pageSize: 1 }
+      const res = await serviceManageServer.getPublishList(params)
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { wedprPublishedService = {} } = res.data
-        const { serviceConfig = '', serviceName, serviceDesc } = wedprPublishedService
-        const { exists = [], values = [], datasetId } = JSON.parse(serviceConfig)
-        this.getDetail({ datasetId })
-        const searchType = exists.includes('*') ? 'all' : 'some'
-        const searchFieldsType = values.includes('*') ? 'all' : 'some'
-        const existsList = searchType === 'all' ? [] : exists
-        const valuesList = searchType === 'all' ? [] : values
-        this.serverForm = { ...this.serverForm, serviceName, serviceDesc, searchType, searchFieldsType, exists: existsList, values: valuesList }
+        const { wedprPublishedServiceList = [] } = res.data
+        const { serviceConfig = '', serviceName, serviceDesc } = wedprPublishedServiceList[0] || {}
+        const { accessibleValueQueryFields = [], datasetId, idField, searchType } = JSON.parse(serviceConfig)
+        await this.getDetail({ datasetId })
+        const handledSearchType = searchTypeEnum.ALL ? [searchTypeEnum.SearchExists, searchTypeEnum.SearchValue] : [searchType]
+        const searchFieldsType = accessibleValueQueryFields.length === this.selectedData.fieldsList.length ? 'all' : 'some'
+        this.serverForm = { ...this.serverForm, serviceName, idField, serviceDesc, searchType: handledSearchType, searchFieldsType, accessibleValueQueryFields }
+        console.log(this.serverForm, 'serverForm')
       }
     },
     // 获取数据集详情
@@ -213,7 +217,10 @@ export default {
       }
     },
     selected(checked, row) {
-      this.serverForm.exists = []
+      this.serverForm.idField = ''
+      this.serverForm.searchType = []
+      this.serverForm.searchFieldsType = ''
+      this.serverForm.accessibleValueQueryFields = []
       if (checked) {
         const fieldsList = row.datasetFields.split(', ')
         this.selectedData = { ...row, fieldsList }
@@ -228,19 +235,16 @@ export default {
             this.$message.error('请选择数据集')
             return
           }
-          const { serviceName, serviceDesc, searchType, searchFieldsType, exists, values } = this.serverForm
+          const { serviceName, serviceDesc, searchFieldsType, idField } = this.serverForm
+          let { accessibleValueQueryFields, searchType } = this.serverForm
+          accessibleValueQueryFields = searchFieldsType === 'all' ? [...this.selectedData.fieldsList] : accessibleValueQueryFields
+          searchType = searchType.length === 2 ? searchTypeEnum.ALL : searchType[0]
           const { datasetId } = this.selectedData
-          if (searchType === 'all') {
-            exists.push('*')
-          }
-          if (searchFieldsType === 'all') {
-            values.push('*')
-          }
-          const serviceConfig = { datasetId, exists, values }
+          const serviceConfig = { searchType, datasetId, accessibleValueQueryFields, idField }
           if (this.type === 'edit') {
-            this.updateService({ serviceId: this.serviceId, serviceName, serviceDesc, serviceConfig: JSON.stringify(serviceConfig), serviceType: 'pir' })
+            this.updateService({ serviceId: this.serviceId, serviceName, serviceDesc, serviceConfig: JSON.stringify(serviceConfig), serviceType: serviceTypeEnum.PIR })
           } else {
-            this.createService({ serviceName, serviceDesc, serviceConfig: JSON.stringify(serviceConfig), serviceType: 'pir' })
+            this.createService({ serviceName, serviceDesc, serviceConfig: JSON.stringify(serviceConfig), serviceType: serviceTypeEnum.PIR })
           }
         } else {
           return false
@@ -250,7 +254,7 @@ export default {
     async getListDataset() {
       const { page_offset, page_size } = this.pageData
       // 仅选择自己的数据
-      const params = { pageNum: page_offset, pageSize: page_size, ownerUserName: this.userId }
+      const params = { pageNum: page_offset, pageSize: page_size, ownerUserName: this.userId, permissionType: 'usable' }
       this.loadingFlag = true
       const res = await dataManageServer.listDataset(params)
       this.loadingFlag = false
@@ -281,11 +285,7 @@ export default {
 }
 </script>
 <style lang="less" scoped>
-div.create-data {
-  .el-checkbox {
-    display: block;
-    margin-bottom: 16px;
-  }
+.create-server-data {
   .card-container {
     overflow: hidden;
   }

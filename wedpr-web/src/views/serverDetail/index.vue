@@ -22,7 +22,7 @@
           <span class="info" :title="serviceInfo.owner"> {{ serviceInfo.owner }} </span>
         </div>
       </div>
-      <div class="whole">
+      <div class="whole" v-if="serviceInfo.serviceType === serviceTypeEnum.PIR">
         <div class="half">
           <span class="title">发布数据：</span>
           <span class="info"> {{ serviceInfo.datasetId }} </span>
@@ -34,10 +34,35 @@
           <span class="info"> {{ serviceInfo.createTime }} </span>
         </div>
       </div>
-      <div class="whole">
+      <div class="whole" v-if="serviceInfo.serviceType === serviceTypeEnum.PIR">
         <div class="half">
           <span class="title">查询规则：</span>
-          <span class="info"> {{ serviceInfo.owner }} </span>
+          <span class="info">
+            <el-table size="small" :data="serviceConfigList" :border="true" class="table-wrap">
+              <el-table-column label="主键" prop="idField" show-overflow-tooltip />
+              <el-table-column label="支持的查询方式" prop="searchType" show-overflow-tooltip>
+                <template v-slot="scope">
+                  <span v-if="scope.row.searchType === searchTypeEnum.ALL">查询存在性，查询字段值</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExists">查询存在性</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchValue">查询字段值</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="可查的字段列表" prop="accessibleValueQueryFields" />
+            </el-table>
+          </span>
+        </div>
+      </div>
+      <div class="whole" v-if="serviceInfo.serviceType !== serviceTypeEnum.PIR">
+        <div class="half">
+          <span class="title">模型内容：</span>
+          <span class="info">
+            <el-table size="small" :data="serviceConfigList" :border="true" class="table-wrap">
+              <el-table-column label="标签提供方" prop="label_provider" show-overflow-tooltip />
+              <el-table-column label="标签字段" prop="label_column" show-overflow-tooltip />
+              <el-table-column label="参与方" prop="participant_agency_list" show-overflow-tooltip />
+              <el-table-column label="模型类型" prop="model_type" />
+            </el-table>
+          </span>
         </div>
       </div>
     </div>
@@ -76,7 +101,7 @@
 <script>
 import { serviceManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
-import { jobStatusList, jobStatusMap } from 'Utils/constant.js'
+import { jobStatusList, jobStatusMap, searchTypeEnum, serviceTypeEnum } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 import wePagination from '@/components/wePagination.vue'
 import serverApply from './serviceApply'
@@ -115,9 +140,12 @@ export default {
       typeList: [],
       jobStatusList,
       jobStatusMap,
+      searchTypeEnum,
+      serviceTypeEnum,
       pageMode: process.env.VUE_APP_MODE,
       showApplyModal: false,
-      serviceId: ''
+      serviceId: '',
+      serviceConfigList: []
     }
   },
   created() {
@@ -150,15 +178,27 @@ export default {
     async queryService() {
       this.loadingFlag = true
       const { serviceId } = this
-      const res = await serviceManageServer.getServerDetail({ serviceId })
+      const params = { condition: {}, serviceIdList: [serviceId], pageNum: 1, pageSize: 1 }
+      const res = await serviceManageServer.getPublishList(params)
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { wedprPublishedService = {} } = res.data
-        const { serviceConfig = '' } = wedprPublishedService
-        const { datasetId, exists = [], values = [] } = JSON.parse(serviceConfig)
-        const ruleDes = this.handleRuleDes(exists, values)
-        this.serviceInfo = { ...wedprPublishedService, datasetId, ruleDes }
+        const { wedprPublishedServiceList = [] } = res.data
+        const { serviceConfig = '', serviceType } = wedprPublishedServiceList[0] || {}
+        const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
+        if (serviceType === serviceTypeEnum.PIR) {
+          this.serviceConfigList = [
+            {
+              searchType,
+              idField,
+              accessibleValueQueryFields
+            }
+          ]
+        } else {
+          this.serviceConfigList = [JSON.parse(serviceConfig)]
+        }
+
+        this.serviceInfo = { ...wedprPublishedServiceList[0], datasetId, serviceType }
         this.getServerUseRecord()
       } else {
         this.serviceInfo = {}
@@ -220,7 +260,8 @@ export default {
       this.getServerUseRecord()
     },
     subApply() {
-      this.showApplyModal = true
+      this.$router.push({ path: '/dataApply', query: { serviceId: this.serviceInfo.serviceId, applyType: 'wedpr_service_auth' } })
+      // this.showApplyModal = true
     },
     closeModal() {
       this.showApplyModal = false

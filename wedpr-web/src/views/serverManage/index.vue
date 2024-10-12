@@ -11,7 +11,12 @@
           <el-input clearable style="width: 160px" v-model="searchForm.owner" placeholder="请输入"> </el-input>
         </el-form-item>
         <el-form-item prop="serviceName" label="服务名称：">
-          <el-input clearable style="width: 160pxcredential / query" v-model="searchForm.serviceName" placeholder="请输入"> </el-input>
+          <el-input clearable style="width: 160px" v-model="searchForm.serviceName" placeholder="请输入"> </el-input>
+        </el-form-item>
+        <el-form-item prop="status" label="发布状态：">
+          <el-select clearable size="small" style="width: 160px" v-model="searchForm.status" placeholder="请选择">
+            <el-option :key="item" v-for="item in servicePulishStatusList" :label="item.label" :value="item.value"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item prop="createDate" label="发布时间：">
           <el-date-picker clearable value-format="yyyy-MM-dd" style="width: 160px" v-model="searchForm.createDate" type="date" placeholder="请选择日期"> </el-date-picker>
@@ -24,53 +29,51 @@
         <el-form-item>
           <el-button type="default" :loading="queryFlag" @click="reset"> 重置 </el-button>
         </el-form-item>
+        <el-form-item>
+          <el-button icon="el-icon-plus" type="primary" @click="startApplySelect"> 批量申请授权 </el-button>
+        </el-form-item>
         <div class="op-container">
           <div class="btn" @click="creatPsi"><img class="icon-btn" src="~Assets/images/lead icon_service1.png" alt="" /> 发布匿踪查询服务</div>
           <div class="btn model" @click="creatModel"><img class="icon-btn" src="~Assets/images/lead icon_service2.png" alt="" /> 发布模型预测服务</div>
         </div>
+        <div class="handle" v-if="showApplySelect">
+          <span>已选{{ selectdDataList.length }}项</span><el-button size="small" :disabled="!selectdDataList.length" type="primary" @click="applyAuth"> 确认申请 </el-button
+          ><el-button size="small" type="info" @click="cancelApply"> 取消 </el-button>
+        </div>
       </el-form>
     </div>
     <div class="card-container">
-      <div @click="getDetail(item)" class="server-con" v-for="item in tableData" :key="item">
-        <img src="~Assets/images/icon_service1.png" alt="" />
-        <dl>
-          <dt>{{ item.serviceName }}</dt>
-          <dd>
-            发布人：<span class="count">{{ item.owner }}</span>
-          </dd>
-          <dd>
-            发布机构：<span class="count">{{ item.agency }}</span>
-          </dd>
-          <dd>
-            服务类型：<span class="count">{{ item.serviceType }}</span>
-          </dd>
-          <dd>
-            创建时间：<span>{{ item.createTime }}</span>
-          </dd>
-        </dl>
-        <div class="edit">
-          <div class="op-con" v-if="item.owner === userId && item.agency === agencyId">
-            <img src="~Assets/images/icon_edit.png" alt="" @click.stop="modifyData(item)" />
-            <img @click.stop="showDeleteModal(item)" src="~Assets/images/icon_delete.png" alt="" />
-          </div>
-          <div class="apply" @click.stop="applyData(item)" v-else>
-            <span>申请使用</span>
-          </div>
-        </div>
-      </div>
+      <serviceCard
+        @selected="(checked) => selected(checked, item)"
+        :selected="selectdDataList.map((v) => v.serviceId).includes(item.serviceId)"
+        @deleteService="showDeleteModal(item)"
+        @modifyData="modifyData(item)"
+        v-for="item in tableData"
+        :serviceInfo="item"
+        :key="item.serviceId"
+      />
     </div>
-    <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
+    <we-pagination
+      :pageSizesOption="[8, 12, 16, 24, 32]"
+      :total="total"
+      :page_offset="pageData.page_offset"
+      :page_size="pageData.page_size"
+      @paginationChange="paginationHandle"
+    ></we-pagination>
   </div>
 </template>
 <script>
 import wePagination from '@/components/wePagination.vue'
 import { serviceManageServer } from 'Api'
 import { handleParamsValid } from 'Utils/index.js'
+import { serviceTypeEnum, servicePulishStatusList } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
+import serviceCard from '@/components/serviceCard.vue'
 export default {
   name: 'serverManage',
   components: {
-    wePagination
+    wePagination,
+    serviceCard
   },
   data() {
     return {
@@ -78,13 +81,15 @@ export default {
         agency: '',
         owner: '',
         serviceName: '',
-        createDate: ''
+        createDate: '',
+        status: ''
       },
       searchQuery: {
         agency: '',
         owner: '',
         serviceName: '',
-        createDate: ''
+        createDate: '',
+        status: ''
       },
       pageData: {
         page_offset: 1,
@@ -94,7 +99,25 @@ export default {
       queryFlag: false,
       tableData: [],
       loadingFlag: false,
-      showAddModal: false
+      showAddModal: false,
+      serviceTypeEnum,
+      serverStatusList: [
+        {
+          label: '发布中',
+          value: 'Publishing'
+        },
+        {
+          label: '发布中',
+          value: 'PublishSuccess'
+        },
+        {
+          label: '发布失败',
+          value: 'PublishFailed'
+        }
+      ],
+      selectdDataList: [],
+      showApplySelect: false,
+      servicePulishStatusList
     }
   },
   computed: {
@@ -104,6 +127,28 @@ export default {
     this.getPublishList()
   },
   methods: {
+    cancelApply() {
+      this.showApplySelect = false
+      this.selectdDataList = []
+      this.dataList = this.dataList.map((v) => {
+        return {
+          ...v,
+          showSelect: false
+        }
+      })
+    },
+    selected(checked, row) {
+      const { serviceId } = row
+      if (checked) {
+        this.selectdDataList.push({ ...row })
+      } else {
+        this.selectdDataList = this.selectdDataList.filter((v) => v.serviceId !== serviceId)
+      }
+    },
+    applyAuth() {
+      const serviceId = encodeURIComponent(this.selectdDataList.map((v) => v.serviceId).join(','))
+      this.$router.push({ path: '/dataApply', query: { serviceId, applyType: 'wedpr_service_auth' } })
+    },
     reset() {
       this.$refs.searchForm.resetFields()
     },
@@ -140,20 +185,39 @@ export default {
         this.getPublishList()
       }
     },
-    // 获取数据集列表
+    startApplySelect() {
+      this.showApplySelect = true
+      this.selectdDataList = []
+      this.filterApplyAbleSelectData()
+    },
+    filterApplyAbleSelectData() {
+      this.tableData = this.tableData.map((v) => {
+        return {
+          ...v,
+          showSelect: true
+        }
+      })
+    },
+    // 获取服务列表
     async getPublishList() {
       const { page_offset, page_size } = this.pageData
       const { agency = '', owner = '', serviceName = '', createDate = '' } = this.searchQuery
       let params = handleParamsValid({ agency, owner, serviceName, createDate })
-      params = { ...params, pageNum: page_offset, pageSize: page_size }
+      params = { condition: { ...params, serviceId: '' }, serviceIdList: [], pageNum: page_offset, pageSize: page_size }
       this.loadingFlag = true
       const res = await serviceManageServer.getPublishList(params)
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { wedprPublishedServiceList = [], totalCount } = res.data
-        this.tableData = wedprPublishedServiceList
-        this.total = totalCount
+        const { wedprPublishedServiceList = [], total } = res.data
+        this.tableData = wedprPublishedServiceList.map((v) => {
+          return {
+            ...v,
+            isOnwer: v.owner === this.userId && v.agency === this.agencyId,
+            showSelect: false
+          }
+        })
+        this.total = total
       } else {
         this.tableData = []
         this.total = 0
@@ -171,17 +235,19 @@ export default {
     creatModel() {
       this.$router.push({ path: '/modelServerCreate' })
     },
-    getDetail(data) {
-      const { serviceId, type } = data
-      this.$router.push({ path: '/serverDetail', query: { serviceId, serverType: type } })
-    },
-    applyData(item) {
-      const { serviceId } = item
-      this.$router.push({ path: '/serverDetail', query: { serviceId, type: 'apply' } })
-    },
+
     modifyData(item) {
-      const { serviceId } = item
-      this.$router.push({ path: '/pirServerCreate', query: { type: 'edit', serviceId } })
+      const { serviceId, serviceType } = item
+      switch (serviceType) {
+        case serviceTypeEnum.PIR:
+          this.$router.push({ path: '/pirServerCreate', query: { type: 'edit', serviceId } })
+          break
+        case serviceTypeEnum.XGB:
+          this.$router.push({ path: '/modelServerCreate', query: { type: 'edit', serviceId } })
+          break
+        default:
+          break
+      }
     }
   }
 }
@@ -218,73 +284,15 @@ div.card-container {
   margin-right: -16px;
   overflow: hidden;
 }
-div.server-con {
-  border: 1px solid #e0e4ed;
-  padding: 20px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  float: left;
-  width: calc(25% - 32px);
-  background-color: #f6f8fc;
-  margin: 20px 16px;
-  cursor: pointer;
-  min-width: 240px;
-  img {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 16px;
+div.handle {
+  span {
+    width: 75px;
+    color: #787b84;
+    float: left;
+    line-height: 32px;
   }
-  dl {
-    dt {
-      font-size: 16px;
-      line-height: 24px;
-      color: #262a32;
-      font-weight: bolder;
-      margin-bottom: 16px;
-    }
-    dd {
-      font-size: 12px;
-      line-height: 24px;
-      margin-bottom: 4px;
-      color: #787b84;
-      span {
-        float: right;
-      }
-    }
+  ::v-deep .el-button--small {
+    margin-left: 10px;
   }
-  div.edit {
-    margin-top: 28px;
-  }
-  .op-con {
-    display: flex;
-    justify-content: space-around;
-    height: auto;
-    img {
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-      margin-bottom: 0;
-    }
-  }
-  div.apply {
-    border: 1px solid #b3b5b9;
-    margin-bottom: -4px;
-    margin-top: -4px;
-    height: 32px;
-    padding: 5px 12px;
-    text-align: center;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    span {
-      display: flex;
-      align-items: center;
-    }
-  }
-}
-div.server-con:hover {
-  box-shadow: 0px 2px 10px 2px #00000014;
-  cursor: pointer;
 }
 </style>

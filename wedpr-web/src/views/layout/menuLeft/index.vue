@@ -21,12 +21,13 @@
         <div class="img-con">
           <img v-if="defaultIndex === menu.name" :src="bindIcon(menu.icon_active_src)" alt="" class="icon-tab" />
           <img v-else :src="bindIcon(menu.icon_src)" alt="" class="icon-tab" />
-          <span class="todo" v-if="menu.name === 'approveManage' && todoNum">{{ todoNum > 99 ? '99+' : todoNum }}</span>
+          <span class="todo" v-if="menu.name === 'approveManage' && todoNum && isCollapse">{{ todoNum > 99 ? '99+' : todoNum }}</span>
         </div>
 
         <template #title>
-          <span class="menu-text">{{ menu.text }}</span>
-          <span class="todo" v-if="menu.name === 'approveManage' && todoNum">{{ todoNum > 99 ? '99+' : todoNum }}</span>
+          <span class="menu-text"
+            >{{ menu.text }}<span class="todo after-title" v-if="menu.name === 'approveManage' && todoNum">{{ todoNum > 99 ? '99+' : todoNum }}</span></span
+          >
         </template>
       </el-menu-item>
     </div>
@@ -267,5 +268,9 @@ span.todo {
   color: white;
   line-height: 16px;
   font-size: 10px;
+}
+span.after-title {
+  position: static;
+  margin-left: 6px
 }
 </style>

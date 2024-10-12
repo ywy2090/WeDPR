@@ -26,7 +26,7 @@
     <div class="con">
       <div class="title-radius">项目内任务</div>
     </div>
-    <div class="form-search" v-if="total">
+    <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
         <el-form-item prop="jobType" label="任务类型：">
           <el-select style="width: 160px" v-model="searchForm.jobType" placeholder="请选择" clearable>
@@ -130,24 +130,11 @@ export default {
     const { projectName } = this.$route.query
     this.projectName = projectName
     projectName && this.queryProject()
-    this.setCookie('tokenTest', 'sdjakskjahfkjsafk', 2, '.com')
   },
   computed: {
     ...mapGetters(['algList', 'agencyList'])
   },
   methods: {
-    // 设置Cookie函数
-    setCookie(name, value, days, domain) {
-      let expires = ''
-
-      if (days) {
-        const date = new Date()
-        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000)
-        expires = '; expires=' + date.toUTCString()
-      }
-      const domainPart = domain ? '; domain=' + domain : ''
-      document.cookie = name + '=' + (value || '') + expires + domainPart + '; path=/'
-    },
     handleData(key) {
       const data = this.algList.filter((v) => v.value === key)
       return data[0] || {}
@@ -240,6 +227,7 @@ export default {
   width: 42px;
   height: auto;
   vertical-align: middle;
+  border-radius: 6px;
   margin-right: 10px;
 }
 div.con {

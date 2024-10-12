@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- 上传完成 -->
     <div :class="className" v-if="showInfo">
       <div class="title">
         <img src="~Assets/images/icon_data.png" alt="" />
@@ -24,11 +25,14 @@
         <li>
           数据来源 <span :title="dataInfo.ownerAgencyName">{{ dataInfo.dataSourceType }}</span>
         </li>
+        <li>
+          创建时间 <span :title="dataInfo.createAt">{{ dataInfo.createAt }}</span>
+        </li>
       </ul>
       <div class="edit" v-if="dataInfo.permissions && showEdit && dataInfo.status !== 2">
         <div class="op-con" v-if="dataInfo.isOwner">
           <img v-if="dataInfo.permissions.writable" src="~Assets/images/icon_edit.png" alt="" @click.stop="modifyData(dataInfo)" />
-          <img v-if="dataInfo.permissions.usable" src="~Assets/images/icon_download.png" alt="" @click.stop="downLoadData(dataInfo)" />
+          <!-- <img v-if="dataInfo.permissions.usable" src="~Assets/images/icon_download.png" alt="" @click.stop="downLoadData(dataInfo)" /> -->
           <img @click.stop="deleteData" v-if="dataInfo.permissions.writable" src="~Assets/images/icon_delete.png" alt="" />
         </div>
         <div class="apply" @click.stop="applyData" v-if="!dataInfo.permissions.usable">
@@ -44,7 +48,7 @@
         </div>
       </div>
     </div>
-
+    <!-- 上传失败支持重传 -->
     <div :class="className" v-if="showReupload">
       <div class="title">
         <img src="~Assets/images/icon_data.png" alt="" />
@@ -62,7 +66,8 @@
         </div>
       </div>
     </div>
-    <div v-if="showUploading" :class="className" :style="{ backgroundImage: `linear-gradient(to right, #EFFCF6 ${progress}, transparent ${progress}` }">
+    <!-- 上传中展示进度条 -->
+    <div :class="className" v-if="showUploading" :style="{ backgroundImage: `linear-gradient(to right, #EFFCF6 ${progress}, transparent ${progress}` }">
       <div class="title">
         <img src="~Assets/images/icon_data.png" alt="" />
         <span :title="dataInfo.datasetTitle">{{ dataInfo.datasetTitle }}</span>
@@ -70,7 +75,7 @@
         <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
       </div>
       <div
-        style="height: 166px"
+        style="height: 190px"
         class="upload-loading"
         v-loading="true"
         :element-loading-text="'数据资源上传中...' + progress"
@@ -78,6 +83,7 @@
         element-loading-background="transparent"
       ></div>
     </div>
+    <!-- 上传完成后端处理中 -->
     <div :class="className" v-if="showServerDataHandle">
       <div class="title">
         <img src="~Assets/images/icon_data.png" alt="" />
@@ -86,7 +92,7 @@
         <el-checkbox v-if="dataInfo.showSelect" @change="handleSelect" :value="selected"></el-checkbox>
       </div>
       <div
-        style="height: 166px"
+        style="height: 190px"
         class="upload-loading"
         v-loading="true"
         element-loading-text="数据处理中"
@@ -226,7 +232,7 @@ export default {
 div.data-card {
   background: #f6fcf9;
   // width: 314px;
-  max-height: 256px;
+  max-height: 280px;
   border: 1px solid #e0e4ed;
   border-radius: 12px;
   margin: 16px;
@@ -365,8 +371,8 @@ div.data-card {
     color: #787b84;
     text-align: center;
     font-size: 14px;
-    padding-top: 30px;
-    padding-bottom: 20px;
+    padding-top: 42px;
+    padding-bottom: 32px;
     i {
       color: #fea900;
       font-size: 18px;

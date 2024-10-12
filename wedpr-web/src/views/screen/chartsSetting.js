@@ -1,5 +1,3 @@
-import nodeUsable from '../../assets/images/node-usable.png'
-import nodeDisable from '../../assets/images/node-disable.png'
 export const colorList = ['#2F89F3', '#69CB92', '#FFA927', '#739AFC', '#EC744C']
 export const circleOption = {
   tooltip: {
@@ -234,16 +232,17 @@ export const barJobOption = {
     left: 'center',
     bottom: -6,
     textStyle: {
-      color: 'white'
+      color: 'white',
+      fontSize: '10px'
     },
     icon: 'circle',
-    type: 'scroll',
+    // type: 'scroll',
     orient: 'horizontal' // vertical
   },
   grid: {
     left: 0, // 图表距离容器左侧多少距离
     right: 10, // 图表距离容器右侧侧多少距离
-    bottom: 30, // 图表距离容器上面多少距离
+    bottom: 50, // 图表距离容器上面多少距离
     top: 10, // 图表距离容器下面多少距离
     containLabel: true // 防止标签溢出
   },
@@ -306,7 +305,7 @@ export const lineJobOption = {
     show: true, // 是否显示图表背景网格
     left: 0, // 图表距离容器左侧多少距离
     right: 10, // 图表距离容器右侧侧多少距离
-    bottom: 30, // 图表距离容器上面多少距离
+    bottom: 50, // 图表距离容器上面多少距离
     top: 10, // 图表距离容器下面多少距离
     containLabel: true // 防止标签溢出
   },
@@ -314,12 +313,13 @@ export const lineJobOption = {
   legend: {
     data: ['机构1', '机构2', '机构3'],
     textStyle: {
-      color: 'white'
+      color: 'white',
+      fontSize: '10px'
     },
     left: 'center',
     bottom: -6,
     icon: 'circle',
-    type: 'scroll',
+    // type: 'scroll',
     orient: 'horizontal' // vertical
   },
   yAxis: {
@@ -365,7 +365,6 @@ export const graphChartOption = {
     {
       type: 'graph',
       layout: 'none',
-      symbolSize: 50,
       roam: false,
       label: {
         show: true,
@@ -376,111 +375,8 @@ export const graphChartOption = {
       edgeLabel: {
         fontSize: 20
       },
-      data: [
-        {
-          name: 'WeBank',
-          symbol: 'image://' + nodeUsable,
-          symbolSize: [100, 80],
-          x: 300,
-          y: 300
-        },
-        {
-          name: 'SGD',
-          symbol: 'image://' + nodeDisable,
-          symbolSize: [100, 80],
-          x: 800,
-          y: 300
-        },
-        {
-          name: 'WeBank1',
-          symbol: 'image://' + nodeUsable,
-          symbolSize: [100, 80],
-          x: 550,
-          y: 100
-        },
-        {
-          name: 'WeBank2',
-          symbol: 'image://' + nodeUsable,
-          symbolSize: [100, 80],
-          x: 550,
-          y: 500
-        }
-      ],
-      // links: [],
-      links: [
-        {
-          source: 'WeBank',
-          target: 'WeBank2',
-          label: {
-            show: false
-          },
-          lineStyle: {
-            curveness: 0.2,
-            color: '#60a9ff',
-            type: 'dotted'
-          }
-        },
-        {
-          source: 'WeBank',
-          target: 'SGD',
-          label: {
-            show: false
-          },
-          lineStyle: {
-            curveness: 0.2,
-            color: '#60a9ff',
-            type: 'dotted'
-          }
-        },
-        {
-          source: 'WeBank',
-          target: 'WeBank1',
-          label: {
-            show: false
-          },
-          lineStyle: {
-            curveness: 0.2,
-            color: '#60a9ff',
-            type: 'dotted'
-          }
-        },
-        {
-          source: 'WeBank2',
-          target: 'WeBank1',
-          label: {
-            show: false
-          },
-          lineStyle: {
-            curveness: 0.2,
-            color: '#60a9ff',
-            type: 'dotted'
-          }
-        },
-        {
-          source: 'WeBank1',
-          target: 'SGD',
-          label: {
-            show: false
-          },
-          lineStyle: {
-            curveness: 0.2,
-            color: '#ff4d4f',
-            type: 'dotted'
-          }
-        },
-        {
-          source: 'SGD',
-          target: 'WeBank1',
-          label: {
-            show: false
-          },
-          lineStyle: {
-            curveness: -0.2,
-            color: '#ff4d4f',
-            type: 'dotted'
-          }
-        }
-      ],
+      data: [],
+      links: [],
       lineStyle: {
         opacity: 0.9,
         width: 2,

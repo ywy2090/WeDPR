@@ -3,7 +3,7 @@
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
         <el-form-item prop="ownerAgency" label="创建机构：">
-          <el-select filterable clearable style="width: 160px" v-model="searchForm.ownerAgency" remote :remote-method="getProjectNameSelect" placeholder="请输入">
+          <el-select clearable style="width: 160px" v-model="searchForm.ownerAgency" placeholder="请选择">
             <el-option v-for="item in agencyList" :label="item.label" :value="item.value" :key="item.value"></el-option>
           </el-select>
         </el-form-item>
@@ -34,29 +34,35 @@
       <div class="card-container" v-if="tableData.length">
         <div class="card" v-for="item in tableData" :key="item.id" @click="goDetail(item)">
           <div class="bg">
-            <img src="~Assets/images/cover.png" alt="" />
+            <img :src="bindIcon(item.randomIndex)" alt="" />
           </div>
           <div class="info">
             <div class="title">
               <span :title="item.name">{{ item.name }}</span>
             </div>
-            <div class="count-detail">
+            <div class="count-detail" v-if="false">
               <dl>
                 <dt>所属机构</dt>
                 <dd class="ell" :title="item.ownerAgency">{{ item.ownerAgency }}</dd>
               </dl>
               <dl>
-                <dt>机构数量</dt>
-                <dd class="ell">{{ item.agencyCount }}</dd>
+                <dt>所属用户</dt>
+                <dd class="ell">{{ item.owner }}</dd>
               </dl>
               <dl>
-                <dt>数据资源数量</dt>
-                <dd class="ell">{{ item.dataCount }}</dd>
+                <dt>创建时间</dt>
+                <dd class="ell">{{ item.createTime }}</dd>
               </dl>
             </div>
             <ul>
-              <li class="ell">
-                {{ item.owner }} <span>{{ item.createTime }}</span>
+              <li>
+                所属机构 <span>{{ item.ownerAgency }}</span>
+              </li>
+              <li>
+                所属用户 <span>{{ item.owner }}</span>
+              </li>
+              <li>
+                创建时间 <span>{{ item.createTime }}</span>
               </li>
             </ul>
           </div>
@@ -114,6 +120,9 @@ export default {
     this.queryProject()
   },
   methods: {
+    bindIcon(randomIndex) {
+      return require('../../assets/images/cover/pro' + randomIndex + '.png')
+    },
     // 查询
     queryHandle() {
       this.$refs.searchForm.validate((valid) => {
@@ -169,7 +178,12 @@ export default {
       this.loadingFlag = false
       if (res.code === 0 && res.data) {
         const { projectList = [], total } = res.data
-        this.tableData = projectList
+        this.tableData = projectList.map((v) => {
+          return {
+            ...v,
+            randomIndex: Math.ceil(v.id % 7)
+          }
+        })
         this.total = total
       } else {
         this.tableData = []

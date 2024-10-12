@@ -13,6 +13,7 @@
     >
       <el-button v-if="drag" type="text" size="small" class="dragtips"><img src="~Assets/images/upload.png" alt="" /> {{ tips }}</el-button>
       <el-button v-else size="small" type="primary">上传附件</el-button>
+      <slot v-if="drag"></slot>
     </el-upload>
     <el-upload v-if="fileList.length" action="" class="upload-demo" :before-upload="beforeUpload" :on-remove="onRemove" :http-request="uploadCsvHandler" :file-list="fileList">
       <el-button size="small" type="primary">重新上传</el-button>

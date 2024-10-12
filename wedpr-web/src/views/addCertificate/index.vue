@@ -5,7 +5,9 @@
         <el-input disabled style="width: 480px" placeholder="请输入" v-model="dataForm.certId" autocomplete="off"></el-input>
       </el-form-item>
       <el-form-item label-width="124px" label="证书请求文件：" prop="csrFile">
-        <weUpLoad key="dataCsvFile" accept=".csr" tips="将证书文件拖到此处，或点击此处上传" :beforeUpload="beforeUploadCsv" v-model="dataForm.csrFile"></weUpLoad>
+        <weUpLoad key="dataCsvFile" accept=".csr" tips="将证书文件拖到此处，或点击此处上传" :beforeUpload="beforeUploadCsv" v-model="dataForm.csrFile">
+          <p @click.stop="downloadCertTool" class="templateTips">下载证书工具</p>
+        </weUpLoad>
       </el-form-item>
       <el-form-item prop="agencyName" label="绑定机构：" label-width="124px">
         <el-select :disabled="Boolean(certId)" size="small" style="width: 480px" v-model="dataForm.agencyName" placeholder="请选择">
@@ -96,6 +98,17 @@ export default {
         })
       }
     },
+    // 获取证书模板
+    async downloadCertTool() {
+      const res = await certificateManageServer.downloadCertTool()
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        console.log(res)
+        const { certToolName, certToolData } = res.data
+        this.downloadZipByBase64String(certToolData, certToolName)
+        this.$message.success('证书工具下载成功')
+      }
+    },
     base64ToBlob(base64String, csrFileName) {
       const binaryString = window.atob(base64String)
       const len = binaryString.length
@@ -107,6 +120,18 @@ export default {
         type: 'application/csr'
       })
       return new File([blob], csrFileName)
+    },
+    downloadZipByBase64String(base64String, zipName) {
+      const binaryString = window.atob(base64String)
+      const len = binaryString.length
+      const bytes = new Uint8Array(len)
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      const blob = new Blob([bytes], {
+        type: 'application/zip'
+      })
+      this.downloadZip(blob, zipName)
     },
     downloadZip(blob, certName) {
       // 3. 创建下载链接并触发下载
@@ -133,7 +158,7 @@ export default {
       console.log(res)
       if (res.code === 0) {
         this.$message.success('证书更新成功')
-        this.getCertDetail()
+        history.go(-1)
       }
     },
     submit() {
@@ -166,6 +191,13 @@ div.create-cer {
   .el-checkbox {
     display: block;
     margin-bottom: 16px;
+  }
+  .templateTips {
+    color: #3071f2;
+    font-size: 12px;
+    margin-left: 8px;
+    transform: translateY(3px);
+    cursor: pointer;
   }
 }
 </style>

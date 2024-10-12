@@ -198,7 +198,7 @@ export default {
   methods: {
     ...mapMutations([SET_TODONUM]),
     openDetail(row) {
-      this.$router.push({ path: '/approveDetail', query: { authID: row.id } })
+      this.$router.push({ path: '/approveDetail', query: { authID: row.id, applyType: row.applyType } })
     },
     query() {
       const { activeName } = this

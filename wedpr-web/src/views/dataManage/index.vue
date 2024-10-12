@@ -266,7 +266,7 @@ export default {
     applyAuth() {
       const { selectdDataList } = this
       const ids = selectdDataList.map((v) => v.datasetId).join(',')
-      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(ids) } })
+      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(ids), applyType: 'wedpr_data_auth' } })
     },
     // 查询
     queryHandle() {
@@ -349,7 +349,7 @@ export default {
         .catch(() => {})
     },
     dataApply(row) {
-      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(row.datasetId) } })
+      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(row.datasetId), applyType: 'wedpr_data_auth' } })
     },
     selected(checked, row) {
       const { datasetId } = row

@@ -89,11 +89,11 @@
         </el-form-item>
         <el-form-item label-width="96px" label="设定：" prop="setting" v-if="dataForm.datasetVisibility">
           <el-checkbox-group v-model="dataForm.setting">
-            <el-checkbox label="本机构内" value="selfAgency"></el-checkbox>
+            <el-checkbox label="selfAgency">本机构内</el-checkbox>
             <div style="display: flex; align-items: center">
-              <el-checkbox label="本用户组内" value="selfUserGroup"></el-checkbox>
+              <el-checkbox label="selfUserGroup">本用户组内</el-checkbox>
               <el-select
-                v-if="dataForm.setting.includes('本用户组内')"
+                v-if="dataForm.setting.includes('selfUserGroup')"
                 size="small"
                 multiple
                 style="width: 400px; margin-left: 16px; margin-top: -12px"
@@ -105,9 +105,9 @@
               </el-select>
             </div>
             <div style="display: flex; align-items: center">
-              <el-checkbox label="指定机构" value="agencyList"> 指定机构 </el-checkbox>
+              <el-checkbox label="agencyList"> 指定机构 </el-checkbox>
               <el-select
-                v-if="dataForm.setting.includes('指定机构')"
+                v-if="dataForm.setting.includes('agencyList')"
                 size="small"
                 multiple
                 style="width: 400px; margin-left: 16px; margin-top: -12px"
@@ -118,8 +118,8 @@
                 <el-option v-for="item in agencyList" :label="item.label" :value="item.value" :key="item.value"></el-option>
               </el-select>
             </div>
-            <el-checkbox label="指定用户" value="userList"> 指定用户 </el-checkbox>
-            <div v-if="dataForm.setting.includes('指定用户')">
+            <el-checkbox label="userList"> 指定用户 </el-checkbox>
+            <div v-if="dataForm.setting.includes('userList')">
               <div v-for="(item, i) in dataForm.userList" :key="item.agency" style="display: flex; margin-bottom: 18px">
                 <el-select size="small" style="width: 160px; margin-left: 16px" v-model="item.agency" placeholder="请选择机构">
                   <el-option v-for="item in agencyList" :label="item.label" :value="item.value" :key="item.value"></el-option>
@@ -151,7 +151,7 @@
               <el-button type="primary" style="margin: 16px; margin-top: 0" @click="addUser">增加用户</el-button>
             </div>
 
-            <el-checkbox label="全局" value="global"></el-checkbox>
+            <el-checkbox label="global">全局</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </formCard>
@@ -380,9 +380,8 @@ export default {
         const visibilityDetailsData = JSON.parse(visibilityDetails)
         const dataForm = { ...this.dataForm, datasetTitle, datasetDesc, datasetLabel, ...visibilityDetailsData, setting: [] }
         // 回显权限设置
-        Object.keys(this.rangeMap).forEach((key) => {
-          const Value = this.rangeMap[key]
-          if (visibilityDetailsData[Value]) {
+        Object.keys(this.rangeMapLabel).forEach((key) => {
+          if (visibilityDetailsData[key]) {
             dataForm.setting.push(key)
           }
         })
@@ -454,13 +453,13 @@ export default {
     },
     validateSetting(rule, value, callback) {
       if (value && value.length) {
-        if (value.includes('指定机构') && !this.dataForm.agencyList.length) {
+        if (value.includes('agencyList') && !this.dataForm.agencyList.length) {
           return callback(new Error('请选择机构'))
         }
-        if (value.includes('本用户组内') && !this.dataForm.groupIdList.length) {
+        if (value.includes('selfUserGroup') && !this.dataForm.groupIdList.length) {
           return callback(new Error('请选择用户组'))
         }
-        if (value.includes('指定用户')) {
+        if (value.includes('userList')) {
           const validData = this.dataForm.userList.filter((v) => {
             return v.user.length && v.agency
           })

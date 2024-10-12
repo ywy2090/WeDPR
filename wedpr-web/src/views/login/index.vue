@@ -43,7 +43,6 @@ import {
 } from 'Store/mutation-types.js'
 import { loginManageServer, settingManageServer, accountManageServer } from 'Api'
 import { permissionMap } from 'Utils/config.js'
-import { algListFull } from 'Utils/constant.js'
 import { jwtDecode } from 'jwt-decode'
 const sm2 = require('sm-crypto').sm2
 export default {
@@ -164,9 +163,16 @@ export default {
       const res = await settingManageServer.getConfig({ key: 'wedpr_algorithm_templates' })
       if (res.code === 0 && res.data) {
         const realData = JSON.parse(res.data)
-        const supportAlg = realData.templates.map((v) => v.name)
-        console.log(supportAlg, 'supportAlg', realData.templates)
-        this.SET_ALGLIST(algListFull.filter((v) => supportAlg.includes(v.value)))
+        const algList = realData.templates.map((v) => {
+          return {
+            ...v,
+            label: v.title,
+            value: v.name,
+            src: require('../../assets/images/alg/' + v.name + '.png')
+          }
+        })
+        console.log(algList, 'algList', realData.templates)
+        this.SET_ALGLIST(algList)
         this.userAgency()
       }
     },

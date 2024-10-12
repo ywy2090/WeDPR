@@ -81,10 +81,36 @@ export const dataStatusEnum = {
 export const jobEnum = {
   XGB_TRAINING: 'XGB_TRAINING',
   XGB_PREDICTING: 'XGB_PREDICTING',
+  LR_TRAINING: 'LR_TRAINING',
+  LR_PREDICTING: 'LR_PREDICTING',
   PSI: 'PSI',
   SQL: 'SQL',
   PIR: 'PIR'
 }
+
+export const serviceTypeEnum = {
+  PIR: 'pir',
+  XGB: 'xgb',
+  lr: 'lr'
+}
+export const serviceAuthStatus = {
+  Owner: 'Owner',
+  Authorized: 'Authorized',
+  NoPermission: 'NoPermission',
+  Expired: 'Expired'
+}
+export const servicePulishStatus = {
+  Publishing: '发布中',
+  PublishSuccess: '发布成功',
+  PublishFailed: '发布失败'
+}
+
+export const searchTypeEnum = {
+  SearchExists: 'SearchExists',
+  SearchValue: 'SearchValue',
+  ALL: 'ALL'
+}
+
 export const agencyStatusEnum = {
   OPEN: 0,
   CLOSE: 1
@@ -117,80 +143,63 @@ export function mapToList(mapObject) {
   })
   return data
 }
-export const algListFull = [
-  {
-    label: '隐私求交',
-    value: 'PSI',
-    src: require('../assets/images/psi_job.png'),
-    jobSrc: require('../assets/images/PSI.png'),
-    participateNumber: 2
-  },
-  {
-    label: 'SecureLGBM训练',
-    value: 'XGB_TRAINING',
-    src: require('../assets/images/xgbtrain_job.png'),
-    jobSrc: require('../assets/images/XGB.png'),
-    participateNumber: 1,
-    needTagsProvider: true
-  },
-  {
-    label: 'SecureLGBM预测',
-    value: 'XGB_PREDICTING',
-    src: require('../assets/images/xgbpredict_job.png'),
-    jobSrc: require('../assets/images/XGB_2.png'),
-    participateNumber: 1
-  },
-  {
-    label: '连表SQL分析',
-    value: 'SQL',
-    src: require('../assets/images/SQL.png'),
-    jobSrc: require('../assets/images/SQL.png'),
-    participateNumber: 2
-  },
-  {
-    label: '匿踪查询',
-    value: 'PIR',
-    src: require('../assets/images/SQL.png'),
-    jobSrc: require('../assets/images/SQL.png'),
-    participateNumber: 1
-  },
-  // {
-  //   label: '多方XGB建模',
-  //   value: 'XGB_MUL',
-  //   src: require('../assets/images/XGB_MUL.png'),
-  //   jobSrc: require('../assets/images/XGB_MUL.png')
-  // },
-  {
-    label: '两方LR建模',
-    value: 'LR_2',
-    src: require('../assets/images/LR_2.png'),
-    jobSrc: require('../assets/images/LR_2.png')
-  },
-  {
-    label: '多方LR建模',
-    value: 'LR_MUL',
-    src: require('../assets/images/LR_MUL.png'),
-    jobSrc: require('../assets/images/LR_MUL.png')
-  },
-  // {
-  //   label: '多方XGB预测',
-  //   value: 'XGB_PREDICT_MUL',
-  //   src: require('../assets/images/XGB_PREDICT_MUL.png'),
-  //   jobSrc: require('../assets/images/XGB_PREDICT_MUL.png')
-  // },
-  {
-    label: '两方LR预测',
-    value: 'LR',
-    src: require('../assets/images/LR.png'),
-    jobSrc: require('../assets/images/LR.png')
-  },
-  {
-    label: '多方LR预测',
-    value: 'LR_PREDICT_MUL',
-    src: require('../assets/images/LR_PREDICT_MUL.png'),
-    jobSrc: require('../assets/images/LR_PREDICT_MUL.png')
-  }
-]
+// const data = {
+//   version: '1.0',
+//   templates: [
+//     { name: 'PSI', title: '数据对齐', participateNumber: '2+', detail: '', version: '1.0' },
+//     { name: 'PIR', title: '匿踪查询', participateNumber: '1', detail: '', version: '1.0' },
+//     { name: 'SQL', title: '连表分析', participateNumber: '3+', detail: '', version: '1.0' },
+//     { name: 'MPC', title: '自定义计算', participateNumber: '3+', detail: '', version: '1.0' },
+//     { name: 'XGB_TRAINING', title: 'SecureLGBM训练', participateNumber: '1+', needTagsProvider: true, detail: '', version: '1.0' },
+//     { name: 'XGB_PREDICTING', title: 'SecureLGBM预测', participateNumber: '2+', detail: '', version: '1.0' },
+//     { name: 'LR_TRAINING', title: 'SecureLR建模', participateNumber: '1+', needTagsProvider: true, detail: '', version: '1.0' },
+//     { name: 'LR_PREDICTING', title: 'SecureLR预测', participateNumber: '2+', value: 'LR_PREDICTING', participateNumber: '2+', detail: '', version: '1.0' }
+//   ]
+// }
+// export const algListFull = [
+//   {
+//     label: '数据对齐',
+//     value: 'PSI',
+//     participateNumber: '2+'
+//   },
+//   {
+//     label: 'SecureLGBM训练',
+//     value: 'XGB_TRAINING',
+//     participateNumber: '1+',
+//     needTagsProvider: true
+//   },
+//   {
+//     label: 'SecureLGBM预测',
+//     value: 'XGB_PREDICTING',
+//     participateNumber: '2+'
+//   },
+//   {
+//     label: '连表SQL分析',
+//     value: 'SQL',
+//     participateNumber: '3+'
+//   },
+//   {
+//     label: '自定义计算',
+//     value: 'MPC',
+//     participateNumber: '3+'
+//   },
+//   {
+//     label: '匿踪查询',
+//     value: 'PIR',
+//     participateNumber: '1'
+//   },
+//   {
+//     label: 'SecureLR训练',
+//     value: 'LR_TRAINING',
+//     participateNumber: '1+',
+//     needTagsProvider: true
+//   },
+//   {
+//     label: 'SecureLR预测',
+//     value: 'LR_PREDICTING',
+//     participateNumber: '2+'
+//   }
+// ]
 export const upTypeList = [
   {
     label: 'CSV文件',
@@ -224,3 +233,4 @@ export const approveActionMapList = mapToList(approveActionMap)
 export const jobActionMapList = mapToList(jobActionMap)
 export const certStatusMapList = mapToList(certStatusMap)
 export const certUseMapList = mapToList(certUseStatusMap)
+export const servicePulishStatusList = mapToList(servicePulishStatus)

@@ -9,7 +9,7 @@
             <dd>新增数据</dd>
           </dl>
           <dl @click="goPage('/serverManage')">
-            <dt><img src="~Assets/images/pir.png" /></dt>
+            <dt><img src="~Assets/images/pir_circle.png" /></dt>
             <dd>匿踪查询</dd>
           </dl>
           <dl @click="goPage('/projectManage')">
@@ -21,7 +21,7 @@
             <dd>联合建模</dd>
           </dl>
           <dl @click="goPage('/projectManage')">
-            <dt><img src="~Assets/images/mpc.png" /></dt>
+            <dt><img src="~Assets/images/mpc_circle.png" /></dt>
             <dd>联合计算</dd>
           </dl>
         </div>

@@ -7,17 +7,8 @@
         </el-form-item>
         <div style="float: right">
           <el-form-item prop="agencyName" label="机构名称：">
-            <el-select
-              loading-text="搜索中"
-              filterable
-              style="width: 180px"
-              v-model="searchForm.agencyName"
-              remote
-              :remote-method="getAgencyNameSelect"
-              placeholder="请选择"
-              clearable
-            >
-              <el-option v-for="item in agencyNameSelectList" :label="item.label" :value="item.label" :key="item.label"></el-option>
+            <el-select clearable size="small" style="width: 160px" v-model="searchForm.agencyName" placeholder="请选择">
+              <el-option v-for="item in agencyList" :label="item.label" :value="item.label" :key="item.label"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item prop="agencyId" label="机构编号：">
@@ -85,7 +76,8 @@ import wePagination from '@/components/wePagination.vue'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import { handleParamsValid } from 'Utils/index.js'
 import { certStatusMap, agencyStatusEnum } from 'Utils/constant.js'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapMutations } from 'vuex'
+import { SET_AGENCYLIST } from 'Store/mutation-types.js'
 export default {
   name: 'agencyManage',
   mixins: [tableHeightHandle],
@@ -111,7 +103,6 @@ export default {
       tableData: [],
       showAddModal: false,
       showChangeModal: false,
-      agencyNameSelectList: [],
       agencyIdSelectList: [],
       modifyagencyId: '',
       certStatusMap,
@@ -120,11 +111,13 @@ export default {
   },
   created() {
     this.getAgencyList()
+    this.getAgencyListSelect()
   },
   computed: {
-    ...mapGetters(['userinfo', 'userId'])
+    ...mapGetters(['userinfo', 'userId', 'agencyList'])
   },
   methods: {
+    ...mapMutations([SET_AGENCYLIST]),
     handleStatusChange(agencyStatus, data) {
       const { agencyId } = data
       data.agencyStatus = agencyStatus ? 0 : 1
@@ -148,20 +141,20 @@ export default {
       this.pageData = { ...pageData }
       this.getAgencyList()
     },
-    async getAgencyNameSelect(agencyName) {
-      if (!agencyName) {
-        this.agencyNameSelectList = []
-        return
-      }
-      const res = await agencyManageServer.getAgencyList({ pageSize: 9999, pageNum: 1, agencyName })
+    // 获取机构列表全量
+    async getAgencyListSelect() {
+      const params = { pageNum: 1, pageSize: 999 }
+      const res = await agencyManageServer.getAgencyList(params)
+      console.log(res)
       if (res.code === 0 && res.data) {
         const { wedprAgencyDTOList = [] } = res.data
-        this.agencyNameSelectList = wedprAgencyDTOList.map((v) => {
+        const agencyListSelect = wedprAgencyDTOList.map((v) => {
           return {
             label: v.agencyName,
             value: v.agencyName
           }
         })
+        this.SET_AGENCYLIST(agencyListSelect)
       }
     },
     async getAgencyIdSelect(agencyId) {
@@ -218,6 +211,7 @@ export default {
       if (res.code === 0) {
         this.$message.success('机构删除成功')
         this.getAgencyList()
+        this.getAgencyListSelect()
       }
     },
     async setAgencyStatus(params) {

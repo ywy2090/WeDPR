@@ -157,11 +157,7 @@ export default {
         })
       }
     },
-    paginationHandle() {},
-    subApply() {
-      const { datasetId } = this.dataInfo
-      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(datasetId) } })
-    }
+    paginationHandle() {}
   }
 }
 </script>

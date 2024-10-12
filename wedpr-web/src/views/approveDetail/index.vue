@@ -154,13 +154,15 @@ export default {
         Reject: 'danger',
         Submit: ''
       },
-      active: 1
+      active: 1,
+      applyType: ''
     }
   },
   created() {
-    const { authID } = this.$route.query
+    const { authID, applyType } = this.$route.query
     this.authID = authID
-    this.queryAuthTemplateDetails(['wedpr_data_auth'])
+    this.applyType = applyType
+    this.queryAuthTemplateDetails([applyType])
     authID && this.getDetail()
   },
   computed: {
@@ -177,7 +179,7 @@ export default {
       }
     },
     reApply() {
-      this.$router.push({ path: 'dataApplyModify', query: { authID: this.authID } })
+      this.$router.push({ path: 'dataApplyModify', query: { authID: this.authID, applyType: this.applyType } })
     },
     // 获取审批单详情
     async getDetail() {

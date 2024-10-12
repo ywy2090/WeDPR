@@ -14,6 +14,8 @@ const deleteCert = (params) => http.post('/admin/deleteCert/' + params.certId)
 const downloadCert = (params) => http.get('/admin/downloadCert/' + params.certId)
 // 编辑证书
 const setCert = (params) => http.post('/admin/setCert', params)
+// 下载模板
+const downloadCertTool = (params) => http.get('/admin/downloadCertTool', params)
 
 export default {
   getCertList,
@@ -22,5 +24,6 @@ export default {
   setCert,
   downloadCert,
   getCertDetail,
-  getNoCertAgencyList
+  getNoCertAgencyList,
+  downloadCertTool
 }
