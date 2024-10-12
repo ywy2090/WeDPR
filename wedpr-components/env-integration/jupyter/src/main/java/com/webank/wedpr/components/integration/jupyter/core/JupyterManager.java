@@ -14,12 +14,14 @@
  */
 package com.webank.wedpr.components.integration.jupyter.core;
 
+import com.webank.wedpr.components.integration.jupyter.client.JupyterClient;
+import com.webank.wedpr.components.integration.jupyter.client.impl.JupyterClientImpl;
 import com.webank.wedpr.components.integration.jupyter.dao.JupyterInfoDO;
 import com.webank.wedpr.components.integration.jupyter.dao.JupyterMapper;
 import com.webank.wedpr.components.meta.sys.config.dao.SysConfigMapper;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.utils.WeDPRException;
-import java.util.Arrays;
+import com.webank.wedpr.core.utils.WeDPRResponse;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,22 +30,25 @@ public class JupyterManager {
     private static final Logger logger = LoggerFactory.getLogger(JupyterManager.class);
     private final SysConfigMapper sysConfigMapper;
     private final JupyterMapper jupyterMapper;
+    private final JupyterClient jupyterClient;
 
     public JupyterManager(SysConfigMapper sysConfigMapper, JupyterMapper jupyterMapper) {
         this.sysConfigMapper = sysConfigMapper;
         this.jupyterMapper = jupyterMapper;
+        this.jupyterClient = new JupyterClientImpl(this.sysConfigMapper);
     }
 
-    protected List<String> getJupyterEntryPoints() {
-        List<String> entryPoints =
-                Arrays.asList(
+    protected JupyterHostSetting fetchJupyterHostSettings() throws Exception {
+        JupyterHostSetting jupyterHostSetting =
+                JupyterHostSetting.deserialize(
                         this.sysConfigMapper
-                                .queryConfig(JupyterConfig.getJupyterHostConfiguatinonKey())
-                                .getConfigValue()
-                                .split(JupyterConfig.getJupyterEntrypointSplitter()));
-        // TODO: check the entryPoints
-        entryPoints.removeIf(s -> s.trim().isEmpty());
-        return entryPoints;
+                                .queryConfig(JupyterConfig.getJupyterHostConfigurationKey())
+                                .getConfigValue());
+        if (jupyterHostSetting == null) {
+            return null;
+        }
+        jupyterHostSetting.setJupyterMapper(jupyterMapper);
+        return jupyterHostSetting;
     }
 
     protected List<JupyterInfoDO> queryJupyter(String user, String agency, String id) {
@@ -61,9 +66,38 @@ public class JupyterManager {
     }
 
     // destroy the jupyter for given person
-    public synchronized Integer deleteJupyter(String user, String jupyterID) {
-        logger.info("deleteJupyter, user: {}, jupyterID: {}", user, jupyterID);
-        return this.jupyterMapper.deleteJupyterInfo(jupyterID, user);
+    public synchronized Integer deleteJupyter(String user, String agency, String jupyterID) {
+        try {
+            List<JupyterInfoDO> jupyterList = queryJupyter(user, agency, jupyterID);
+            if (jupyterList == null || jupyterList.isEmpty()) {
+                logger.info(
+                        "deleteJupyter return directly for no jupyter found for the user, user: {}, agency: {}, jupyterID: {}",
+                        user,
+                        agency,
+                        jupyterID);
+                return 0;
+            }
+            // stop the jupyter
+            JupyterInfoDO stoppedJupyter = jupyterList.get(0);
+            WeDPRResponse response = this.jupyterClient.stop(stoppedJupyter);
+            logger.info(
+                    "stopJupyter success, user: {}, agency: {}, jupyter: {}, response: {}",
+                    user,
+                    agency,
+                    stoppedJupyter.toString(),
+                    response.toString());
+
+            logger.info("deleteJupyter, user: {}, jupyterID: {}", user, jupyterID);
+            return this.jupyterMapper.deleteJupyterInfo(jupyterID, user);
+        } catch (Exception e) {
+            logger.warn(
+                    "stopJupyter failed, user: {}, agency: {}, jupyter: {}, error: ",
+                    user,
+                    agency,
+                    jupyterID,
+                    e);
+            return 0;
+        }
     }
 
     protected JupyterInfoDO checkJupyterExistence(String user, String jupyterID) throws Exception {
@@ -81,7 +115,7 @@ public class JupyterManager {
             logger.info("the jupyter is already running, id: {}", jupyterID);
             return result;
         }
-        // TODO: open the jupyter
+        this.jupyterClient.start(result);
         // update the status to running
         updateJupyterStatus(jupyterID, JupyterStatus.Running);
         result.setJupyterStatus(JupyterStatus.Running);
@@ -95,7 +129,7 @@ public class JupyterManager {
             logger.info("the jupyter is already closed, id: {}", jupyterID);
             return result;
         }
-        // TODO: close the jupyter
+        this.jupyterClient.stop(result);
         // update the jupyter to closed
         updateJupyterStatus(jupyterID, JupyterStatus.Closed);
         result.setJupyterStatus(JupyterStatus.Closed);
@@ -112,38 +146,25 @@ public class JupyterManager {
                             + " has already allocated the jupyter, one user can only occupy one jupyter-notebook!");
         }
         // try to allocate the jupyter for new user
-        List<String> accessEntryPoints = getJupyterEntryPoints();
-        if (accessEntryPoints.isEmpty()) {
+        JupyterHostSetting jupyterHostSetting = fetchJupyterHostSettings();
+        if (jupyterHostSetting == null) {
             throw new WeDPRException("No jupyter resource now!");
         }
-        // query the allocated jupyter
-        JupyterInfoDO condition = new JupyterInfoDO(true);
-        String allocatedEntrypoint = null;
-        for (String entrypoint : accessEntryPoints) {
-            condition.setAgency(entrypoint);
-            Integer allocatedCount = jupyterMapper.queryJupyterRecordCount(condition);
-            if (allocatedCount >= JupyterConfig.getMaxJupyterPerHost()) {
-                continue;
-            } else {
-                allocatedEntrypoint = entrypoint;
-            }
+        // try to obtain the jupyter
+        // Note: allocateJupyter will throw exception when allocate failed
+        JupyterInfoDO allocatedJupyter = jupyterHostSetting.allocateJupyter(user, agency);
+        try {
+            this.jupyterClient.create(allocatedJupyter);
+        } catch (Exception e) {
+            // delete the record if start failed
+            this.jupyterMapper.deleteJupyterInfo(allocatedJupyter.getId(), user);
+            throw e;
         }
-        if (allocatedEntrypoint == null) {
-            throw new WeDPRException("Insufficient jupyter resources!");
-        }
+
         logger.info(
-                "allocateJupyter, user: {}, agency: {}, entrypoint: {}",
-                user,
-                agency,
-                allocatedEntrypoint);
-        // insert the information
-        JupyterInfoDO allocatedJupyter = new JupyterInfoDO();
-        allocatedJupyter.setAgency(agency);
-        allocatedJupyter.setOwner(user);
-        allocatedJupyter.setAccessEntry(allocatedEntrypoint);
-        // TODO: set the settings
-        allocatedJupyter.setStatus(JupyterStatus.Ready.getStatus());
-        jupyterMapper.insertJupyterInfo(allocatedJupyter);
+                "Allocate the jupyter success, make it as ready, jupyterInfo: {}",
+                allocatedJupyter.toString());
+        updateJupyterStatus(allocatedJupyter.getId(), JupyterStatus.Ready);
         return allocatedJupyter.getId();
     }
 }

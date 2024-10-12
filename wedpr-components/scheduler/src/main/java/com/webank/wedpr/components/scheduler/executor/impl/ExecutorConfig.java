@@ -32,6 +32,15 @@ public class ExecutorConfig {
     private static String PSI_RESULT_FILE =
             WeDPRConfig.apply("wedpr.executor.psi.result.file.name", "psi_result.csv");
 
+    private static String MPC_PREPARE_FILE_NAME =
+            WeDPRConfig.apply("wedpr.executor.mpc.prepare.file.name", "mpc_prepare.csv");
+
+    private static String MPC_RESULbT_FILE =
+            WeDPRConfig.apply("wedpr.executor.mpc.result.file.name", "mpc_result.csv");
+
+    private static String MPC_OUTPUT_FILE =
+            WeDPRConfig.apply("wedpr.executor.mpc.output.file.name", "mpc_output.txt");
+
     public static String getJobCacheDir() {
         return JOB_CACHE_DIR;
     }
@@ -58,5 +67,9 @@ public class ExecutorConfig {
 
     public static String getDefaultPSIResultPath(String user, String jobID) {
         return WeDPRCommonConfig.getUserJobCachePath(user, jobID, PSI_RESULT_FILE);
+    }
+
+    public static String getMPCPrepareFileName() {
+        return MPC_PREPARE_FILE_NAME;
     }
 }

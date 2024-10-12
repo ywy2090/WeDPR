@@ -19,11 +19,11 @@ import com.webank.wedpr.components.project.dao.JobDO;
 
 public interface Executor {
     // prepare for the job
-    public abstract void prepare(JobDO jobDO) throws Exception;
+    Object prepare(JobDO jobDO) throws Exception;
 
-    public abstract void execute(JobDO jobDO) throws Exception;
+    void execute(JobDO jobDO) throws Exception;
 
-    public abstract void kill(JobDO jobDO) throws Exception;
+    void kill(JobDO jobDO) throws Exception;
 
-    public abstract ExecuteResult queryStatus(String jobID) throws Exception;
+    ExecuteResult queryStatus(String jobID) throws Exception;
 }

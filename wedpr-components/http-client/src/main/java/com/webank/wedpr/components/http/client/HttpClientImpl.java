@@ -15,15 +15,13 @@
 
 package com.webank.wedpr.components.http.client;
 
-import com.webank.wedpr.components.http.client.model.BaseRequest;
-import com.webank.wedpr.components.http.client.model.BaseResponse;
-import com.webank.wedpr.components.http.client.model.BaseResponseFactory;
-import com.webank.wedpr.core.utils.WeDPRException;
+import com.webank.wedpr.core.utils.*;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -44,7 +42,7 @@ public class HttpClientImpl {
             Integer maxConnTotal,
             RequestConfig requestConfig,
             BaseResponseFactory factory) {
-        this.url = HttpClientPool.getUrl(url);
+        this.url = Common.getUrl(url);
         this.maxConnTotal = maxConnTotal;
         this.requestConfig = requestConfig;
         this.factory = factory;
@@ -55,18 +53,22 @@ public class HttpClientImpl {
     }
 
     public BaseResponse executePost(BaseRequest request) throws Exception {
-        return factory.build(executePostAndGetString(request, null));
+        return executePost(request, null);
     }
 
-    public String executePostAndGetString(BaseRequest request, Integer successCode)
+    public BaseResponse executePost(BaseRequest request, Integer successCode) throws Exception {
+        return factory.build(executePostAndGetString(request, successCode));
+    }
+
+    public String executePostAndGetString(String url, String request, Integer successCode)
             throws Exception {
         StringEntity requestEntity = null;
         CloseableHttpResponse response = null;
         try {
             CloseableHttpClient httpClient =
                     HttpClientPool.getHttpClient(this.maxConnTotal, this.requestConfig);
-            HttpPost httpPost = new HttpPost(this.url);
-            requestEntity = new StringEntity(request.serialize());
+            HttpPost httpPost = new HttpPost(url);
+            requestEntity = new StringEntity(request);
             httpPost.setEntity(requestEntity);
             httpPost.setHeader(CONTENT_TYPE_KEY, DEFAULT_CONTENT_TYPE);
             response = httpClient.execute(httpPost);
@@ -74,7 +76,7 @@ public class HttpClientImpl {
                 if (response.getStatusLine().getStatusCode() != successCode) {
                     throw new WeDPRException(
                             "send request: "
-                                    + request.serialize()
+                                    + request
                                     + " failed, status: "
                                     + response.getStatusLine().toString()
                                     + ", detail: "
@@ -84,13 +86,22 @@ public class HttpClientImpl {
             String result = EntityUtils.toString(response.getEntity());
             logger.info(
                     "##### executePostAndGetString, request: {}, response: {}, response: {}",
-                    request.serialize(),
+                    request,
                     result,
-                    response.toString());
+                    response);
             return result;
         } finally {
             releaseResource(response, requestEntity);
         }
+    }
+
+    public String executePostAndGetString(String request, Integer successCode) throws Exception {
+        return executePostAndGetString(this.url, request, successCode);
+    }
+
+    public String executePostAndGetString(BaseRequest request, Integer successCode)
+            throws Exception {
+        return executePostAndGetString(request.serialize(), successCode);
     }
 
     private void releaseResource(CloseableHttpResponse response, StringEntity requestEntity)
@@ -101,23 +112,44 @@ public class HttpClientImpl {
         }
     }
 
-    public BaseResponse execute(String url, boolean delete) throws Exception {
+    public String executeAndGetString(HttpRequestBase httpRequestBase) throws Exception {
         CloseableHttpResponse response = null;
         try {
             CloseableHttpClient httpClient =
                     HttpClientPool.getHttpClient(this.maxConnTotal, this.requestConfig);
-            if (!delete) {
-                HttpGet httpGet = new HttpGet(url);
-                httpGet.setHeader(CONTENT_TYPE_KEY, DEFAULT_CONTENT_TYPE);
-                response = httpClient.execute(httpGet);
-            } else {
-                HttpDelete httpDelete = new HttpDelete(url);
-                httpDelete.setHeader(CONTENT_TYPE_KEY, DEFAULT_CONTENT_TYPE);
-                response = httpClient.execute(httpDelete);
-            }
+
+            httpRequestBase.setHeader(CONTENT_TYPE_KEY, DEFAULT_CONTENT_TYPE);
+            response = httpClient.execute(httpRequestBase);
+
+            return EntityUtils.toString(response.getEntity());
+        } finally {
+            releaseResource(response, null);
+        }
+    }
+
+    public BaseResponse execute(HttpRequestBase httpRequestBase) throws Exception {
+        CloseableHttpResponse response = null;
+        try {
+            CloseableHttpClient httpClient =
+                    HttpClientPool.getHttpClient(this.maxConnTotal, this.requestConfig);
+
+            httpRequestBase.setHeader(CONTENT_TYPE_KEY, DEFAULT_CONTENT_TYPE);
+            response = httpClient.execute(httpRequestBase);
+
             return factory.build(EntityUtils.toString(response.getEntity()));
         } finally {
             releaseResource(response, null);
         }
+    }
+
+    public BaseResponse execute(String url, boolean delete) throws Exception {
+        HttpRequestBase httpRequestBase = null;
+        if (delete) {
+            httpRequestBase = new HttpDelete(url);
+        } else {
+            httpRequestBase = new HttpGet(url);
+        }
+
+        return execute(httpRequestBase);
     }
 }

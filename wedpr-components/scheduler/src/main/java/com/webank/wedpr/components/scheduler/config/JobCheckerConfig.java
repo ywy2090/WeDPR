@@ -17,10 +17,14 @@ package com.webank.wedpr.components.scheduler.config;
 
 import com.webank.wedpr.components.project.JobChecker;
 import com.webank.wedpr.components.project.dao.JobDO;
+import com.webank.wedpr.components.scheduler.executor.ExecutorParamChecker;
 import com.webank.wedpr.components.scheduler.executor.impl.ml.MLExecutorParamChecker;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.executor.impl.mpc.MPCExecutorParamChecker;
+import com.webank.wedpr.components.scheduler.executor.impl.pir.PirExecutorParamChecker;
 import com.webank.wedpr.components.scheduler.executor.impl.psi.PSIExecutorParamChecker;
 import com.webank.wedpr.core.protocol.JobType;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +37,7 @@ import org.springframework.context.annotation.Scope;
 
 @Configuration
 @AutoConfigureAfter(FileMetaBuilderConfig.class)
+@Data
 public class JobCheckerConfig {
     private static final Logger logger = LoggerFactory.getLogger(JobCheckerConfig.class);
     @Autowired private FileMetaBuilder fileMetaBuilder;
@@ -43,40 +48,46 @@ public class JobCheckerConfig {
     public JobChecker jobChecker() throws Exception {
         JobChecker jobChecker = new JobChecker();
         // register PSI job param checker
-        registerPSIJobChecker(jobChecker, fileMetaBuilder);
+        registerJobChecker(jobChecker, new PSIExecutorParamChecker(fileMetaBuilder));
         logger.info("registerPSIJobChecker success");
         // register ML job param checker
-        registerMLJobChecker(jobChecker, fileMetaBuilder);
+        registerJobChecker(jobChecker, new MLExecutorParamChecker(fileMetaBuilder));
         logger.info("registerMLJobChecker success");
+
+        registerJobChecker(jobChecker, new PirExecutorParamChecker());
+        logger.info("registerPirJobChecker success");
+
+        // register MPC job param checker
+        registerMPCJobChecker(jobChecker, fileMetaBuilder);
+        logger.info("registerMPCJobChecker success");
+
         return jobChecker;
     }
 
-    public void registerPSIJobChecker(JobChecker jobChecker, FileMetaBuilder fileMetaBuilder) {
-        PSIExecutorParamChecker psiExecutorParamChecker =
-                new PSIExecutorParamChecker(fileMetaBuilder);
-        // register PSI job param checker
-        for (JobType jobType : psiExecutorParamChecker.getJobTypeList()) {
+    protected void registerJobChecker(
+            JobChecker jobChecker, ExecutorParamChecker executorParamChecker) {
+        // register ML job param checker
+        for (JobType jobType : executorParamChecker.getJobTypeList()) {
             jobChecker.registerJobCheckHandler(
                     jobType,
                     new JobChecker.JobCheckHandler() {
                         @Override
                         public Object checkAndParseParam(JobDO jobDO) throws Exception {
-                            return psiExecutorParamChecker.checkAndParseJob(jobDO);
+                            return executorParamChecker.checkAndParseJob(jobDO);
                         }
                     });
         }
     }
 
-    public void registerMLJobChecker(JobChecker jobChecker, FileMetaBuilder fileMetaBuilder) {
-        MLExecutorParamChecker mlExecutorParamChecker = new MLExecutorParamChecker(fileMetaBuilder);
-        // register ML job param checker
-        for (JobType jobType : mlExecutorParamChecker.getJobTypeList()) {
+    public void registerMPCJobChecker(JobChecker jobChecker, FileMetaBuilder fileMetaBuilder) {
+        MPCExecutorParamChecker mpcExecutorParamChecker = new MPCExecutorParamChecker();
+        for (JobType jobType : mpcExecutorParamChecker.getJobTypeList()) {
             jobChecker.registerJobCheckHandler(
                     jobType,
                     new JobChecker.JobCheckHandler() {
                         @Override
                         public Object checkAndParseParam(JobDO jobDO) throws Exception {
-                            return mlExecutorParamChecker.checkAndParseJob(jobDO);
+                            return mpcExecutorParamChecker.checkAndParseJob(jobDO);
                         }
                     });
         }

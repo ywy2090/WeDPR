@@ -18,10 +18,10 @@ package com.webank.wedpr.components.project.service.impl;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageInfo;
 import com.github.pagehelper.page.PageMethod;
-import com.webank.wedpr.components.dataset.dao.DatasetUserPermissions;
-import com.webank.wedpr.components.dataset.mapper.DatasetMapper;
-import com.webank.wedpr.components.dataset.mapper.DatasetPermissionMapper;
-import com.webank.wedpr.components.dataset.permission.DatasetUserPermissionValidator;
+import com.webank.wedpr.components.db.mapper.dataset.dao.DatasetUserPermissions;
+import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
+import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetPermissionMapper;
+import com.webank.wedpr.components.db.mapper.dataset.permission.DatasetUserPermissionValidator;
 import com.webank.wedpr.components.mybatis.PageHelperWrapper;
 import com.webank.wedpr.components.project.JobChecker;
 import com.webank.wedpr.components.project.dao.JobDO;
@@ -73,12 +73,11 @@ public class ProjectServiceImpl implements ProjectService {
                             .queryProject(Boolean.TRUE, condition);
             if (existedProjects != null && !existedProjects.isEmpty()) {
                 throw new WeDPRException(
-                        "createProject failed for the project "
+                        "The project "
                                 + project.getName()
                                 + " already exists, please try another project name!");
             }
             this.projectMapperWrapper.getProjectMapper().insertProjectInfo(project);
-            // TODO: init the project resource
             logger.info("createProject success, detail: {}", projectDetail.toString());
             response.setData(project.getId());
         } catch (Exception e) {
@@ -88,11 +87,7 @@ public class ProjectServiceImpl implements ProjectService {
                     projectDetail.toString(),
                     e);
             response.setCode(Constant.WEDPR_FAILED);
-            response.setMsg(
-                    "Create project failed for "
-                            + e.getMessage()
-                            + ", project information: "
-                            + projectDetail.toString());
+            response.setMsg(e.getMessage());
         }
         return response;
     }
@@ -299,8 +294,12 @@ public class ProjectServiceImpl implements ProjectService {
             validateUserPermissionToDatasets(user, agency, datasetList);
 
             this.projectMapperWrapper.insertJob(request.getJob());
+
+            String jobId = request.getJob().getId();
+
             logger.info(
-                    "submitJob, user: {}, agency: {}, datasetIds: {}, detail: {}",
+                    "## submitJob, jobId: {}, user: {}, agency: {}, datasetIDs: {}, detail: {}",
+                    jobId,
                     user,
                     agency,
                     datasetList,

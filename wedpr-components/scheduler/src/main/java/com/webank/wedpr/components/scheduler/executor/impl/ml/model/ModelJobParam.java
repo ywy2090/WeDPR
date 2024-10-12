@@ -42,6 +42,7 @@ public class ModelJobParam {
     // the dataset information
     private List<DatasetInfo> dataSetList;
 
+    @JsonIgnore private transient List<String> datasetIDList;
     @JsonIgnore private transient DatasetInfo selfDataset;
     @JsonIgnore private transient DatasetInfo labelProviderDataset;
     @JsonIgnore private transient ModelJobRequest modelRequest = new ModelJobRequest();
@@ -58,6 +59,7 @@ public class ModelJobParam {
         }
         modelRequest.setJobID(jobID);
         for (DatasetInfo datasetInfo : dataSetList) {
+            datasetInfo.setDatasetIDList(datasetIDList);
             datasetInfo.check();
             if (datasetInfo.getReceiveResult()) {
                 modelRequest
@@ -75,12 +77,11 @@ public class ModelJobParam {
     }
 
     public void parseLabelProviderInfo() throws Exception {
+
+        String selfAgency = WeDPRCommonConfig.getAgency();
+
         for (DatasetInfo datasetInfo : dataSetList) {
-            if (datasetInfo
-                            .getDataset()
-                            .getOwnerAgency()
-                            .compareToIgnoreCase(WeDPRCommonConfig.getAgency())
-                    == 0) {
+            if (datasetInfo.getDataset().getOwnerAgency().compareToIgnoreCase(selfAgency) == 0) {
                 this.selfDataset = datasetInfo;
                 if (this.labelProviderDataset != null) {
                     break;
@@ -99,6 +100,7 @@ public class ModelJobParam {
                             + WeDPRCommonConfig.getAgency()
                             + " not set!");
         }
+
         this.modelRequest.setDatasetPath(this.selfDataset.getDataset().getPath());
         if (this.labelProviderDataset == null) {
             throw new WeDPRException("Invalid model job param, Must define the labelProvider");
@@ -231,6 +233,14 @@ public class ModelJobParam {
 
     public void setLabelProviderDataset(DatasetInfo labelProviderDataset) {
         this.labelProviderDataset = labelProviderDataset;
+    }
+
+    public List<String> getDatasetIDList() {
+        return datasetIDList;
+    }
+
+    public void setDatasetIDList(List<String> datasetIDList) {
+        this.datasetIDList = datasetIDList;
     }
 
     public boolean usePSI() {

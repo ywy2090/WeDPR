@@ -15,15 +15,19 @@
 
 package com.webank.wedpr.core.protocol;
 
+import com.webank.wedpr.core.utils.WeDPRException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum JobType {
     PSI("PSI"),
+    MPC("MPC"),
     ML_PSI("ML_PSI"),
+    MPC_PSI("MPC_PSI"),
     MLPreprocessing("PREPROCESSING"),
     FeatureEngineer("FEATURE_ENGINEERING"),
     XGB_TRAIN("XGB_TRAINING"),
-    XGB_PREDICT("XGB_PREDICTING");
+    XGB_PREDICT("XGB_PREDICTING"),
+    PIR("PIR");
 
     private final String type;
 
@@ -33,6 +37,14 @@ public enum JobType {
 
     public String getType() {
         return this.type;
+    }
+
+    public boolean shouldSync() {
+        // The pir job no need to sync
+        if (this.ordinal() == PIR.ordinal()) {
+            return false;
+        }
+        return true;
     }
 
     public boolean mlJob() {
@@ -57,6 +69,21 @@ public enum JobType {
 
     public static Boolean isPSIJob(String jobType) {
         return jobType.compareToIgnoreCase(PSI.getType()) == 0;
+    }
+
+    public static Boolean isMPCJob(String jobType) {
+        return jobType.compareToIgnoreCase(MPC.getType()) == 0;
+    }
+
+    public static ExecutorType getExecutorType(String jobTypeStr) throws Exception {
+        JobType jobType = JobType.deserialize(jobTypeStr);
+        if (jobType == null) {
+            throw new WeDPRException("Invalid empty jobtType!");
+        }
+        if (jobType.ordinal() == PIR.ordinal()) {
+            return ExecutorType.PIR;
+        }
+        return ExecutorType.REMOTE;
     }
 
     public static JobType deserialize(String type) {

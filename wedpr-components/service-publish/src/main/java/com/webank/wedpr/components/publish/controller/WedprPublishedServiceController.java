@@ -4,6 +4,7 @@ import com.webank.wedpr.components.publish.entity.request.PublishCreateRequest;
 import com.webank.wedpr.components.publish.entity.request.PublishSearchRequest;
 import com.webank.wedpr.components.publish.service.WedprPublishedServiceService;
 import com.webank.wedpr.components.token.auth.TokenUtils;
+import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -12,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +43,7 @@ public class WedprPublishedServiceController {
             return wedprPublishService.createPublishService(
                     TokenUtils.getLoginUser(request).getUsername(), publishCreate);
         } catch (Exception e) {
-            logger.warn("发布服务失败 error: ", e);
+            logger.warn("PublishCreateRequest error: ", e);
             return new WeDPRResponse(Constant.WEDPR_FAILED, "发布服务失败 error: " + e.getMessage());
         }
     }
@@ -55,17 +55,22 @@ public class WedprPublishedServiceController {
             return wedprPublishService.updatePublishService(
                     TokenUtils.getLoginUser(request).getUsername(), publishRequest);
         } catch (Exception e) {
-            logger.warn("更新已发布的服务 error: ", e);
+            logger.warn("updatePublish error: ", e);
             return new WeDPRResponse(Constant.WEDPR_FAILED, "撤回已发布的服务失败: " + e.getMessage());
         }
     }
 
-    @GetMapping("/list")
-    public WeDPRResponse listPublish(PublishSearchRequest request) {
+    @PostMapping("/list")
+    public WeDPRResponse listPublish(
+            @RequestBody PublishSearchRequest request, HttpServletRequest httpServletRequest) {
         try {
-            return wedprPublishService.listPublishService(request);
+            // Note: anyone can see all published service
+            return wedprPublishService.listPublishService(
+                    TokenUtils.getLoginUser(httpServletRequest).getUsername(),
+                    WeDPRCommonConfig.getAgency(),
+                    request);
         } catch (Exception e) {
-            logger.warn("列出所有的已发布的服务 exception, error: ", e);
+            logger.warn("listPublish exception, error: ", e);
             return new WeDPRResponse(
                     Constant.WEDPR_FAILED, "listPublish failed for " + e.getMessage());
         }
@@ -77,19 +82,8 @@ public class WedprPublishedServiceController {
             return wedprPublishService.revokePublishService(
                     TokenUtils.getLoginUser(request).getUsername(), serviceId);
         } catch (Exception e) {
-            logger.warn("撤回已发布的服务 error: ", e);
+            logger.warn("revokePublish error: ", e);
             return new WeDPRResponse(Constant.WEDPR_FAILED, "撤回已发布的服务失败: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/search/{serviceId}")
-    public WeDPRResponse searchPublish(@PathVariable String serviceId) {
-        try {
-            return wedprPublishService.searchPublishService(serviceId);
-        } catch (Exception e) {
-            logger.warn("searchPublish exception, error: ", e);
-            return new WeDPRResponse(
-                    Constant.WEDPR_FAILED, "createProject failed for " + e.getMessage());
         }
     }
 }

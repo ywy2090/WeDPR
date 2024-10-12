@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 public class DownloadCertResponse {
     private String certName;
-    private String certData;
+    private String certScriptData;
 }

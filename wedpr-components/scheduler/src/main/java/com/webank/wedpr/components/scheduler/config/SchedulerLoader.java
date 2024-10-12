@@ -16,16 +16,26 @@
 package com.webank.wedpr.components.scheduler.config;
 
 import com.webank.wedpr.components.project.JobChecker;
+import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
 import com.webank.wedpr.components.scheduler.SchedulerBuilder;
+import com.webank.wedpr.components.scheduler.client.SchedulerClient;
 import com.webank.wedpr.components.scheduler.core.SchedulerTaskImpl;
+import com.webank.wedpr.components.scheduler.executor.ExecuteResult;
+import com.webank.wedpr.components.scheduler.executor.callback.TaskFinishedHandler;
+import com.webank.wedpr.components.scheduler.executor.impl.ExecutiveContextBuilder;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.executor.impl.pir.PirExecutor;
+import com.webank.wedpr.components.scheduler.executor.impl.remote.RemoteSchedulerExecutor;
+import com.webank.wedpr.components.scheduler.executor.manager.ExecutorManager;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.components.storage.builder.StoragePathBuilder;
 import com.webank.wedpr.components.storage.config.HdfsStorageConfig;
 import com.webank.wedpr.components.storage.config.LocalStorageConfig;
 import com.webank.wedpr.components.sync.ResourceSyncer;
 import com.webank.wedpr.components.sync.config.ResourceSyncerConfig;
+import com.webank.wedpr.core.protocol.ExecutorType;
+import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,18 +63,67 @@ public class SchedulerLoader {
     @Autowired private ResourceSyncer resourceSyncer;
     @Autowired private JobChecker jobChecker;
 
+    @Qualifier("weDPRTransport")
+    @Autowired
+    private WeDPRTransport weDPRTransport;
+
     @Bean(name = "schedulerTaskImpl")
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     @ConditionalOnMissingBean
     public SchedulerTaskImpl schedulerTaskImpl() throws Exception {
+        FileMetaBuilder fileMetaBuilder =
+                new FileMetaBuilder(new StoragePathBuilder(hdfsConfig, localStorageConfig));
         SchedulerTaskImpl schedulerTask =
-                SchedulerBuilder.build(
-                        projectMapperWrapper,
-                        storage,
-                        resourceSyncer,
-                        new FileMetaBuilder(new StoragePathBuilder(hdfsConfig, localStorageConfig)),
-                        jobChecker);
+                SchedulerBuilder.buildSchedulerTask(
+                        projectMapperWrapper, storage, resourceSyncer, fileMetaBuilder, jobChecker);
+        // register the executors
+        if (schedulerTask.getScheduler().getExecutorManager() != null) {
+            logger.info("Register Executor for the ExecutorManager");
+            registerExecutors(schedulerTask.getScheduler().getExecutorManager(), fileMetaBuilder);
+        }
         schedulerTask.start();
         return schedulerTask;
+    }
+
+    protected void registerExecutors(
+            ExecutorManager executorManager, FileMetaBuilder fileMetaBuilder) {
+
+        SchedulerClient schedulerClient = new SchedulerClient();
+        RemoteSchedulerExecutor remoteSchedulerExecutor =
+                new RemoteSchedulerExecutor(schedulerClient, jobChecker, storage, fileMetaBuilder);
+        executorManager.registerExecutor(ExecutorType.REMOTE.getType(), remoteSchedulerExecutor);
+
+        /*
+        // register the executor
+        PSIExecutor psiExecutor = new PSIExecutor(storage, fileMetaBuilder, jobChecker);
+        executorManager.registerExecutor(JobType.PSI.getType(), psiExecutor);
+
+        logger.info("register PSIExecutor success");
+        MLPSIExecutor mlpsiExecutor = new MLPSIExecutor(storage, fileMetaBuilder);
+        executorManager.registerExecutor(JobType.ML_PSI.getType(), mlpsiExecutor);
+
+        logger.info("register ML-PSIExecutor success");
+        MLExecutor mlExecutor = new MLExecutor();
+        executorManager.registerExecutor(JobType.MLPreprocessing.getType(), mlExecutor);
+        executorManager.registerExecutor(JobType.FeatureEngineer.getType(), mlExecutor);
+        executorManager.registerExecutor(JobType.XGB_TRAIN.getType(), mlExecutor);
+        executorManager.registerExecutor(JobType.XGB_PREDICT.getType(), mlExecutor);
+        logger.info("register MLExecutor success");
+        */
+
+        // register the pir executor, TODO: implement the taskFinishHandler
+        executorManager.registerExecutor(
+                ExecutorType.PIR.getType(),
+                new PirExecutor(
+                        weDPRTransport,
+                        new ExecutiveContextBuilder(projectMapperWrapper),
+                        new TaskFinishedHandler() {
+                            @Override
+                            public void onFinish(JobDO jobDO, ExecuteResult result) {
+                                projectMapperWrapper.updateJobResult(
+                                        jobDO.getId(), jobDO.getJobResult().getJobStatus(), null);
+                            }
+                        }));
+        logger.info("register PirExecutor success");
     }
 }

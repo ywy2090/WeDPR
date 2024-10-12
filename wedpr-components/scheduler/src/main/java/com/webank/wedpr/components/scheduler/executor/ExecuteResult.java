@@ -16,10 +16,12 @@
 package com.webank.wedpr.components.scheduler.executor;
 
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
+import lombok.Data;
 import lombok.SneakyThrows;
 
+@Data
 public class ExecuteResult {
-    public static enum ResultStatus {
+    public enum ResultStatus {
         RUNNING("Running"),
         SUCCESS("SUCCESS"),
         FAILED("Failed");
@@ -80,6 +82,7 @@ public class ExecuteResult {
         return this.resultStatus.finished();
     }
 
+    // {"msg":"task is running","resultStatus":"SUCCESS"}
     @SneakyThrows(Exception.class)
     public String serialize() {
         return ObjectMapperFactory.getObjectMapper().writeValueAsString(this);

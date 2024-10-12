@@ -10,6 +10,7 @@ import com.webank.wedpr.components.admin.request.GetWedprProjectListRequest;
 import com.webank.wedpr.components.admin.response.ListProjectResponse;
 import com.webank.wedpr.components.admin.service.WedprProjectTableService;
 import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -24,11 +25,13 @@ public class WedprProjectTableServiceImpl
         extends ServiceImpl<WedprProjectTableMapper, WedprProjectTable>
         implements WedprProjectTableService {
 
+    @Autowired private WedprProjectTableMapper wedprProjectTableMapper;
+
     @Override
     public ListProjectResponse listProject(GetWedprProjectListRequest request) {
         LambdaQueryWrapper<WedprProjectTable> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        String ownerAgencyName = request.getOwnerAgencyName();
-        String projectName = request.getProjectName();
+        String ownerAgencyName = request.getOwnerAgency();
+        String projectName = request.getName();
         String startTimeStr = request.getStartTime();
         String endTimeStr = request.getEndTime();
         Integer pageNum = request.getPageNum();

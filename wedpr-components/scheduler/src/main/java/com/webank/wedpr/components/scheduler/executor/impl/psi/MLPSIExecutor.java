@@ -28,12 +28,13 @@ public class MLPSIExecutor extends PSIExecutor {
     }
 
     @Override
-    public void prepare(JobDO jobDO) throws Exception {
+    public Object prepare(JobDO jobDO) throws Exception {
         // get the jobParam
         PSIJobParam psiJobParam =
                 ((ModelJobParam) jobDO.getJobParam())
                         .toPSIJobParam(this.fileMetaBuilder, this.storage);
         psiJobParam.setTaskID(jobDO.getTaskID());
         preparePSIJob(jobDO, psiJobParam);
+        return jobDO.getJobRequest();
     }
 }

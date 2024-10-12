@@ -20,7 +20,7 @@ import com.webank.wedpr.core.protocol.JobType;
 import java.util.List;
 
 public interface ExecutorParamChecker {
-    public abstract List<JobType> getJobTypeList();
+    List<JobType> getJobTypeList();
 
-    public abstract Object checkAndParseJob(JobDO jobDO) throws Exception;
+    Object checkAndParseJob(JobDO jobDO) throws Exception;
 }

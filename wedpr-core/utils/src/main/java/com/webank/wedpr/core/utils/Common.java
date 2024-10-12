@@ -19,11 +19,14 @@ import static com.webank.wedpr.core.utils.Constant.DEFAULT_TIMESTAMP_FORMAT;
 
 import java.io.File;
 import java.lang.reflect.Field;
+import java.math.BigInteger;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
@@ -97,6 +100,10 @@ public class Common {
         }
     }
 
+    public static boolean isEmptyStr(String str) {
+        return str == null || str.isEmpty();
+    }
+
     public static boolean isNullStr(String str) {
         if (StringUtils.isBlank(str)) {
             return true;
@@ -128,7 +135,7 @@ public class Common {
 
     public static int getProcessId(Process process) throws WeDPRException {
         try {
-            Field field = process.getClass().getField(Constant.PID_FIELD);
+            Field field = process.getClass().getDeclaredField(Constant.PID_FIELD);
             field.setAccessible(true);
             return field.getInt(process);
         } catch (Exception e) {
@@ -150,5 +157,73 @@ public class Common {
 
     public static String generateRandomKey() {
         return Base64.getEncoder().encodeToString(UUID.randomUUID().toString().getBytes());
+    }
+
+    public static String getUrl(String url) {
+        if (url.startsWith("http://")) {
+            return url;
+        }
+        return String.format("http://%s", url);
+    }
+
+    public static BigInteger bytesToBigInteger(byte[] bytes) {
+        return new BigInteger(1, bytes);
+    }
+
+    public static byte[] bigIntegerToBytes(BigInteger number) {
+        byte[] bytes = number.toByteArray();
+        if (bytes[0] == 0) {
+            byte[] tmpBytes = new byte[bytes.length - 1];
+            System.arraycopy(bytes, 1, tmpBytes, 0, tmpBytes.length);
+            return tmpBytes;
+        }
+        return bytes;
+    }
+
+    public static void isValidTimestamp(String timestamp) throws WeDPRException {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss");
+            formatter.parse(timestamp);
+        } catch (DateTimeParseException e) {
+            logger.error("illegal timestamp string, timestamp: {}", timestamp);
+            throw new WeDPRException("illegal timestamp string, value: " + timestamp);
+        }
+    }
+
+    public static void isValidDateFormat(String timestamp) throws WeDPRException {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("uuuu-MM-dd");
+            formatter.parse(timestamp);
+        } catch (DateTimeParseException e) {
+            logger.error("illegal date string, timestamp: {}", timestamp);
+            throw new WeDPRException("illegal date string, value: " + timestamp);
+        }
+    }
+
+    public static boolean isDateExpired(String dateString) {
+        return isDateExpired(Constant.DEFAULT_DATE_FORMAT, dateString);
+    }
+
+    public static boolean isDateExpired(String datePattern, String dateString) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(datePattern);
+        LocalDate date = LocalDate.parse(dateString, formatter);
+        LocalDate currentDate = LocalDate.now();
+        return date.isBefore(currentDate);
+    }
+
+    public static String joinAndAddDoubleQuotes(List<String> arrayData) {
+        return arrayData.stream().map(s -> "\'" + s + "\'").collect(Collectors.joining(", "));
+    }
+
+    public static String addDoubleQuotes(String data) {
+        return "\"" + data + "\"";
+    }
+
+    public static Map<String, String> trimAndMapping(Set<String> data) {
+        Map<String, String> mapping = new HashMap<>();
+        for (String item : data) {
+            mapping.put(item.trim(), item);
+        }
+        return mapping;
     }
 }

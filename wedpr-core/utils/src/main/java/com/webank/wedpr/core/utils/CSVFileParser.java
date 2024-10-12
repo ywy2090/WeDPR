@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,42 +45,6 @@ public class CSVFileParser {
             logger.warn("CSVFileParser exception, filePath: {}, error: ", filePath, e);
             throw new WeDPRException("loadCSVFile exception for " + e.getMessage(), e);
         }
-    }
-
-    public static List<List<String>> processCsv2SqlMap(String[] tableFields, String csvFilePath)
-            throws Exception {
-        return (List<List<String>>)
-                loadCSVFile(
-                        csvFilePath,
-                        WeDPRCommonConfig.getReadChunkSize(),
-                        new ParseHandler() {
-                            @Override
-                            public Object call(CSVReaderHeaderAware reader) throws Exception {
-                                Map<String, String> headerInfo = reader.readMap();
-                                Set<String> fields = headerInfo.keySet();
-                                for (String field : tableFields) {
-                                    if (!fields.contains(field.trim())) {
-                                        String errorMsg =
-                                                "extractFields failed for the field "
-                                                        + field
-                                                        + " not existed in the file "
-                                                        + tableFields.toString();
-                                        logger.warn(errorMsg);
-                                        throw new WeDPRException(errorMsg);
-                                    }
-                                }
-                                List<List<String>> resultValue = new ArrayList<>();
-                                Map<String, String> row;
-                                while ((row = reader.readMap()) != null) {
-                                    List<String> rowValue = new ArrayList<>();
-                                    for (String field : tableFields) {
-                                        rowValue.add(row.get(field));
-                                    }
-                                    resultValue.add(rowValue);
-                                }
-                                return resultValue;
-                            }
-                        });
     }
 
     public static Set<String> getFields(String filePath) throws Exception {
@@ -191,9 +156,10 @@ public class CSVFileParser {
                     public Object call(CSVReaderHeaderAware reader) throws Exception {
                         // check the fields
                         Map<String, String> headerInfo = reader.readMap();
-                        Set<String> fields = headerInfo.keySet();
+                        Map<String, String> fieldsMapping =
+                                Common.trimAndMapping(headerInfo.keySet());
                         for (String field : extractConfig.getExtractFields()) {
-                            if (!fields.contains(field.trim())) {
+                            if (!fieldsMapping.keySet().contains(field.trim())) {
                                 String errorMsg =
                                         "extractFields failed for the field "
                                                 + field
@@ -212,7 +178,8 @@ public class CSVFileParser {
                             while ((row = reader.readMap()) != null) {
                                 int column = 0;
                                 for (String field : extractConfig.getExtractFields()) {
-                                    writer.write(row.get(field));
+                                    // Note: the key for row maybe exist blanks
+                                    writer.write(row.get(fieldsMapping.get(field)));
                                     if (column < extractConfig.getExtractFields().size() - 1) {
                                         writer.write(extractConfig.getFieldSplitter());
                                     }
@@ -235,5 +202,37 @@ public class CSVFileParser {
                         return null;
                     }
                 });
+    }
+
+    public static List<List<String>> processCsv2SqlMap(String[] tableFields, String csvFilePath)
+            throws Exception {
+        return (List<List<String>>)
+                loadCSVFile(
+                        csvFilePath,
+                        WeDPRCommonConfig.getReadChunkSize(),
+                        reader -> {
+                            List<List<String>> resultValue = new ArrayList<>();
+                            Map<String, String> row;
+                            while ((row = reader.readMap()) != null) {
+                                List<String> rowValue = new ArrayList<>();
+                                for (String field : tableFields) {
+                                    Map<String, String> rowFieldsMapping =
+                                            Common.trimAndMapping(row.keySet());
+                                    if (!rowFieldsMapping.keySet().contains(field.trim())) {
+                                        String errorMsg =
+                                                "extractFields failed for the field "
+                                                        + field
+                                                        + " not existed in the file "
+                                                        + ArrayUtils.toString(
+                                                                rowFieldsMapping.keySet());
+                                        logger.warn(errorMsg);
+                                        throw new WeDPRException(-1, errorMsg);
+                                    }
+                                    rowValue.add(row.get(rowFieldsMapping.get(field)));
+                                }
+                                resultValue.add(rowValue);
+                            }
+                            return resultValue;
+                        });
     }
 }

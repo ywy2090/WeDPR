@@ -1,7 +1,7 @@
 package com.webank.wedpr.components.dataset.utils;
 
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
-import com.webank.wedpr.components.dataset.dao.UserInfo;
+import com.webank.wedpr.components.db.mapper.dataset.dao.UserInfo;
 import com.webank.wedpr.components.token.auth.TokenUtils;
 import com.webank.wedpr.components.token.auth.model.GroupInfo;
 import com.webank.wedpr.components.token.auth.model.UserToken;
@@ -53,17 +53,12 @@ public class UserTokenUtils {
         String[] splitStrings = token.split("\\|");
 
         List<GroupInfo> groupInfoList = new ArrayList<>();
-        GroupInfo groupInfo = new GroupInfo();
-        groupInfo.setGroupId(splitStrings[2]);
-        groupInfo.setGroupName(splitStrings[2]);
-        groupInfoList.add(groupInfo);
-
         UserInfo userInfo =
                 UserInfo.builder()
                         .role(splitStrings[0])
                         .agency(splitStrings[1])
+                        .user(splitStrings[2])
                         .groupInfos(groupInfoList)
-                        .user(splitStrings[3])
                         .build();
 
         logger.info("debug model, try to solve use info from test field, user: {}", userInfo);

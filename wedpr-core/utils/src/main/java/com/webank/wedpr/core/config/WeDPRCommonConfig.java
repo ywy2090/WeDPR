@@ -16,14 +16,19 @@
 package com.webank.wedpr.core.config;
 
 import com.webank.wedpr.core.utils.Common;
+import com.webank.wedpr.core.utils.WeDPRException;
+import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 
+// Note: Since the WeDPRCommonConfig module is a reusable, it shouldn't require the config to exist
+// when initializing static configuration variables,
+// which will cause some services that do not need to set these configuration to exception.
 public class WeDPRCommonConfig {
     private static final Integer DEFAULT_READ_TRUNK_SIZE = 1024 * 1024;
     private static final Integer DEFAULT_WRITE_TRUNK_SIZE = 1024 * 1024;
     // the agency id
-    private static final String AGENCY = WeDPRConfig.apply("wedpr.agency", null, Boolean.TRUE);
-    private static final String ADMIN_AGENCY =
-            WeDPRConfig.apply("wedpr.admin_agency", "ADMIN", Boolean.TRUE);
+    private static final String AGENCY = WeDPRConfig.apply("wedpr.agency", null);
+    private static final String ADMIN_AGENCY = WeDPRConfig.apply("wedpr.admin_agency", null);
     private static final String FIELD_SPLITTER = WeDPRConfig.apply("wedpr.field.splitter", ",");
 
     private static final Integer READ_CHUNK_SIZE =
@@ -38,12 +43,44 @@ public class WeDPRCommonConfig {
             WeDPRConfig.apply("wedpr.auth.cache.expire.minutes", 30);
     private static final Integer REPORT_TIMEOUT =
             WeDPRConfig.apply("wedpr.report.timeout.seconds", 30);
+    private static final Integer REPORT_TIMEOUT_MS = REPORT_TIMEOUT * 1000;
 
+    //// the param key configuration
+    private static String PARAM_KEY_USER_NAME =
+            WeDPRConfig.apply("wedpr.param.key.user", "user_name");
+    private static String PARAM_KEY_LISTEN_IP =
+            WeDPRConfig.apply("wedpr.param.key.listen_ip", "listen_ip");
+    private static String PARAM_KEY_LISTEN_PORT =
+            WeDPRConfig.apply("wedpr.param.key.listen_port", "listen_port");
+    //// the param key configuration
+
+    //// the key to store the jupyter code template
+    private static String CODE_TEMPLATE_KEY_CREATE_USER =
+            WeDPRConfig.apply("wedpr.code.template.key.create_user", "wedpr_create_user");
+    private static String CODE_TEMPLATE_KEY_DELETE_USER =
+            WeDPRConfig.apply("wedpr.code.template.key.delete", "wedpr_delete_user");
+    //// the key to store the jupyter code template
+
+    private static String WEDPR_WORKER_API_PATH =
+            WeDPRConfig.apply("wedpr.worker.api.path", "/api/wedpr/v3/worker");
+    private static String WEDPR_WORKER_SUBMIT_TASK_METHOD =
+            WeDPRConfig.apply("wedpr.worker.api.method.submit", "submit");
+
+    private static String SHELL_CODE_CONNECTOR = " && ";
+
+    @SneakyThrows
     public static String getAgency() {
+        if (StringUtils.isBlank(AGENCY)) {
+            throw new WeDPRException("Invalid emtpy agency!");
+        }
         return AGENCY;
     }
 
+    @SneakyThrows
     public static String getAdminAgency() {
+        if (StringUtils.isBlank(ADMIN_AGENCY)) {
+            throw new WeDPRException("Invalid emtpy agency!");
+        }
         return ADMIN_AGENCY;
     }
 
@@ -87,7 +124,39 @@ public class WeDPRCommonConfig {
         return AUTH_CACHE_EXPIRE_TIME;
     }
 
-    public static Integer getReportTimeout() {
-        return REPORT_TIMEOUT;
+    public static Integer getReportTimeoutMs() {
+        return REPORT_TIMEOUT_MS;
+    }
+
+    public static String getParamKeyUserName() {
+        return PARAM_KEY_USER_NAME;
+    }
+
+    public static String getParamKeyListenIp() {
+        return PARAM_KEY_LISTEN_IP;
+    }
+
+    public static String getParamKeyListenPort() {
+        return PARAM_KEY_LISTEN_PORT;
+    }
+
+    public static String getCodeTemplateKeyCreateUser() {
+        return CODE_TEMPLATE_KEY_CREATE_USER;
+    }
+
+    public static String getCodeTemplateKeyDeleteUser() {
+        return CODE_TEMPLATE_KEY_DELETE_USER;
+    }
+
+    public static String getShellCodeConnector() {
+        return SHELL_CODE_CONNECTOR;
+    }
+
+    public static String getWedprWorkerApiPath() {
+        return WEDPR_WORKER_API_PATH;
+    }
+
+    public static String getWedprWorkerSubmitTaskMethod() {
+        return WEDPR_WORKER_SUBMIT_TASK_METHOD;
     }
 }

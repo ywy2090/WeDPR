@@ -41,6 +41,7 @@ public class MLExecutorParamChecker implements ExecutorParamChecker {
         ModelJobParam modelJobParam = ModelJobParam.deserialize(jobDO.getParam());
         modelJobParam.setJobID(jobDO.getId());
         modelJobParam.setJobType(jobDO.getType());
+        modelJobParam.setDatasetIDList(jobDO.getDatasetList());
         // check the param
         modelJobParam.check();
         return modelJobParam;

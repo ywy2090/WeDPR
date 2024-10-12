@@ -17,7 +17,7 @@ package com.webank.wedpr.components.scheduler.executor.impl.ml.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.webank.wedpr.components.http.client.model.BaseRequest;
+import com.webank.wedpr.core.utils.BaseRequest;
 import com.webank.wedpr.core.utils.Common;
 import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import java.util.ArrayList;
@@ -79,11 +79,6 @@ public class ModelJobRequest implements BaseRequest {
         this.setLabelProvider(modelJobRequest.getLabelProvider());
     }
 
-    public ModelJobRequest(String jobID, String taskType) {
-        this.jobID = jobID;
-        this.taskType = taskType;
-    }
-
     public String getJobID() {
         return jobID;
     }
@@ -106,6 +101,11 @@ public class ModelJobRequest implements BaseRequest {
 
     public void setDatasetPath(String datasetPath) {
         this.datasetPath = datasetPath;
+
+        if (this.datasetID != null && !datasetID.isEmpty()) {
+            return;
+        }
+
         if (StringUtils.isBlank(this.datasetPath)) {
             return;
         }

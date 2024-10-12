@@ -1,16 +1,16 @@
 package com.webank.wedpr.components.dataset.datasource.processor;
 
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
-import com.webank.wedpr.components.dataset.dao.Dataset;
-import com.webank.wedpr.components.dataset.dao.UserInfo;
 import com.webank.wedpr.components.dataset.datasource.DBType;
 import com.webank.wedpr.components.dataset.datasource.DataSourceMeta;
 import com.webank.wedpr.components.dataset.datasource.category.DBDataSource;
-import com.webank.wedpr.components.dataset.exception.DatasetException;
 import com.webank.wedpr.components.dataset.sqlutils.SQLUtils;
 import com.webank.wedpr.components.dataset.utils.CsvUtils;
 import com.webank.wedpr.components.dataset.utils.FileUtils;
 import com.webank.wedpr.components.dataset.utils.JsonUtils;
+import com.webank.wedpr.components.db.mapper.dataset.dao.Dataset;
+import com.webank.wedpr.components.db.mapper.dataset.dao.UserInfo;
+import com.webank.wedpr.components.db.mapper.dataset.exception.DatasetException;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.components.storage.api.StoragePath;
 import com.webank.wedpr.core.utils.Common;
@@ -162,7 +162,13 @@ public class DBDataSourceProcessor extends CsvDataSourceProcessor {
                     datasetConfig.getDatasetStoragePath(
                             userInfo.getUser(), datasetId, dataSourceMeta.dynamicDataSource());
 
-            StoragePath storagePath = fileStorage.upload(true, csvFilePath, userDatasetPath, false);
+            StoragePath storagePath =
+                    fileStorage.upload(
+                            this.dataSourceProcessorContext.getFilePermissionInfo(),
+                            true,
+                            csvFilePath,
+                            userDatasetPath,
+                            false);
 
             String storagePathStr =
                     ObjectMapperFactory.getObjectMapper().writeValueAsString(storagePath);

@@ -20,8 +20,10 @@ import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -212,8 +214,28 @@ public class WedprCertServiceImpl extends ServiceImpl<WedprCertMapper, WedprCert
         WedprCert wedprCert = checkAgencyCertExist(certId);
         DownloadCertResponse response = new DownloadCertResponse();
         response.setCertName(wedprCert.getAgencyName() + Constant.ZIP_FILE_SUFFIX);
-        response.setCertData(wedprCert.getCertFileText());
+        response.setCertScriptData(wedprCert.getCertFileText());
         return response;
+    }
+
+    @Override
+    public DownloadCertToolResponse downloadCertScript() throws WeDPRException {
+        try (InputStream inputStream =
+                this.getClass().getClassLoader().getResourceAsStream(Utils.CERT_SCRIPT_NAME)) {
+            if (inputStream == null) {
+                log.error("cert tool file not found");
+                throw new WeDPRException(Constant.WEDPR_FAILED, "cert tool file not found");
+            }
+            byte[] bytes = Utils.readInputStream(inputStream);
+            String certToolFileData = Base64.getEncoder().encodeToString(bytes);
+            DownloadCertToolResponse response = new DownloadCertToolResponse();
+            response.setCertToolName(Utils.CERT_SCRIPT_NAME);
+            response.setCertToolData(certToolFileData);
+            return response;
+        } catch (Exception e) {
+            log.error("download cert tool file error", e);
+            throw new WeDPRException(Constant.WEDPR_FAILED, "download cert tool file error");
+        }
     }
 
     private static void setCertStatusQueryParam(

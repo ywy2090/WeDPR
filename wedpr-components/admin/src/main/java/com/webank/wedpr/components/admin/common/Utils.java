@@ -8,8 +8,11 @@ import com.webank.wedpr.core.protocol.UserRoleEnum;
 import com.webank.wedpr.core.utils.Constant;
 import com.webank.wedpr.core.utils.WeDPRException;
 import java.io.*;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -23,6 +26,8 @@ import org.springframework.util.StringUtils;
 /** Created by caryliao on 2024/8/22 22:29 */
 @Slf4j
 public class Utils {
+    public static final String CERT_SCRIPT_NAME = "cert_tool.zip";
+
     public static UserToken checkPermission(HttpServletRequest request) throws WeDPRException {
         UserToken userToken = TokenUtils.getLoginUser(request);
         String username = userToken.getUsername();
@@ -72,10 +77,18 @@ public class Utils {
     }
 
     public static long getDaysDifference(LocalDateTime inputTime) {
-        // 获取当前时间
         LocalDateTime currentTime = LocalDateTime.now();
-        // 计算时间差（以天为单位）
-        return ChronoUnit.DAYS.between(currentTime, inputTime);
+        long secondsDifference = ChronoUnit.SECONDS.between(currentTime, inputTime);
+        double oneDaySeconds = 24 * 3600.0;
+        double daysDifference = secondsDifference / oneDaySeconds;
+        log.info("cert daysDifference:{}", daysDifference);
+        DecimalFormat decimalFormat = (DecimalFormat) NumberFormat.getNumberInstance();
+        decimalFormat.setMinimumFractionDigits(0);
+        decimalFormat.setMaximumFractionDigits(0);
+        decimalFormat.setRoundingMode(RoundingMode.CEILING);
+        Integer daysDifferenceInt = Integer.parseInt(decimalFormat.format(daysDifference));
+        log.info("cert daysDifferenceInt:{}", daysDifferenceInt);
+        return daysDifferenceInt;
     }
 
     public static LocalDateTime getLocalDateTime(String inputTime) {
@@ -164,5 +177,30 @@ public class Utils {
                 return CertStatusViewEnum.EXPIRED_CERT.getStatusValue();
             }
         }
+    }
+
+    public static String getPercentage(int numerator, int denominator, int decimalPlaces) {
+        double result = 0;
+        if (denominator != 0) {
+            result = (double) numerator / denominator;
+        }
+        DecimalFormat decimalFormat = (DecimalFormat) NumberFormat.getNumberInstance();
+        decimalFormat.setMinimumFractionDigits(decimalPlaces);
+        decimalFormat.setMaximumFractionDigits(decimalPlaces);
+        decimalFormat.setRoundingMode(java.math.RoundingMode.HALF_UP);
+        int percentRate = 100;
+        return decimalFormat.format(result * percentRate);
+    }
+
+    public static byte[] readInputStream(InputStream inStream) throws IOException {
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int len = -1;
+        while ((len = inStream.read(buffer)) != -1) {
+            outStream.write(buffer, 0, len);
+        }
+        outStream.close();
+        inStream.close();
+        return outStream.toByteArray();
     }
 }

@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @ConditionalOnProperty(value = "wedpr.storage.type", havingValue = "HDFS")
 @Component("fileStorage")
@@ -55,9 +56,6 @@ public class HDFSStorage implements FileStorageInterface {
                 Configuration hadoopConf = new Configuration();
                 hadoopConf.set(StorageConstant.FS_URI_CONFIG_KEY, hdfsConfig.getUrl());
                 this.fileSystem = FileSystem.get(hadoopConf);
-                // TODO: add hdfs account config
-                // this.fileSystem = FileSystem.get(new URI(hdfsConfig.getUrl()), hadoopConf,
-                // "root");
                 this.hdfsConfig = hdfsConfig;
                 logger.info("connect to hdfs success, hdfsConfig: {}", hdfsConfig);
             } catch (Exception e) {
@@ -163,7 +161,11 @@ public class HDFSStorage implements FileStorageInterface {
     @SneakyThrows(Exception.class)
     @Override
     public StoragePath upload(
-            boolean enforceOverwrite, String localPath, String remotePath, boolean isAbsPath) {
+            FilePermissionInfo filePermissionInfo,
+            boolean enforceOverwrite,
+            String localPath,
+            String remotePath,
+            boolean isAbsPath) {
         logger.debug("update file: {}=>{}", localPath, remotePath);
 
         String remoteAbsPath;
@@ -176,13 +178,29 @@ public class HDFSStorage implements FileStorageInterface {
         handleFsAction(
                 null,
                 "upload",
-                (fsHandlerArgs, fsActionResult) ->
-                        fsHandlerArgs
-                                .getFileSystem()
-                                .copyFromLocalFile(
-                                        enforceOverwrite,
-                                        new Path(localPath),
-                                        new Path(remoteAbsPath)));
+                (fsHandlerArgs, fsActionResult) -> {
+                    fsHandlerArgs
+                            .getFileSystem()
+                            .copyFromLocalFile(
+                                    enforceOverwrite, new Path(localPath), new Path(remoteAbsPath));
+                    if (filePermissionInfo == null) {
+                        return;
+                    }
+                    String group = filePermissionInfo.getGroup();
+                    if (StringUtils.isEmpty(group)) {
+                        group = hdfsConfig.getUser();
+                    }
+                    logger.info(
+                            "upload data and set permission, remotePath: {}, user: {}, group: {}",
+                            remotePath,
+                            filePermissionInfo.getOwner(),
+                            group);
+                    // set the permission
+                    fsHandlerArgs
+                            .getFileSystem()
+                            .setOwner(
+                                    new Path(remoteAbsPath), filePermissionInfo.getOwner(), group);
+                });
 
         HDFSStoragePath hdfsStoragePath = new HDFSStoragePath();
         hdfsStoragePath.setFilePath(remoteAbsPath);

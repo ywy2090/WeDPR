@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
 import com.webank.wedpr.components.project.model.BatchJobList;
-import com.webank.wedpr.components.scheduler.Scheduler;
+import com.webank.wedpr.components.scheduler.api.SchedulerApi;
 import com.webank.wedpr.components.sync.ResourceSyncer;
 import com.webank.wedpr.components.sync.core.ResourceActionRecord;
 import com.webank.wedpr.components.sync.core.ResourceActionRecorderBuilder;
@@ -60,13 +60,13 @@ public class JobSyncer {
     private final ResourceSyncer resourceSyncer;
     private final ProjectMapperWrapper projectMapperWrapper;
     private final ResourceActionRecorderBuilder resourceBuilder;
-    private final Scheduler scheduler;
+    private final SchedulerApi scheduler;
 
     public JobSyncer(
             String agency,
             String resourceType,
             ResourceSyncer resourceSyncer,
-            Scheduler scheduler,
+            SchedulerApi scheduler,
             ProjectMapperWrapper projectMapperWrapper) {
         this.agency = agency;
         this.resourceType = resourceType;
@@ -86,7 +86,7 @@ public class JobSyncer {
         ResourceActionRecord record =
                 this.resourceBuilder.build(resourceID, action.getAction(), resourceContent);
         this.resourceSyncer.sync(trigger, record);
-        logger.debug("Sync resource, ID: {}, content: {}", resourceID, record.toString());
+        logger.info("Sync resource, ID: {}, content: {}", resourceID, record.toString());
         return record.getResourceID();
     }
 

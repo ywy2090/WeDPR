@@ -18,8 +18,14 @@ import com.webank.wedpr.components.crypto.config.CryptoConfig;
 import com.webank.wedpr.components.crypto.impl.AESCrypto;
 import com.webank.wedpr.components.crypto.impl.HashCryptoImpl;
 import com.webank.wedpr.core.utils.WeDPRException;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 public class CryptoToolkitFactory {
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final HashCrypto sha256HashCrypto =
+            CryptoToolkitFactory.buildHashCrypto(CryptoConfig.SHA256_ALGORITHM);
+
     public static SymmetricCrypto buildSymmetricCrypto() throws WeDPRException {
         if (CryptoConfig.getSymmetricAlgorithmType().compareToIgnoreCase(CryptoConfig.AES_ALGORITHM)
                 == 0) {
@@ -31,11 +37,30 @@ public class CryptoToolkitFactory {
                 "Not supported symmetric algorithm: " + CryptoConfig.getSymmetricAlgorithmType());
     }
 
+    public static SymmetricCrypto buildAESSymmetricCrypto(String key, byte[] iv) {
+        return new AESCrypto(key, iv);
+    }
+
     public static HashCrypto buildHashCrypto() {
-        return new HashCryptoImpl(CryptoConfig.getHashAlgorithmType());
+        return CryptoToolkitFactory.buildHashCrypto(CryptoConfig.getHashAlgorithmType());
+    }
+
+    public static HashCrypto buildHashCrypto(String algorithmType) {
+        return new HashCryptoImpl(algorithmType);
     }
 
     public static CryptoToolkit build() throws Exception {
         return new CryptoToolkit(buildSymmetricCrypto(), buildHashCrypto());
+    }
+
+    public static String hash(String input) throws Exception {
+        return sha256HashCrypto.hash(input);
+    }
+
+    public static String generateRandomKey() {
+        // 随机生成 16 位字符串格式的密钥
+        byte[] keyBytes = new byte[16];
+        SECURE_RANDOM.nextBytes(keyBytes);
+        return Base64.getEncoder().encodeToString(keyBytes);
     }
 }

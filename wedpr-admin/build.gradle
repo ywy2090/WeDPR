@@ -7,4 +7,5 @@ dependencies {
     compile project(":wedpr-components-initializer")
     compile project(":wedpr-components-security")
     compile project(":wedpr-components-admin")
+    compile project(":wedpr-components-sync")
 }

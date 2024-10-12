@@ -19,7 +19,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
 import com.webank.wedpr.components.project.model.BatchJobList;
-import com.webank.wedpr.components.scheduler.SchedulerTaskConfig;
+import com.webank.wedpr.components.scheduler.api.SchedulerApi;
+import com.webank.wedpr.components.scheduler.config.SchedulerTaskConfig;
 import com.webank.wedpr.components.sync.ResourceSyncer;
 import com.webank.wedpr.core.config.WeDPRCommonConfig;
 import com.webank.wedpr.core.protocol.JobStatus;
@@ -38,7 +39,7 @@ public class SchedulerTaskImpl {
     private static final Logger logger = LoggerFactory.getLogger(SchedulerTaskImpl.class);
 
     private final ProjectMapperWrapper projectMapperWrapper;
-    private final SchedulerImpl scheduler;
+    private final SchedulerApi scheduler;
     private final JobSyncer jobSyncer;
 
     private final ScheduledExecutorService workerTimer = new ScheduledThreadPoolExecutor(1);
@@ -46,7 +47,7 @@ public class SchedulerTaskImpl {
     public SchedulerTaskImpl(
             ProjectMapperWrapper projectMapperWrapper,
             ResourceSyncer resourceSyncer,
-            SchedulerImpl scheduler) {
+            SchedulerApi scheduler) {
         this.jobSyncer =
                 new JobSyncer(
                         WeDPRCommonConfig.getAgency(),
@@ -77,7 +78,7 @@ public class SchedulerTaskImpl {
         logger.info("start schedulerTask success");
     }
 
-    public SchedulerImpl getScheduler() {
+    public SchedulerApi getScheduler() {
         return this.scheduler;
     }
 
@@ -112,7 +113,7 @@ public class SchedulerTaskImpl {
         this.jobSyncer.sync(Constant.SYS_USER, JobSyncer.JobAction.KillAction, jobs.serialize());
     }
 
-    protected void scheduleTasksToRun(int concurrency) throws JsonProcessingException {
+    protected void scheduleTasksToRun(int concurrency) throws Exception {
         logger.info("###### scheduleTasksToRun: {}", concurrency);
         // get the running task number
         Set<JobDO> runningJobs =
@@ -148,14 +149,41 @@ public class SchedulerTaskImpl {
             return;
         }
         // in case of been scheduled more than once
-        List<JobDO> jobList = new ArrayList<>(jobsToRun);
+        List<JobDO> jobsToSync = new ArrayList<>();
+        List<JobDO> jobsToExecute = new ArrayList<>();
+        for (JobDO job : jobsToRun) {
+            if (job.getShouldSync()) {
+                jobsToSync.add(job);
+            } else {
+                jobsToExecute.add(job);
+            }
+        }
+        logger.info(
+                "scheduleTasksToRun, syncJobs: {}, jobsToRun: {}, jobsToSync: {}, jobsToExecute: {}",
+                runningJobSize,
+                jobsToRun.size(),
+                jobsToSync.size(),
+                jobsToExecute.size());
+        syncJobs(jobsToSync);
+        executeJobs(jobsToExecute);
+    }
+
+    protected void executeJobs(List<JobDO> jobList) {
+        if (jobList == null || jobList.isEmpty()) {
+            return;
+        }
+        // execute the jobs
+        this.scheduler.batchRunJobs(jobList);
+    }
+
+    protected void syncJobs(List<JobDO> jobList) throws Exception {
+        // No jobs to sync
+        if (jobList == null || jobList.isEmpty()) {
+            return;
+        }
         this.projectMapperWrapper.batchUpdateJobStatus(
                 null, null, jobList, JobStatus.ChainInProgress);
-        logger.info(
-                "scheduleTasksToRun, runningJobs: {}, jobsToRun: {}",
-                runningJobSize,
-                jobsToRun.size());
-        // this.scheduler.batchRunJobs(new ArrayList<>(jobsToRun));
+
         BatchJobList jobs = new BatchJobList(jobList);
         jobs.resetStatus(JobStatus.Running);
         this.jobSyncer.sync(Constant.SYS_USER, JobSyncer.JobAction.RunAction, jobs.serialize());

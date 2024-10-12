@@ -15,9 +15,9 @@ stateOrProvinceName_default =GuangDong
 localityName = Locality Name (eg, city)
 localityName_default = ShenZhen
 organizationalUnitName = Organizational Unit Name (eg, section)
-organizationalUnitName_default = fiscobcos
-commonName =  Organizational  commonName (eg, fiscobcos)
-commonName_default = fiscobcos
+organizationalUnitName_default = wedpr
+commonName =  Organizational  commonName (eg, wedpr)
+commonName_default = wedpr
 commonName_max = 64
 
 [ v3_req ]

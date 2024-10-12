@@ -4,11 +4,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * @author caryliao
- * @since 2024-09-06
+ * @since 2024-09-10
  */
 @TableName("wedpr_job_dataset_relation")
 @ApiModel(value = "WedprJobDatasetRelation对象", description = "")
@@ -23,7 +22,7 @@ public class WedprJobDatasetRelation implements Serializable {
     private String datasetId;
 
     @ApiModelProperty(value = "任务创建时间")
-    private LocalDateTime createTime;
+    private String createTime;
 
     public String getJobId() {
         return jobId;
@@ -41,11 +40,11 @@ public class WedprJobDatasetRelation implements Serializable {
         this.datasetId = datasetId;
     }
 
-    public LocalDateTime getCreateTime() {
+    public String getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(LocalDateTime createTime) {
+    public void setCreateTime(String createTime) {
         this.createTime = createTime;
     }
 

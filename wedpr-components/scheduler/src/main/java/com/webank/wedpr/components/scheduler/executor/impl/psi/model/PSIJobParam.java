@@ -15,6 +15,7 @@
 
 package com.webank.wedpr.components.scheduler.executor.impl.psi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
 import com.webank.wedpr.components.scheduler.executor.impl.model.DatasetInfo;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ public class PSIJobParam {
             if (dataset == null) {
                 throw new WeDPRException("Invalid PSI Request, must define the input dataset!");
             }
-            dataset.check();
+            dataset.check(this.datasetIDList);
             if (idFields == null || idFields.isEmpty()) {
                 throw new WeDPRException("Must define the field list to run PSI!");
             }
@@ -90,6 +92,8 @@ public class PSIJobParam {
     @JsonProperty("dataSetList")
     private List<PartyResourceInfo> partyResourceInfoList;
 
+    @JsonIgnore private List<String> datasetIDList;
+
     public String getJobID() {
         return jobID;
     }
@@ -107,6 +111,9 @@ public class PSIJobParam {
     }
 
     public static PSIJobParam deserialize(String data) throws Exception {
+        if (StringUtils.isBlank(data)) {
+            throw new WeDPRException("The PSIJobParam must be non-empty!");
+        }
         return ObjectMapperFactory.getObjectMapper().readValue(data, PSIJobParam.class);
     }
 
@@ -141,6 +148,7 @@ public class PSIJobParam {
             throw new WeDPRException("Invalid PSIJobParam, must define at least 2-parties!");
         }
         for (PartyResourceInfo partyResourceInfo : partyResourceInfoList) {
+            partyResourceInfo.setDatasetIDList(datasetIDList);
             partyResourceInfo.checkAndResetPath(fileMetaBuilder, jobID);
         }
     }
@@ -151,7 +159,7 @@ public class PSIJobParam {
         psiRequest.setParties(toPSIParam(ownerAgency));
         resetPartyIndex(psiRequest.getParties());
         List<String> receivers = new ArrayList<>();
-        Boolean syncResult = false;
+        boolean syncResult = false;
         for (PartyResourceInfo partyInfo : partyResourceInfoList) {
             if (partyInfo.getReceiveResult()) {
                 receivers.add(partyInfo.getDataset().getOwnerAgency());
@@ -245,24 +253,28 @@ public class PSIJobParam {
                     downloadedFilePath,
                     extractFilePath,
                     System.currentTimeMillis() - startT);
+
             // upload the psi tmp file
             startT = System.currentTimeMillis();
             String owner = partyInfo.getDataset().getOwner();
             String remotePath =
                     WeDPRCommonConfig.getUserJobCachePath(
                             owner, jobID, ExecutorConfig.getPSIPrepareFileName());
+
             // update the input
             FileMeta updatedInput =
                     fileMetaBuilder.build(
                             storage.type(), remotePath, owner, WeDPRCommonConfig.getAgency());
+
             // reset the home
             fileMetaBuilder.resetWithHome(updatedInput);
             logger.info(
                     "Begin to upload the extracted psi file from {}=>{}",
                     extractFilePath,
                     updatedInput.getPath());
-            storage.upload(Boolean.TRUE, extractFilePath, updatedInput.getPath(), true);
+            storage.upload(null, Boolean.TRUE, extractFilePath, updatedInput.getPath(), true);
             partyInfo.setDataset(updatedInput);
+
             logger.info(
                     "Upload the extracted psi file from {}=>{} success, timecost: {}",
                     extractFilePath,
@@ -281,6 +293,14 @@ public class PSIJobParam {
 
     public void setTaskID(String taskID) {
         this.taskID = taskID;
+    }
+
+    public List<String> getDatasetIDList() {
+        return datasetIDList;
+    }
+
+    public void setDatasetIDList(List<String> datasetIDList) {
+        this.datasetIDList = datasetIDList;
     }
 
     public String serialize() throws Exception {
