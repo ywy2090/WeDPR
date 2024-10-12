@@ -113,16 +113,14 @@ div.server-con {
     height: 20px;
     line-height: 20px;
     font-size: 16px;
+    border: 1px solid #3071f2;
+    box-shadow: 0 0 3px #3071f2;
   }
   ::v-deep .el-checkbox__inner::after {
     left: 7px;
     width: 4px;
     height: 8px;
     top: 3px;
-  }
-  ::v-deep .el-checkbox__inner {
-    border: 1px solid #3071f2;
-    box-shadow: 0 0 3px #3071f2;
   }
   span.auth {
     position: absolute;

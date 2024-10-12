@@ -120,7 +120,7 @@ export default {
   }
 }
 .card-container {
-  margin: -10px -10px;
+  margin: -10px;
   max-height: 410px;
   overflow: auto;
 }
