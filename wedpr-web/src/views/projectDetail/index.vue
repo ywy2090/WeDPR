@@ -243,6 +243,7 @@ export default {
   width: 42px;
   height: auto;
   vertical-align: middle;
+  border-radius: 6px;
   margin-right: 10px;
 }
 div.con {

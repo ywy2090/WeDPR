@@ -36,18 +36,16 @@
                 placeholder="请选择日期"
               >
               </el-date-picker>
+              <el-select style="width: 160px" v-model="scope.row[item.key]" v-else-if="item.type === 'select'" placeholder="请选择" clearable>
+                <el-option :label="item.label" :value="item.value" :key="item.label" v-for="item in accessKeyList"></el-option>
+              </el-select>
               <span v-else> {{ scope.row[item.key] }} </span>
             </template>
           </el-table-column>
         </el-table>
       </el-form-item>
       <el-form-item label="审批流程：" prop="applyChain">
-        <approveChain
-          showAdd
-          @addUserToChain="addUserToChain"
-          @deleteUser="deleteUser"
-          :approveChainList="approveChainList"
-        />
+        <approveChain showAdd @addUserToChain="addUserToChain" @deleteUser="deleteUser" :approveChainList="approveChainList" />
       </el-form-item>
     </el-form>
     <div class="sub-con">
@@ -57,7 +55,7 @@
 </template>
 <script>
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
-import { dataManageServer, accountManageServer, authManageServer } from 'Api'
+import { dataManageServer, accountManageServer, authManageServer, accessKeyManageServer } from 'Api'
 import approveChain from '@/components/approveChain.vue'
 import { mapGetters } from 'vuex'
 export default {
@@ -82,13 +80,14 @@ export default {
         applyDesc: [{ required: true, message: '申请背景不能为空', trigger: 'blur' }]
       },
       columns: [],
-      authID: ''
+      authID: '',
+      accessKeyList: []
     }
   },
   created() {
-    const { authID } = this.$route.query
+    const { authID, applyType } = this.$route.query
     this.authID = authID
-    this.queryAuthTemplateDetails(['wedpr_data_auth'])
+    this.queryAuthTemplateDetails([applyType])
     authID && this.getDetail()
   },
   computed: {
@@ -174,6 +173,21 @@ export default {
         this.approveChainList = []
       }
     },
+    // 获取ak列表
+    async queryAccessKeyList() {
+      const params = { condition: { status: 'Enable', id: '' }, pageNum: -1, pageSize: 1 }
+      const res = await accessKeyManageServer.queryAccessKeyList(params)
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { credentials = [] } = res.data
+        this.accessKeyList = credentials.map((v) => {
+          return {
+            label: v.accessKeyID,
+            value: v.accessKeyID
+          }
+        })
+      }
+    },
     submit() {
       this.$refs.applyInfo.validate((valid) => {
         if (valid) {
@@ -222,6 +236,15 @@ export default {
         const { columns = [] } = JSON.parse(templateSetting)
         this.columns = columns
         console.log(this.columns, 'this.columns')
+        switch (this.applyType) {
+          case 'wedpr_service_auth':
+            this.queryAccessKeyList()
+            break
+          case 'wedpr_data_auth':
+            break
+          default:
+            break
+        }
       }
     }
   }

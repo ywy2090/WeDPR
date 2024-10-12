@@ -25,7 +25,7 @@
         <el-form-item prop="createTime" label="生成时间：">
           <el-date-picker
             style="width: 344px"
-            value-format="yyyy-MM-dd hh:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
             v-model="searchForm.createTime"
             type="datetimerange"
             range-separator="至"
@@ -166,7 +166,7 @@ export default {
       this.pageData = { ...pageData }
       this.queryRecordSyncStatus()
     },
-    // 获取账户列表
+    // 获取日志列表
     async queryRecordSyncStatus() {
       const { page_offset, page_size } = this.pageData
       const { createTime, resourceType, resourceAction, status, ownerAgencyName } = this.searchQuery

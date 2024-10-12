@@ -8,12 +8,12 @@
         <el-form-item label-width="98px" label="项目简介：" prop="projectDesc">
           <el-input style="width: 480px" placeholder="请输入" v-model="dataForm.projectDesc" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label-width="98px" label="选择模式：" prop="type">
+        <!-- <el-form-item label-width="98px" label="选择模式：" prop="type">
           <el-radio-group v-model="dataForm.type">
             <el-radio label="Expert">向导模式</el-radio>
             <el-radio label="Wizard">专家模式</el-radio>
           </el-radio-group>
-        </el-form-item>
+        </el-form-item> -->
       </formCard>
     </el-form>
     <div>
@@ -23,6 +23,7 @@
 </template>
 <script>
 import { projectManageServer } from 'Api'
+import { mapGetters } from 'vuex'
 export default {
   name: 'projectCreate',
   data() {
@@ -30,7 +31,7 @@ export default {
       dataForm: {
         name: '',
         projectDesc: '',
-        type: ''
+        type: 'Expert'
       },
       rules: {
         name: [{ required: true, message: '项目名称不能为空', trigger: 'blur' }],
@@ -38,6 +39,9 @@ export default {
         type: [{ required: true, message: '模式不能为空', trigger: 'blur' }]
       }
     }
+  },
+  computed: {
+    ...mapGetters(['userId'])
   },
   methods: {
     // 获取项目详情
@@ -61,6 +65,7 @@ export default {
         this.$router.push({ path: '/projectManage' })
       }
     },
+
     submit() {
       this.$refs.dataForm.validate((valid) => {
         if (valid) {

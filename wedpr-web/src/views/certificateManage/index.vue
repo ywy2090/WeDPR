@@ -16,7 +16,7 @@
               clearable
               style="width: 344px"
               type="datetimerange"
-              value-format="yyyy-MM-dd hh:mm:ss"
+              value-format="yyyy-MM-dd HH:mm:ss"
               v-model="searchForm.createTime"
               range-separator="至"
               start-placeholder="开始日期"
@@ -25,7 +25,7 @@
           </el-form-item>
           <el-form-item prop="certStatus" label="证书状态：">
             <el-select clearable size="small" style="width: 160px" v-model="searchForm.certStatus" placeholder="请选择">
-              <el-option label="有效" :value="certStatusEnum.NO_CERT"></el-option>
+              <el-option label="有效" :value="certStatusEnum.OPEND"></el-option>
               <el-option label="过期" :value="certStatusEnum.OUTDATE"></el-option>
               <el-option label="禁用" :value="certStatusEnum.CLOSED"></el-option>
             </el-select>
@@ -221,8 +221,8 @@ export default {
       const res = await certificateManageServer.downloadCert({ certId })
       console.log(res)
       if (res.code === 0) {
-        const { certName, certData } = res.data
-        this.base64ToBlob(certData, certName)
+        const { certName, certScriptData } = res.data
+        this.base64ToBlob(certScriptData, certName)
         this.$message.success('证书下载成功')
       }
     },

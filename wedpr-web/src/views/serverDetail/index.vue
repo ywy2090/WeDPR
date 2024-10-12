@@ -22,7 +22,7 @@
           <span class="info" :title="serviceInfo.owner"> {{ serviceInfo.owner }} </span>
         </div>
       </div>
-      <div class="whole">
+      <div class="whole" v-if="serviceInfo.serviceType === serviceTypeEnum.PIR">
         <div class="half">
           <span class="title">发布数据：</span>
           <span class="info"> {{ serviceInfo.datasetId }} </span>
@@ -34,38 +34,65 @@
           <span class="info"> {{ serviceInfo.createTime }} </span>
         </div>
       </div>
-      <div class="whole">
+      <div class="whole" v-if="serviceInfo.serviceType === serviceTypeEnum.PIR">
         <div class="half">
           <span class="title">查询规则：</span>
-          <span class="info"> {{ serviceInfo.owner }} </span>
+          <span class="info">
+            <el-table size="small" :data="serviceConfigList" :border="true" class="table-wrap">
+              <el-table-column label="主键" prop="idField" show-overflow-tooltip />
+              <el-table-column label="支持的查询方式" prop="searchType" show-overflow-tooltip>
+                <template v-slot="scope">
+                  <span v-if="scope.row.searchType === searchTypeEnum.ALL">查询存在性，查询字段值</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExists">查询存在性</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchValue">查询字段值</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="可查的字段列表" prop="accessibleValueQueryFields" />
+            </el-table>
+          </span>
+        </div>
+      </div>
+      <div class="whole" v-if="serviceInfo.serviceType !== serviceTypeEnum.PIR">
+        <div class="half">
+          <span class="title">模型内容：</span>
+          <span class="info">
+            <el-table size="small" :data="serviceConfigList" :border="true" class="table-wrap">
+              <el-table-column label="标签提供方" prop="label_provider" show-overflow-tooltip />
+              <el-table-column label="标签字段" prop="label_column" show-overflow-tooltip />
+              <el-table-column label="参与方" prop="participant_agency_list" show-overflow-tooltip />
+              <el-table-column label="模型类型" prop="model_type" />
+            </el-table>
+          </span>
         </div>
       </div>
     </div>
-    <div class="con">
-      <div class="title-radius">使用记录</div>
+    <div v-if="serviceInfo.owner === userId && serviceInfo.agency === agencyId">
+      <div class="con">
+        <div class="title-radius">使用记录</div>
+      </div>
+      <div class="tableContent autoTableWrap" v-if="total">
+        <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
+          <el-table-column label="调用ID" prop="invokeId" />
+          <el-table-column label="调用机构" prop="invokeAgency" />
+          <el-table-column label="调用用户" prop="invokeUser" />
+          <el-table-column label="申请时间" prop="applyTime" />
+          <el-table-column label="有效期至" prop="expireTime" />
+          <el-table-column label="任务状态" prop="status">
+            <template v-slot="scope">
+              <el-tag size="small" v-if="scope.row.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
+              <el-tag size="small" v-else-if="scope.row.status == 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
+              <el-tag size="small" v-else-if="scope.row.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
+              <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+        <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
+      </div>
+      <el-empty v-if="!total" :image-size="120" description="暂无数据">
+        <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
+      </el-empty>
     </div>
-    <div class="tableContent autoTableWrap" v-if="total">
-      <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
-        <el-table-column label="调用ID" prop="invokeId" />
-        <el-table-column label="调用机构" prop="invokeAgency" />
-        <el-table-column label="调用用户" prop="invokeUser" />
-        <el-table-column label="申请时间" prop="applyTime" />
-        <el-table-column label="有效期至" prop="expireTime" />
-        <el-table-column label="任务状态" prop="status">
-          <template v-slot="scope">
-            <el-tag size="small" v-if="scope.row.status === 'RunSuccess'" effect="dark" color="#52B81F">成功</el-tag>
-            <el-tag size="small" v-else-if="scope.row.status == 'RunFailed'" effect="dark" color="#FF4D4F">失败</el-tag>
-            <el-tag size="small" v-else-if="scope.row.status === 'Running'" effect="dark" color="#3071F2">运行中</el-tag>
-            <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
-      <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
-    </div>
-    <el-empty v-if="!total" :image-size="120" description="暂无数据">
-      <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
-    </el-empty>
-    <div class="sub-con">
+    <div class="sub-con" v-else>
       <el-button size="medium" type="primary" @click="subApply"> 申请调用 </el-button>
     </div>
     <serverApply :serviceId="serviceId" :showApplyModal="showApplyModal" @closeModal="closeModal" @handlOK="handlOK" />
@@ -74,7 +101,7 @@
 <script>
 import { serviceManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
-import { jobStatusList, jobStatusMap } from 'Utils/constant.js'
+import { jobStatusList, jobStatusMap, searchTypeEnum, serviceTypeEnum } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 import wePagination from '@/components/wePagination.vue'
 import serverApply from './serviceApply'
@@ -113,9 +140,12 @@ export default {
       typeList: [],
       jobStatusList,
       jobStatusMap,
+      searchTypeEnum,
+      serviceTypeEnum,
       pageMode: process.env.VUE_APP_MODE,
       showApplyModal: false,
-      serviceId: ''
+      serviceId: '',
+      serviceConfigList: []
     }
   },
   created() {
@@ -125,7 +155,7 @@ export default {
     this.showApplyModal = type === 'apply'
   },
   computed: {
-    ...mapGetters(['algList'])
+    ...mapGetters(['algList', 'agencyId'])
   },
   methods: {
     handleData(key) {
@@ -148,15 +178,27 @@ export default {
     async queryService() {
       this.loadingFlag = true
       const { serviceId } = this
-      const res = await serviceManageServer.getServerDetail({ serviceId })
+      const params = { condition: {}, serviceIdList: [serviceId], pageNum: 1, pageSize: 1 }
+      const res = await serviceManageServer.getPublishList(params)
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { wedprPublishedService = {} } = res.data
-        const { serviceConfig = {} } = wedprPublishedService
-        const { datasetId, exists = [], values = [] } = serviceConfig
-        const ruleDes = this.handleRuleDes(exists, values)
-        this.serviceInfo = { ...wedprPublishedService, datasetId, ruleDes }
+        const { wedprPublishedServiceList = [] } = res.data
+        const { serviceConfig = '', serviceType } = wedprPublishedServiceList[0] || {}
+        const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
+        if (serviceType === serviceTypeEnum.PIR) {
+          this.serviceConfigList = [
+            {
+              searchType,
+              idField,
+              accessibleValueQueryFields
+            }
+          ]
+        } else {
+          this.serviceConfigList = [JSON.parse(serviceConfig)]
+        }
+
+        this.serviceInfo = { ...wedprPublishedServiceList[0], datasetId, serviceType }
         this.getServerUseRecord()
       } else {
         this.serviceInfo = {}
@@ -218,7 +260,8 @@ export default {
       this.getServerUseRecord()
     },
     subApply() {
-      this.showApplyModal = true
+      this.$router.push({ path: '/dataApply', query: { serviceId: this.serviceInfo.serviceId, applyType: 'wedpr_service_auth' } })
+      // this.showApplyModal = true
     },
     closeModal() {
       this.showApplyModal = false

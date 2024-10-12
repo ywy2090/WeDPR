@@ -6,23 +6,23 @@
     </ul>
     <div class="step-container">
       <el-steps :active="active" finish-status="success">
-        <el-step title="选择模型"></el-step>
+        <el-step title="选择模板" :description="selectedAlg && selectedAlg.label"></el-step>
         <el-step title="选择数据资源"></el-step>
         <el-step title="配置并运行"></el-step>
         <el-step title="查看结果"></el-step>
       </el-steps>
     </div>
 
-    <formCard key="1" title="请选择模型" v-show="active === 0">
+    <formCard key="1" title="请选择模板" v-show="active === 0">
       <div class="alg-container">
-        <div :class="selectedAlg.value === item.value ? 'alg active' : 'alg'" v-for="item in algListFull" @click="selectAlg(item)" :key="item.value">
-          <img :src="item.jobSrc" alt="" />
+        <div :class="selectedAlg.value === item.value ? 'alg active' : 'alg'" v-for="item in algList" @click="selectAlg(item)" :key="item.value">
+          <img :src="item.src" alt="" />
           <span class="title">{{ item.label }}</span>
         </div>
       </div>
     </formCard>
-    <div v-show="active === 1">
-      <div class="tags data-container" v-if="selectedAlg.value === jobEnum.XGB_TRAINING">
+    <div v-show="active === 1 && selectedAlg.value !== jobEnum.PIR">
+      <div class="tags data-container" v-if="selectedAlg.needTagsProvider">
         <p>
           选择标签数据
           <span class="btn" @click="removeTag" v-if="tagSelectList.length"> <img src="~Assets/images/icon_delete.png" alt="" /> 移除 </span>
@@ -45,9 +45,9 @@
       <div class="participates data-container" v-for="(item, index) in paticipateSelectList" :key="item">
         <p>
           选择参与方数据 {{ selectedAlg.value === jobEnum.XGB_TRAINING ? '' : index + 1 }}
-          <span class="btn" @click="removeParticipate(item.datasetId)" v-if="item.datasetId"><img src="~Assets/images/icon_delete.png" alt="" /> 移除 </span>
+          <span class="btn" @click="removeParticipate(index)" v-if="item.datasetId"><img src="~Assets/images/icon_delete.png" alt="" /> 移除 </span>
         </p>
-        <div class="area" @click="showAddParticipate" v-if="!item.datasetId">
+        <div class="area" @click="showAddParticipate(index)" v-if="!item.datasetId">
           <img src="~Assets/images/add_dataset.png" alt="" />
           <div>点击选择数据</div>
         </div>
@@ -61,12 +61,21 @@
           </el-table>
         </div>
       </div>
-      <div class="add" @click="showAddParticipate">
+      <div class="add" v-if="selectedAlg" @click="showAddParticipate(paticipateSelectList.length)">
         <span><img src="~Assets/images/add_participate.png" alt="" />增加参与方</span>
       </div>
     </div>
+    <div v-show="active === 1 && selectedAlg.value === jobEnum.PIR">
+      <serviceSelect :serviceType="serviceTypeEnum.PIR" @selected="handleServiceSelected" />
+    </div>
     <div v-show="active === 2">
-      <el-form v-if="selectedAlg.value === jobEnum.XGB_TRAINING" label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
+      <el-form
+        v-if="selectedAlg.value === jobEnum.XGB_TRAINING || selectedAlg.value === jobEnum.LR_TRAINING"
+        label-width="200px"
+        :model="jobSettingForm"
+        ref="jobSettingForm"
+        :rules="jobSettingFormRules"
+      >
         <div class="participates data-container">
           <p>已选数据</p>
           <div class="area table-area">
@@ -77,11 +86,11 @@
                   <el-tag color="#4CA9EC" style="color: white" v-if="!scope.row.selectedTagFields" size="small">参与方</el-tag>
                 </template>
               </el-table-column>
-
               <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
               <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
               <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
               <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
+              <el-table-column label="包含字段" prop="datasetFields" show-overflow-tooltip />
               <el-table-column label="已选标签字段" prop="selectedTagFields" show-overflow-tooltip />
             </el-table>
           </div>
@@ -89,7 +98,7 @@
         <formCard key="set" title="请设置参数">
           <div class="alg-container">
             <el-form-item label="选择历史参数：" prop="setting">
-              <el-select size="small" value-key="id" @change="handleSelectSetting" style="width: 360px" v-model="model_setting" placeholder="请选择">
+              <el-select size="small" value-key="id" @change="handleSelectSetting" style="width: 360px" v-model="XGB_SETTING" placeholder="请选择">
                 <el-option :key="item" v-for="item in modelSettingList" :label="item.label" :value="item.value"></el-option>
               </el-select>
             </el-form-item>
@@ -121,7 +130,13 @@
           </el-select>
         </el-form-item>
       </el-form>
-      <el-form v-if="selectedAlg.value === jobEnum.SQL" key="3" label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
+      <el-form
+        v-if="selectedAlg.value === jobEnum.XGB_PREDICTING || selectedAlg.value === jobEnum.LR_PREDICTING"
+        label-width="200px"
+        :model="jobSettingForm"
+        ref="jobSettingForm"
+        :rules="jobSettingFormRules"
+      >
         <div class="participates data-container">
           <p>已选数据</p>
           <div class="area table-area">
@@ -131,7 +146,6 @@
                   <el-tag color="#4CA9EC" style="color: white" size="small">参与方</el-tag>
                 </template>
               </el-table-column>
-
               <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
               <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
               <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
@@ -139,18 +153,98 @@
             </el-table>
           </div>
         </div>
+        <formCard title="请选择模型">
+          <el-form-item prop="modelId" class="modelId" label-width="0">
+            <modelSelect v-model="jobSettingForm.modelId" />
+          </el-form-item>
+        </formCard>
         <el-form-item label="结果接收方：" prop="receiver" label-width="120px">
           <el-select size="small" style="width: 360px" v-model="jobSettingForm.receiver" multiple placeholder="请选择">
             <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="请设置参数：" prop="sql" label-width="120px">
-          <div class="sql-container">
-            <div style="width: 60%; height: 500px">
-              <editorCom v-model="jobSettingForm.sql" />
-            </div>
+      </el-form>
+      <el-form v-if="selectedAlg.value === jobEnum.SQL" key="3" label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
+        <div class="participates data-container">
+          <p>已选数据</p>
+          <div class="area table-area">
+            <el-table size="small" :data="jobSettingForm.selectedData" :border="true" class="table-wrap">
+              <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
+              <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
+              <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
+              <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
+              <el-table-column label="包含字段" prop="ownerUserName" show-overflow-tooltip />
+            </el-table>
           </div>
+        </div>
+        <formCard key="SQL" class="sql-card" title="编写SQL语句">
+          <el-form-item label="" prop="sql" label-width="0">
+            <div class="sql-container">
+              <div class="modify-container">
+                <editorCom v-model="jobSettingForm.sql" />
+              </div>
+              <div class="lead"><img src="~Assets/images/icon_guide.png" /> 语法指引及示例下载</div>
+            </div>
+          </el-form-item>
+        </formCard>
+        <el-form-item label="结果接收方：" prop="receiver" label-width="120px">
+          <el-select size="small" style="width: 360px" v-model="jobSettingForm.receiver" multiple placeholder="请选择">
+            <el-option :key="item" v-for="item in agencyList" multiple :label="item.label" :value="item.value"></el-option>
+          </el-select>
         </el-form-item>
+      </el-form>
+      <el-form v-if="selectedAlg.value === jobEnum.PIR" key="3" label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
+        <div class="participates data-container">
+          <p>已选服务</p>
+          <div class="area table-area">
+            <el-table size="small" :data="jobSettingForm.selectedData" :border="true" class="table-wrap">
+              <el-table-column label="服务名称" prop="serviceName" show-overflow-tooltip />
+              <el-table-column label="数据集" prop="datasetId" show-overflow-tooltip />
+              <el-table-column label="主键" prop="idField" show-overflow-tooltip />
+              <el-table-column label="支持的查询方式" prop="searchType" show-overflow-tooltip>
+                <template v-slot="scope">
+                  <span v-if="scope.row.searchType === searchTypeEnum.ALL">查询存在性，查询字段值</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExists">查询存在性</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchValue">查询字段值</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="可查的字段列表" prop="accessibleValueQueryFields" />
+            </el-table>
+          </div>
+        </div>
+        <formCard key="PIR" title="请设置查询规则">
+          <el-form-item label="查询类型：" prop="searchType" label-width="120px">
+            <el-radio-group v-model="jobSettingForm.searchType">
+              <el-radio
+                v-if="selectedServiceConfig.searchType === searchTypeEnum.SearchExists || selectedServiceConfig.searchType === searchTypeEnum.ALL"
+                :label="searchTypeEnum.SearchExists"
+                >查询存在性</el-radio
+              >
+              <el-radio
+                v-if="selectedServiceConfig.searchType === searchTypeEnum.SearchValue || selectedServiceConfig.searchType === searchTypeEnum.ALL"
+                :label="searchTypeEnum.SearchValue"
+                >查询字段值</el-radio
+              >
+              （默认查询主键为id）
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="查询字段：" prop="queriedFields" label-width="120px" v-if="jobSettingForm.searchType === searchTypeEnum.SearchValue">
+            <el-select size="small" style="width: 360px" v-model="jobSettingForm.queriedFields" multiple placeholder="请选择">
+              <el-option :key="item" v-for="item in selectedServiceConfig.accessibleValueQueryFields" :label="item" :value="item"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label-width="120px" style="margin-bottom: 10px" prop="searchIdList" label="字段值：">
+            <el-input
+              size="small"
+              :autosize="{ minRows: 6 }"
+              type="textarea"
+              v-model="jobSettingForm.searchIdList"
+              placeholder="请输入查询字段值,多个值用,分割"
+              style="width: 480px"
+            >
+            </el-input>
+          </el-form-item>
+        </formCard>
       </el-form>
       <div v-if="selectedAlg.value === jobEnum.PSI">
         <el-form label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
@@ -180,7 +274,6 @@
         </el-form>
       </div>
     </div>
-
     <div>
       <el-button size="medium" v-if="active > 0" @click="pre"> 上一步 </el-button>
       <el-button size="medium" v-if="active < 2" type="primary" @click="next" :disabled="nextDisabaled"> 下一步 </el-button>
@@ -196,17 +289,20 @@ import formCard from '@/components/formCard.vue'
 import { settingManageServer, projectManageServer } from 'Api'
 import tagSelect from './tagSelect/index.vue'
 import participateSelect from './participateSelect/index.vue'
+import modelSelect from './modelSelect/index.vue'
 import { mapGetters } from 'vuex'
-import { algListFull, jobEnum } from 'Utils/constant.js'
+import { jobEnum, searchTypeEnum, serviceTypeEnum } from 'Utils/constant.js'
 import editorCom from '@/components/editorCom.vue'
-
+import serviceSelect from './serviceSelect/index.vue'
 export default {
   name: 'leadMode',
   components: {
     formCard,
     tagSelect,
     participateSelect,
-    editorCom
+    modelSelect,
+    editorCom,
+    serviceSelect
     // dataCard
   },
   data() {
@@ -219,13 +315,16 @@ export default {
       jobSettingForm: {
         receiver: [],
         selectedData: [],
-        sql: ''
+        sql: '',
+        queryType: 1,
+        dataFields: [],
+        fieldsValueList: [],
+        modelId: '',
+        searchType: [],
+        queriedFields: [],
+        searchIdList: ''
       },
-      jobSettingFormRules: {
-        receiver: [{ required: true, message: '结果接收方不能为空', trigger: 'blur' }],
-        selectedData: [{ required: true, message: '参与方不能为空', trigger: 'blur' }],
-        sql: [{ required: true, message: 'sql内容不能为空', trigger: 'blur' }]
-      },
+
       modelModule: [
         {
           type: 'float',
@@ -245,7 +344,6 @@ export default {
         }
       ],
       selectedAlg: {},
-      algListFull,
       showTagsModal: false,
       showParticipateModal: false,
       pageData: {},
@@ -253,8 +351,13 @@ export default {
       paticipateSelectList: [{}],
       dataInfo: {},
       jobEnum,
+      serviceTypeEnum,
       modelSettingList: [],
-      model_setting: ''
+      XGB_SETTING: '',
+      addContainerIndex: 0,
+      modelTableData: [],
+      searchTypeEnum,
+      selectedServiceConfig: {}
     }
   },
   created() {
@@ -267,12 +370,19 @@ export default {
       console.log(selectedAlg)
       const { participateNumber } = selectedAlg
       this.paticipateSelectList = []
-      for (let i = 0; i < participateNumber; i++) {
+      for (let i = 0; i < parseInt(participateNumber); i++) {
         this.paticipateSelectList.push({})
       }
       console.log(participateNumber, this.paticipateSelectList)
+      this.tagSelectList = []
       switch (selectedAlg.value) {
         case jobEnum.XGB_TRAINING:
+          this.queryDefaultSettings()
+          this.queryModelSettingList()
+          break
+        // FIXME:
+        case jobEnum.LR_TRAINING:
+          this.queryDefaultSettings()
           this.queryModelSettingList()
           break
         default:
@@ -298,18 +408,6 @@ export default {
       if (this.active === 0) {
         return !this.selectedAlg.value
       }
-      const { participateNumber } = this.selectedAlg
-      if (this.active === 1) {
-        const validpaticipateSelectLength = this.paticipateSelectList.filter((v) => v.datasetId).length
-        if (this.selectedAlg.value === jobEnum.XGB_TRAINING) {
-          // xgb需要选择标签提供方数据集
-          const tagSelectListNum = this.tagSelectList.length
-          return !(tagSelectListNum === 1 && participateNumber === validpaticipateSelectLength)
-        } else {
-          // 其他任务只需满足参与方数量
-          return !(validpaticipateSelectLength >= participateNumber)
-        }
-      }
       return false
     },
     // 组合处理选中的dataset
@@ -329,14 +427,57 @@ export default {
           selectedFields = this.jobSettingForm.selectedData.every((v) => v.datasetFieldsSelected.length)
           disabled = !(this.jobSettingForm.receiver.length && selectedFields)
           break
+        case jobEnum.PIR:
+          disabled = false
+          break
         default:
           disabled = !this.jobSettingForm.receiver.length
           break
       }
       return disabled
+    },
+    pirOptions() {
+      if (this.jobSettingForm.selectedData.length) {
+        const { datasetFields = '' } = this.jobSettingForm.selectedData[0]
+        const fields = datasetFields.trim().split(',')
+        const children = fields.map((v) => {
+          return {
+            label: v,
+            value: v
+          }
+        })
+        return [
+          {
+            value: 0,
+            label: '所有字段',
+            children
+          }
+        ]
+      } else {
+        return []
+      }
+    },
+    jobSettingFormRules() {
+      return {
+        receiver: [{ required: true, message: '结果接收方不能为空', trigger: 'blur' }],
+        selectedData: [{ required: true, message: '参与方不能为空', trigger: 'blur' }],
+        sql: [{ required: this.selectedAlg.value === jobEnum.SQL, message: 'sql内容不能为空', trigger: 'blur' }],
+        queryType: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询类型', trigger: 'blur' }],
+        modelId: [{ required: this.selectedAlg.value === jobEnum.XGB_PREDICTING, message: '请选择模型', trigger: 'blur' }],
+        searchType: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询类型', trigger: 'blur' }],
+        queriedFields: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询字段', trigger: 'blur' }],
+        searchIdList: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请输入字段值', trigger: 'blur' }]
+      }
     }
   },
   methods: {
+    handleServiceSelected(service) {
+      console.log(service)
+      const { serviceConfig } = service
+      const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
+      this.selectedServiceConfig = JSON.parse(serviceConfig)
+      this.jobSettingForm.selectedData = [{ ...service, datasetId, searchType, idField, accessibleValueQueryFields, selectedServiceConfig: this.selectedServiceConfig }]
+    },
     checkJobData() {
       this.$refs.jobSettingForm.validate((valid) => {
         if (valid) {
@@ -347,6 +488,13 @@ export default {
               break
             case jobEnum.XGB_TRAINING:
               this.handleXGBdata()
+              break
+            // FIXME:
+            case jobEnum.LR_TRAINING:
+              this.handleXGBdata()
+              break
+            case jobEnum.PIR:
+              this.handlePIRdata()
               break
             default:
               break
@@ -372,15 +520,28 @@ export default {
         this.dataInfo = []
       }
     },
-
+    hanleSelectedModel(checked, item) {
+      if (checked) {
+        this.jobSettingForm.modelId = item.modelId
+      } else {
+        this.jobSettingForm.modelId = ''
+      }
+    },
+    handlePIRdata() {
+      const { searchType, queriedFields = [], searchIdList } = this.jobSettingForm
+      const { serviceId } = this.jobSettingForm.selectedData[0]
+      const { name } = this.dataInfo
+      const params = {
+        serviceId,
+        searchIdList: searchIdList.split(','),
+        queriedFields,
+        searchType
+      }
+      this.submitJob({ job: { param: JSON.stringify(params), jobType: jobEnum.PIR, projectName: name } })
+    },
     handlePsiJobData() {
       const { selectedAlg } = this
       const { selectedData, receiver } = this.jobSettingForm
-      const ownerAgencyNameList = selectedData.map((v) => v.ownerAgencyName)
-      if (Array.from(new Set(ownerAgencyNameList)).length < 2) {
-        this.$message.error('参与方至少为2方')
-        return
-      }
       const { name } = this.dataInfo
       const dataSetList = selectedData.map((v) => {
         console.log(v, v.datasetStoragePath, JSON.parse(v.datasetStoragePath))
@@ -405,16 +566,12 @@ export default {
           agency: v.ownerAgencyName
         }
       })
-      this.submitJob({ job: params, taskParties })
+      const datasetList = selectedData.map((v) => v.datasetId)
+      this.submitJob({ job: params, taskParties, datasetList })
     },
     handleXGBdata() {
       const { selectedAlg, modelModule } = this
       const { selectedData, receiver } = this.jobSettingForm
-      const ownerAgencyNameList = selectedData.map((v) => v.ownerAgencyName)
-      if (Array.from(new Set(ownerAgencyNameList)).length < 2) {
-        this.$message.error('参与方至少为2方')
-        return
-      }
       const { name } = this.dataInfo
       console.log(selectedData, 'selectedData')
       const dataSetList = selectedData.map((v) => {
@@ -438,7 +595,7 @@ export default {
         modelSetting[key] = v.value
       })
       const param = { dataSetList, modelSetting }
-      console.log(param, 'modelSettingmodelSettingmodelSettingmodelSettingmodelSettingmodelSettingmodelSetting')
+      console.log(param, 'modelSettingmodel')
       const params = { jobType: selectedAlg.value, projectName: name, param: JSON.stringify(param) }
       const taskParties = selectedData.map((v) => {
         return {
@@ -446,8 +603,9 @@ export default {
           agency: v.ownerAgencyName
         }
       })
+      const datasetList = selectedData.map((v) => v.datasetId)
       console.log({ job: params, taskParties }, receiver)
-      this.submitJob({ job: params, taskParties })
+      this.submitJob({ job: params, taskParties, datasetList })
     },
     handleSelectSetting(data) {
       const setting = JSON.parse(data.setting)
@@ -470,22 +628,31 @@ export default {
         this.dataInfo = []
       }
     },
-    async querySettings(params) {
-      const res = await settingManageServer.querySettings(params)
-      console.log(res)
+    // 查询xgb默认模板参数
+    async queryDefaultSettings() {
+      const res = await settingManageServer.querySettings({
+        onlyMeta: false,
+        condition: {
+          id: '',
+          name: '',
+          type: 'ALGORITHM_SETTING',
+          owner: ''
+        }
+      })
       if (res.code === 0 && res.data) {
         const { setting = '' } = res.data[0]
         console.log(setting, 'JSON.parse(setting)')
         this.modelModule = JSON.parse(setting)
       }
     },
+    // 查询用户自定义setting模板list
     async queryModelSettingList() {
       const res = await settingManageServer.querySettings({
         onlyMeta: false,
         condition: {
           id: '',
           name: '',
-          type: 'MODEL_SETTING',
+          type: 'XGB_SETTING',
           owner: ''
         }
       })
@@ -499,8 +666,9 @@ export default {
         })
       }
     },
-    showAddParticipate() {
+    showAddParticipate(addContainerIndex) {
       this.showParticipateModal = true
+      this.addContainerIndex = addContainerIndex // 记录点击添加的是哪个container
     },
     closeModal() {
       this.showTagsModal = false
@@ -514,31 +682,70 @@ export default {
       this.tagSelectList = []
     },
     setArea() {
-      // 去重
       if (this.paticipateSelectList.some((v) => v.datasetId)) {
         this.paticipateSelectList = this.paticipateSelectList.filter((v) => v.datasetId)
       } else {
         this.paticipateSelectList = [{}]
       }
     },
-    removeParticipate(datasetId) {
-      this.paticipateSelectList = this.paticipateSelectList.filter((v) => datasetId !== v.datasetId)
-      this.setArea()
+    removeParticipate(index) {
+      this.paticipateSelectList.splice(index, 1)
     },
     participateSelected(data) {
       this.showParticipateModal = false
-      this.paticipateSelectList.push({
-        ...data
-      })
-      this.setArea()
+      this.$set(this.paticipateSelectList, this.addContainerIndex, data)
     },
     handleClick() {},
     addTag() {
       this.showTagsModal = true
     },
-
+    calcParticipateNumberMatch(participateNumber, dataLength) {
+      if (participateNumber.indexOf('+') > -1) {
+        return dataLength >= parseInt(participateNumber)
+      } else {
+        return dataLength === parseInt(participateNumber)
+      }
+    },
     next() {
-      this.active++
+      if (this.active === 1) {
+        const { participateNumber } = this.selectedAlg
+        const validpaticipateSelect = this.paticipateSelectList.filter((v) => v.datasetId)
+        const validDataLength = validpaticipateSelect.length // 有效数据集数量
+        const participateAgencyList = validpaticipateSelect.map((v) => v.ownerAgencyName)
+        // 参与机构数量
+        const uniqueAgencyLength = Array.from(new Set(participateAgencyList)).length
+        if (this.selectedAlg.value === jobEnum.XGB_TRAINING || this.selectedAlg.value === jobEnum.LR_TRAINING) {
+          const tag = this.tagSelectList[0] || {}
+          const xgbValidParticipateLength = validpaticipateSelect.filter((v) => v.ownerAgencyName !== tag.ownerAgencyName).length
+          // xgb需要选择标签提供方数据集
+          const tagSelectListNum = this.tagSelectList.length
+          if (!(tagSelectListNum === 1 && this.calcParticipateNumberMatch(participateNumber, xgbValidParticipateLength))) {
+            this.$message.error(`请添加标签提供方，并添加至少${parseInt(participateNumber)}个不同机构的参与方`)
+            return
+          }
+        } else if (this.selectedAlg.value === jobEnum.PSI) {
+          // psi 可同一机构下多个数据集
+          if (!this.calcParticipateNumberMatch(participateNumber, validDataLength)) {
+            this.$message.error(`请添加至少${parseInt(participateNumber)}个参与方`)
+            return
+          }
+        } else if (this.selectedAlg.value === jobEnum.PIR) {
+          // psi 可同一机构下多个数据集
+          if (!this.jobSettingForm.selectedData.length) {
+            this.$message.error('请选择服务')
+            return
+          }
+        } else {
+          // 其他任务只要参与方数量满足
+          if (!this.calcParticipateNumberMatch(participateNumber, uniqueAgencyLength)) {
+            this.$message.error(`请添加至少${parseInt(participateNumber)}个不同机构的参与方`)
+            return
+          }
+        }
+        this.active++
+      } else {
+        this.active++
+      }
     },
     pre() {
       this.active--
@@ -685,6 +892,27 @@ div.lead-mode {
     margin-left: 16px;
     font-weight: 500;
   }
+  div.sql-card {
+    padding-bottom: 0;
+    div.sql-container {
+      display: flex;
+      div.modify-container {
+        flex: 1;
+        height: 500px;
+      }
+      div.lead {
+        color: #3071f2;
+        padding-left: 16px;
+        cursor: pointer;
+        img {
+          width: 16px;
+          height: 16px;
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+
   ::v-deep .el-step__head.is-success {
     color: #3071f2;
     border-color: #3071f2;
@@ -702,12 +930,22 @@ div.lead-mode {
   ::v-deep .el-step__title.is-process {
     color: #3071f2;
   }
+  ::v-deep .el-step__description.is-success {
+    color: #3071f2;
+  }
+  ::v-deep .el-step__description.is-process {
+    color: #3071f2;
+  }
   ::v-deep .el-step.is-horizontal .el-step__line {
     top: 18px;
   }
   ::v-deep .el-step__icon {
     width: 36px;
     height: 36px;
+  }
+  ::v-deep .el-input-group__prepend {
+    width: 84px;
+    text-align: center;
   }
 }
 </style>

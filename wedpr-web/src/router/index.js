@@ -352,9 +352,21 @@ const routes = [
         }
       },
       {
-        name: 'serverCreate',
-        path: '/serverCreate',
-        component: () => import(/* webpackChunkName: "layout" */ '@/views/serverCreate/index.vue'),
+        name: 'pirServerCreate',
+        path: '/pirServerCreate',
+        component: () => import(/* webpackChunkName: "layout" */ '@/views/pirServerCreate/index.vue'),
+        meta: {
+          title: '服务发布',
+          isParent: false,
+          requireAuth: true,
+          permissionCheck: true,
+          permissionNeed: ['serverManage']
+        }
+      },
+      {
+        name: 'modelServerCreate',
+        path: '/modelServerCreate',
+        component: () => import(/* webpackChunkName: "layout" */ '@/views/modelServerCreate/index.vue'),
         meta: {
           title: '服务发布',
           isParent: false,

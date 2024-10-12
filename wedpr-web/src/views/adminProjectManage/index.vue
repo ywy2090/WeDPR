@@ -3,7 +3,7 @@
     <div class="form-search">
       <el-form :inline="true" @submit="queryHandle" :model="searchForm" ref="searchForm" size="small">
         <el-form-item prop="ownerAgency" label="创建机构：">
-          <el-select filterable clearable style="width: 160px" v-model="searchForm.ownerAgency" remote :remote-method="getProjectNameSelect" placeholder="请输入">
+          <el-select clearable style="width: 160px" v-model="searchForm.ownerAgency" placeholder="请选择">
             <el-option v-for="item in agencyList" :label="item.label" :value="item.value" :key="item.value"></el-option>
           </el-select>
         </el-form-item>
@@ -14,7 +14,7 @@
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
           <el-date-picker
-            value-format="yyyy-MM-dd hh:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
             v-model="searchForm.createTime"
             type="datetimerange"
             range-separator="至"
@@ -34,29 +34,35 @@
       <div class="card-container" v-if="tableData.length">
         <div class="card" v-for="item in tableData" :key="item.id" @click="goDetail(item)">
           <div class="bg">
-            <img src="~Assets/images/cover.png" alt="" />
+            <img :src="bindIcon(item.randomIndex)" alt="" />
           </div>
           <div class="info">
             <div class="title">
               <span :title="item.name">{{ item.name }}</span>
             </div>
-            <div class="count-detail">
+            <div class="count-detail" v-if="false">
               <dl>
                 <dt>所属机构</dt>
-                <dd>{{ item.ownerAgency }}</dd>
+                <dd class="ell" :title="item.ownerAgency">{{ item.ownerAgency }}</dd>
               </dl>
               <dl>
-                <dt>机构数量</dt>
-                <dd>{{ item.agencyCount }}</dd>
+                <dt>所属用户</dt>
+                <dd class="ell">{{ item.owner }}</dd>
               </dl>
               <dl>
-                <dt>数据资源数量</dt>
-                <dd>{{ item.dataCount }}</dd>
+                <dt>创建时间</dt>
+                <dd class="ell">{{ item.createTime }}</dd>
               </dl>
             </div>
             <ul>
-              <li class="ell">
-                {{ item.owner }} <span>{{ item.createTime }}</span>
+              <li>
+                所属机构 <span>{{ item.ownerAgency }}</span>
+              </li>
+              <li>
+                所属用户 <span>{{ item.owner }}</span>
+              </li>
+              <li>
+                创建时间 <span>{{ item.createTime }}</span>
               </li>
             </ul>
           </div>
@@ -114,6 +120,9 @@ export default {
     this.queryProject()
   },
   methods: {
+    bindIcon(randomIndex) {
+      return require('../../assets/images/cover/pro' + randomIndex + '.png')
+    },
     // 查询
     queryHandle() {
       this.$refs.searchForm.validate((valid) => {
@@ -127,7 +136,7 @@ export default {
       })
     },
     goDetail(row) {
-      this.$router.push({ path: '/projectDetail', query: { projectId: row.id } })
+      this.$router.push({ path: '/projectDetail', query: { projectName: row.name } })
     },
     async getProjectNameSelect(projectName) {
       if (!projectName) {
@@ -169,7 +178,12 @@ export default {
       this.loadingFlag = false
       if (res.code === 0 && res.data) {
         const { projectList = [], total } = res.data
-        this.tableData = projectList
+        this.tableData = projectList.map((v) => {
+          return {
+            ...v,
+            randomIndex: Math.ceil(v.id % 7)
+          }
+        })
         this.total = total
       } else {
         this.tableData = []
@@ -238,6 +252,7 @@ div.card-container {
       margin-bottom: 16px;
       dl {
         color: #787b84;
+        width: 33%;
         dt {
           font-size: 12px;
           line-height: 20px;
@@ -247,6 +262,7 @@ div.card-container {
           font-size: 14px;
           line-height: 24px;
           font-weight: 500;
+          width: 100%;
         }
       }
     }

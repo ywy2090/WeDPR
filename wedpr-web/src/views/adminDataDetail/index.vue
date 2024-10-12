@@ -53,12 +53,13 @@
         </div>
       </div>
     </div>
-    <div class="title-radius" v-if="dataInfo.isOwner">使用记录</div>
-    <div class="tableContent autoTableWrap" v-if="dataInfo.isOwner && total">
+    <div class="title-radius">使用记录</div>
+    <div class="tableContent autoTableWrap" v-if="total">
       <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="tableData" :border="true" class="table-wrap">
-        <el-table-column label="任务ID" prop="taskID" />
+        <el-table-column label="任务ID" prop="id" />
         <el-table-column label="所属项目" prop="projectName" />
         <el-table-column label="发起机构" prop="ownerAgency" />
+        <el-table-column label="参与机构" prop="participate" />
         <el-table-column label="发起用户" prop="owner" />
         <el-table-column label="创建时间" prop="createTime" />
         <el-table-column label="任务状态" prop="status">
@@ -69,15 +70,10 @@
             <el-tag size="small" v-else effect="dark" color="#3071F2">{{ jobStatusMap[scope.row.status] }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
-          <template>
-            <el-button size="small" type="text">查看详情</el-button>
-          </template>
-        </el-table-column>
       </el-table>
       <we-pagination :total="total" :page_offset="pageData.page_offset" :page_size="pageData.page_size" @paginationChange="paginationHandle"></we-pagination>
     </div>
-    <el-empty v-if="!total && dataInfo.isOwner" :image-size="120" description="暂无数据">
+    <el-empty v-if="!total" :image-size="120" description="暂无数据">
       <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
     </el-empty>
   </div>
@@ -96,7 +92,7 @@ export default {
         permissions: {}
       },
       pageData: {
-        page_offset: 0,
+        page_offset: 1,
         page_size: 10
       },
       tableData: [],
@@ -129,30 +125,39 @@ export default {
       console.log(res)
       if (res.code === 0 && res.data) {
         this.dataInfo = { ...res.data, isOwner: res.data.ownerUserName === this.userId && res.data.ownerAgencyName === this.agencyId }
-        this.queryJobsByDatasetID()
+        this.adminQueryJobsByDatasetId()
         console.log(this.dataInfo)
       } else {
         this.dataInfo = {}
       }
     },
     // 获取数据集详情
-    async queryJobsByDatasetID() {
+    async adminQueryJobsByDatasetId() {
       this.loadingFlag = true
       const { datasetId } = this
-      const res = await projectManageServer.queryJobsByDatasetID({ datasetID: datasetId })
+      const { page_offset, page_size } = this.pageData
+      const res = await projectManageServer.adminQueryJobsByDatasetId({ datasetId: datasetId, pageNum: page_offset, pageSize: page_size })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { content, totalCount } = res.data
-        this.total = totalCount
-        this.tableData = content
+        const { jobList, total } = res.data
+        this.total = total
+        this.tableData = jobList.map((v) => {
+          let participate = ''
+          try {
+            participate = JSON.parse(v.parties).map((v) => v.agency)
+            participate = Array.from(new Set(participate)).join('，')
+          } catch {
+            participate = ''
+          }
+          return {
+            participate,
+            ...v
+          }
+        })
       }
     },
-    paginationHandle() {},
-    subApply() {
-      const { datasetId } = this.dataInfo
-      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(datasetId) } })
-    }
+    paginationHandle() {}
   }
 }
 </script>
@@ -209,5 +214,12 @@ div.info-container {
 }
 span.info {
   color: #262a32;
+}
+.tableContent {
+  ::v-deep .el-tag {
+    padding: 0 12px;
+    border: none;
+    line-height: 24px;
+  }
 }
 </style>

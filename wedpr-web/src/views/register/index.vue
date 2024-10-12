@@ -7,7 +7,7 @@
         <div class="login-form">
           <el-form ref="normalForm" :model="normalForm" :rules="normalFormRules" @keydown.enter.native="handleSubmitRegister">
             <el-form-item prop="mobile">
-              <el-tooltip class="item" effect="light" placement="bottom">
+              <el-tooltip class="item" effect="light" placement="top">
                 <div slot="content" class="check-info">
                   <div class="rule">
                     <el-icon v-if="!userNameRule.lengthStatus" style="color: #ff4d4f" class="icon el-icon-error" />
@@ -24,7 +24,7 @@
               </el-tooltip>
             </el-form-item>
             <el-form-item prop="password">
-              <el-tooltip class="item" effect="light" placement="bottom">
+              <el-tooltip class="item" effect="light" placement="top">
                 <div slot="content" class="check-info">
                   <div class="rule">
                     <el-icon v-if="!passwordRule.lengthStatus" style="color: #ff4d4f" class="icon el-icon-error" />
@@ -41,7 +41,7 @@
               </el-tooltip>
             </el-form-item>
             <el-form-item prop="passwordRepeat">
-              <el-tooltip class="item" effect="light" :content="passwordtips" placement="bottom">
+              <el-tooltip class="item" effect="light" :content="passwordtips" placement="top">
                 <div slot="content" class="check-info">
                   <div class="rule">
                     <el-icon v-if="!passwordRepeatRule.lengthStatus" style="color: #ff4d4f" class="icon el-icon-error" />

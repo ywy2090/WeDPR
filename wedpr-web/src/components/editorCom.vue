@@ -20,6 +20,7 @@
 import * as monaco from 'monaco-editor'
 import { language as pythonLanguage } from 'monaco-editor/esm/vs/basic-languages/python/python.js'
 import { language as sqlLanguage } from 'monaco-editor/esm/vs/basic-languages/sql/sql.js'
+import { format } from 'sql-formatter'
 export default {
   name: 'editorCom',
   props: {
@@ -83,7 +84,8 @@ export default {
         scrollBeyondLastLine: false, // 设置编辑器是否可以滚动到最后一行之后
         readOnly: false, // 是否为只读模式
         theme: 'vs-dark' // vs, hc-black, or vs-dark
-      }
+      },
+      editor: null
     }
   },
   mounted() {
@@ -96,13 +98,15 @@ export default {
       // 生成编辑器配置
       const editorOptions = Object.assign(this.defaultOpts, this.opts)
       // 生成编辑器对象
-      this.monacoEditor = monaco.editor.create(this.$refs.container, editorOptions)
+      this.editor = monaco.editor.create(this.$refs.container, editorOptions)
       // 编辑器内容发生改变时触发
-      this.monacoEditor.onDidChangeModelContent(() => {
-        // this.$emit('change', this.monacoEditor.getValue())
-        this.$emit('input', this.monacoEditor.getValue())
+      this.editor.onDidChangeModelContent(() => {
+        // this.$emit('change', this.editor.getValue())
+        this.$emit('input', this.editor.getValue())
       })
+      this.addSqlFormatter()
       this.addSqlTips()
+      // this.addFormatter()
     },
     addPythonTips() {
       monaco.languages.registerCompletionItemProvider('python', {
@@ -157,6 +161,25 @@ export default {
           })
           return {
             suggestions: suggestions
+          }
+        }
+      })
+    },
+    // 格式化代码
+    formatSql() {},
+    addSqlFormatter() {
+      // 监听右键事件
+      this.editor.addAction({
+        id: 'format.sql',
+        label: 'Formart SQL',
+        precondition: null,
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 1,
+        run: () => {
+          try {
+            this.editor.setValue(format(this.editor.getValue()))
+          } catch (e) {
+            console.log('error')
           }
         }
       })

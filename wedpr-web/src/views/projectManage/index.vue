@@ -19,13 +19,16 @@
         <el-form-item>
           <el-button icon="el-icon-plus" type="primary" @click="createProject"> 新建项目 </el-button>
         </el-form-item>
+        <el-form-item>
+          <el-button icon="el-icon-folder-opened" type="primary" @click="getJupterLink"> 打开juypter </el-button>
+        </el-form-item>
       </el-form>
     </div>
     <div class="record">
       <div class="card-container" v-if="tableData.length">
         <div class="card" v-for="item in tableData" :key="item.id" @click="goDetail(item)">
           <div class="bg">
-            <img src="~Assets/images/cover.png" alt="" />
+            <img :src="bindIcon(item.randomIndex)" alt="" />
           </div>
           <div class="info">
             <div class="project-title">
@@ -70,9 +73,10 @@
   </div>
 </template>
 <script>
-import { projectManageServer } from 'Api'
+import { projectManageServer, jupyterManageServer } from 'Api'
 import wePagination from '@/components/wePagination.vue'
 import { handleParamsValid } from 'Utils/index.js'
+import { mapGetters } from 'vuex'
 export default {
   name: 'dataManage',
   components: {
@@ -100,10 +104,32 @@ export default {
       projectNameSelectList: []
     }
   },
+  computed: {
+    ...mapGetters(['authorization'])
+  },
   created() {
     this.queryProject()
   },
   methods: {
+    async getJupterLink(params) {
+      const res = await jupyterManageServer.getJupterLink(params)
+      if (res.code === 0 && res.data) {
+        const { jupyters = [] } = res.data
+        if (jupyters.length) {
+          const { jupyterAccessUrl = 'http://139.159.202.235:9401/lab' } = jupyters[0]
+          window.open(jupyterAccessUrl + 'Authorization=' + this.authorization)
+        } else {
+          window.open('http://139.159.202.235:9401/lab?Authorization=' + this.authorization)
+        }
+      }
+    },
+    bindIcon(randomIndex) {
+      return require('../../assets/images/cover/pro' + randomIndex + '.png')
+    },
+    async allocate(params) {
+      const res = await jupyterManageServer.allocate(params)
+      console.log(res)
+    },
     // 查询
     queryHandle() {
       this.$refs.searchForm.validate((valid) => {
@@ -159,7 +185,12 @@ export default {
       this.loadingFlag = false
       if (res.code === 0 && res.data) {
         const { dataList = [], total } = res.data
-        this.tableData = dataList
+        this.tableData = dataList.map((v) => {
+          return {
+            ...v,
+            randomIndex: Math.ceil(v.id % 7)
+          }
+        })
         this.total = total
       } else {
         this.tableData = []

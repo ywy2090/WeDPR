@@ -80,8 +80,8 @@
           </template>
         </el-table-column>
         <el-table-column label="操作">
-          <template>
-            <el-button size="small" type="text">查看详情</el-button>
+          <template v-slot="scope">
+            <el-button size="small" @click="goJobDetail(scope.row.id)" type="text">查看详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -169,7 +169,10 @@ export default {
     paginationHandle() {},
     subApply() {
       const { datasetId } = this.dataInfo
-      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(datasetId) } })
+      this.$router.push({ path: '/dataApply', query: { selectdDataStr: encodeURIComponent(datasetId), applyType: 'wedpr_data_auth' } })
+    },
+    goJobDetail(id) {
+      this.$router.push({ path: '/jobDetail', query: { id } })
     }
   }
 }
@@ -227,5 +230,12 @@ div.info-container {
 }
 span.info {
   color: #262a32;
+}
+.tableContent {
+  ::v-deep .el-tag {
+    padding: 0 12px;
+    border: none;
+    line-height: 24px;
+  }
 }
 </style>

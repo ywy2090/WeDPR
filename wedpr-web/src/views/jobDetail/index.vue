@@ -9,13 +9,19 @@
               <span class="info" :title="jobInfo.id"> {{ jobInfo.id }} </span>
             </div>
           </div>
-          <div class="whole">
+          <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
+            <div class="half">
+              <span class="title">标签提供方：</span>
+              <span class="info" :title="jobInfo.particapate"> {{ jobInfo.particapate }} </span>
+            </div>
+          </div>
+          <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
             <div class="half">
               <span class="title">参与方：</span>
               <span class="info" :title="jobInfo.particapate"> {{ jobInfo.particapate }} </span>
             </div>
           </div>
-          <div class="whole">
+          <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
             <div class="half">
               <span class="title">结果接收方：</span>
               <span class="info" :title="jobInfo.receiver"> {{ jobInfo.receiver }} </span>
@@ -57,7 +63,25 @@
             </div>
           </div>
         </div>
-        <div class="con">
+        <div class="con" v-if="jobInfo.jobType === jobEnum.PIR">
+          <div class="title-radius">选择的服务</div>
+          <div class="tableContent autoTableWrap">
+            <el-table size="small" :data="serviceData" :border="true" class="table-wrap">
+              <el-table-column label="服务名称" prop="serviceName" show-overflow-tooltip />
+              <el-table-column label="数据集" prop="datasetId" show-overflow-tooltip />
+              <el-table-column label="主键" prop="idField" show-overflow-tooltip />
+              <el-table-column label="支持的查询方式" prop="searchType" show-overflow-tooltip>
+                <template v-slot="scope">
+                  <span v-if="scope.row.searchType === searchTypeEnum.ALL">查询存在性，查询字段值</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExists">查询存在性</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchValue">查询字段值</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="可查的字段列表" prop="accessibleValueQueryFields" />
+            </el-table>
+          </div>
+        </div>
+        <div class="con" v-else>
           <div class="title-radius">参与数据资源</div>
           <div class="tableContent autoTableWrap">
             <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="dataList" :border="true" class="table-wrap">
@@ -91,11 +115,11 @@
   </div>
 </template>
 <script>
-import { jobManageServer, dataManageServer, settingManageServer } from 'Api'
+import { jobManageServer, dataManageServer, settingManageServer, serviceManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import xgbResult from './result/xgbResult.vue'
 import baseResult from './result/baseResult.vue'
-import { jobStatusMap, jobEnum } from 'Utils/constant.js'
+import { jobStatusMap, jobEnum, searchTypeEnum } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 export default {
   name: 'groupManage',
@@ -121,7 +145,9 @@ export default {
       resultFileInfo: {}, // psiresult
       receiverList: [],
       jobEnum,
-      modelSetting: {}
+      modelSetting: {},
+      serviceData: [],
+      searchTypeEnum
     }
   },
   created() {
@@ -141,29 +167,56 @@ export default {
       console.log(res)
       if (res.code === 0 && res.data) {
         const { job = {}, modelResultDetail = {}, resultFileInfo } = res.data
-        const { parties, param } = job
+        const { parties = '', param } = job
         const { jobStatusInfo = {} } = job
         this.jobInfo = { ...job }
-        this.jobInfo.particapate = JSON.parse(parties)
-          .map((v) => v.agency)
-          .join('，')
+        if (parties) {
+          this.jobInfo.particapate = JSON.parse(parties)
+            .map((v) => v.agency)
+            .join('，')
+        }
+
         console.log(JSON.parse(param), 'JSON.parse(param)')
-        const { dataSetList, modelSetting } = JSON.parse(param)
+        const { dataSetList, modelSetting, serviceId } = JSON.parse(param)
         this.modelSetting = modelSetting
-        this.receiverList = dataSetList.filter((v) => v.receiveResult).map((v) => v.dataset.ownerAgency)
-        this.jobInfo.receiver = this.receiverList.join('，')
-        const ids = dataSetList
-          .map((v) => {
-            return v.dataset && v.dataset.datasetID
-          })
-          .filter((v) => v)
-        ids.length && this.getListDetail({ datasetIdList: ids })
+        // 获取任务关联数据集列表
+        if (dataSetList && dataSetList.length) {
+          this.receiverList = dataSetList.filter((v) => v.receiveResult).map((v) => v.dataset.ownerAgency)
+          this.jobInfo.receiver = this.receiverList.join('，')
+          const ids = dataSetList
+            .map((v) => {
+              return v.dataset && v.dataset.datasetID
+            })
+            .filter((v) => v)
+          ids.length && this.getListDetail({ datasetIdList: ids })
+        }
+
+        // pir服务需要获取服务详情
+        if (serviceId) {
+          this.queryService(serviceId)
+        }
         console.log(JSON.parse(parties), 'parties')
         this.modelResultDetail = modelResultDetail
         this.jobStatusInfo = jobStatusInfo
         this.resultFileInfo = resultFileInfo
       } else {
         this.jobInfo = {}
+      }
+    },
+    // 获取服务详情
+    async queryService(serviceId) {
+      this.loadingFlag = true
+      const params = { condition: {}, serviceIdList: [serviceId], pageNum: 1, pageSize: 1 }
+      const res = await serviceManageServer.getPublishList(params)
+      this.loadingFlag = false
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { wedprPublishedServiceList = [] } = res.data
+        const { serviceConfig = '', serviceType, serviceName } = wedprPublishedServiceList[0] || {}
+        console.log(serviceType, 'serviceType')
+        const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
+        this.serviceData = [{ datasetId, searchType, idField, accessibleValueQueryFields, serviceName }]
+        console.log(this.serviceData, 'this.serviceData============================================')
       }
     },
     // 获取数据集详情
@@ -201,7 +254,7 @@ export default {
     async saveModelConf(name) {
       const { modelSetting } = this
       const params = {
-        templateList: [{ name, type: 'MODEL_SETTING', setting: JSON.stringify({ ...modelSetting }) }]
+        templateList: [{ name, type: 'XGB_SETTING', setting: JSON.stringify({ ...modelSetting }) }]
       }
       const res = await settingManageServer.insertSettings(params)
       console.log(res)

@@ -40,7 +40,7 @@
         </el-form-item>
         <el-form-item prop="createTime" label="创建时间：">
           <el-date-picker
-            value-format="yyyy-MM-dd hh:mm:ss"
+            value-format="yyyy-MM-dd HH:mm:ss"
             v-model="searchForm.createTime"
             type="datetimerange"
             range-separator="至"
@@ -65,7 +65,6 @@
           <template v-slot="scope"> <img class="type-img" :src="handleData(scope.row.jobType).src" /> {{ handleData(scope.row.jobType).label }} </template>
         </el-table-column>
         <el-table-column label="任务ID" prop="id" show-overflow-tooltip />
-        <!-- <el-table-column label="任务名称" prop="name" show-overflow-tooltip /> -->
         <el-table-column label="创建时间" prop="createTime" show-overflow-tooltip />
         <el-table-column label="发起机构" prop="ownerAgency" show-overflow-tooltip />
         <el-table-column label="参与机构" prop="participate" show-overflow-tooltip />
@@ -128,9 +127,9 @@ export default {
     }
   },
   created() {
-    const { projectId } = this.$route.query
-    this.projectId = projectId
-    projectId && this.queryProject()
+    const { projectName } = this.$route.query
+    this.projectName = projectName
+    projectName && this.queryProject()
   },
   computed: {
     ...mapGetters(['algList', 'agencyList'])
@@ -146,8 +145,8 @@ export default {
     // 获取项目详情
     async queryProject() {
       this.loadingFlag = true
-      const { projectId } = this
-      const res = await projectManageServer.adminQueryProject({ id: projectId })
+      const { projectName } = this
+      const res = await projectManageServer.adminQueryProject({ projectName, pageNum: 1, pageSize: 10 })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
@@ -198,9 +197,8 @@ export default {
         this.tableData = jobList.map((v) => {
           let participate = ''
           try {
-            participate = JSON.parse(v.parties)
-              .map((v) => v.agency)
-              .join('，')
+            participate = JSON.parse(v.parties).map((v) => v.agency)
+            participate = Array.from(new Set(participate)).join('，')
           } catch {
             participate = ''
           }
@@ -229,6 +227,7 @@ export default {
   width: 42px;
   height: auto;
   vertical-align: middle;
+  border-radius: 6px;
   margin-right: 10px;
 }
 div.con {
