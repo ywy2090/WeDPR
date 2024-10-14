@@ -197,8 +197,13 @@ public class ExecutorManagerImpl implements ExecutorManager {
             @Override
             public void onFinish(JobDO jobDO, ExecuteResult result) {
                 try {
-                    projectMapperWrapper.updateFinalJobResult(
-                            jobDO, JobStatus.RunSuccess, result.serialize());
+                    if (result.getResultStatus() == null || result.getResultStatus().failed()) {
+                        projectMapperWrapper.updateFinalJobResult(
+                                jobDO, JobStatus.RunFailed, result.serialize());
+                    } else {
+                        projectMapperWrapper.updateFinalJobResult(
+                                jobDO, JobStatus.RunSuccess, result.serialize());
+                    }
                 } catch (Exception e) {
                     logger.error(
                             "update job status to success for job {} failed, result: {}, error: ",
