@@ -55,11 +55,19 @@ public class MLExecutorConfig {
     }
 
     public static String getRunTaskApiUrl(String jobID) {
-        return URL + "/" + RUN_TASK_API_PATH + jobID;
+        return URL + RUN_TASK_API_PATH + jobID;
+    }
+
+    public static String getRunTaskApiUrl(String url, String jobID) {
+        return url + RUN_TASK_API_PATH + jobID;
     }
 
     public static String getObtainJobResultApiUrl(String jobID) {
         return URL + "/" + OBTAIN_JOB_RESULT_API_PATH + "/" + jobID;
+    }
+
+    public static String getObtainJobResultApiUrl(String url, String jobID) {
+        return url + "/" + OBTAIN_JOB_RESULT_API_PATH + "/" + jobID;
     }
 
     public static String getSuccessStatus() {

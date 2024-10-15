@@ -37,6 +37,11 @@ public class EntryPointInfo {
         if (uriPath.startsWith(Constant.URI_SPLITER)) {
             return Common.getUrl(entryPoint + uriPath);
         }
+
+        if (uriPath.isEmpty()) {
+            return Common.getUrl(entryPoint);
+        }
+
         return Common.getUrl(entryPoint + Constant.URI_SPLITER + uriPath);
     }
 

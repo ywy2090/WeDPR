@@ -1,7 +1,6 @@
 package com.webank.wedpr.components.scheduler.workflow.builder;
 
 import com.webank.wedpr.common.protocol.WorkerNodeType;
-import com.webank.wedpr.common.utils.ObjectMapperFactory;
 import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.executor.ExecuteResult;
@@ -76,9 +75,9 @@ public class JobWorkFlowBuilderImpl implements JobWorkFlowBuilderApi {
             WorkFlow workflow, List<Integer> upstreams, WorkerNodeType workerNodeType, Object args)
             throws Exception {
         // args
-        String argsAsString = ObjectMapperFactory.getObjectMapper().writeValueAsString(args);
+        // String argsAsString = ObjectMapperFactory.getObjectMapper().writeValueAsString(args);
         // workflow build
-        return workflow.addWorkFlowNode(upstreams, workerNodeType.getType(), argsAsString);
+        return workflow.addWorkFlowNode(upstreams, workerNodeType.getType(), args);
     }
 
     @Override
