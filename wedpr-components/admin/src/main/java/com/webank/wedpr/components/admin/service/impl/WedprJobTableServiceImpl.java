@@ -3,8 +3,9 @@ package com.webank.wedpr.components.admin.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.webank.wedpr.common.protocol.JobStatus;
-import com.webank.wedpr.common.protocol.JobType;
+import com.webank.wedpr.common.utils.ObjectMapperFactory;
 import com.webank.wedpr.components.admin.common.Utils;
 import com.webank.wedpr.components.admin.entity.WedprAgency;
 import com.webank.wedpr.components.admin.entity.WedprJobTable;
@@ -14,6 +15,8 @@ import com.webank.wedpr.components.admin.request.GetWedprJobListRequest;
 import com.webank.wedpr.components.admin.response.*;
 import com.webank.wedpr.components.admin.service.WedprAgencyService;
 import com.webank.wedpr.components.admin.service.WedprJobTableService;
+import com.webank.wedpr.components.meta.sys.config.dao.SysConfigDO;
+import com.webank.wedpr.components.meta.sys.config.dao.SysConfigMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +46,8 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
     @Autowired private WedprJobTableMapper wedprJobTableMapper;
 
     @Autowired private WedprAgencyService wedprAgencyService;
+
+    @Autowired private SysConfigMapper sysConfigMapper;
 
     @Override
     public ListJobResponse listJob(GetWedprJobListRequest request) {
@@ -83,7 +88,7 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
     }
 
     @Override
-    public GetJobStatisticsResponse getJobStatistics() {
+    public GetJobStatisticsResponse getJobStatistics() throws JsonProcessingException {
         // query job overview
         int totalCount = count();
         LambdaQueryWrapper<WedprJobTable> wedprJobTableQueryWrapper = new LambdaQueryWrapper<>();
@@ -98,14 +103,15 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
         // query jobTypeStatistic
         List<WedprJobTable> jobTableList1 = wedprJobTableMapper.jobTypeStatistic();
         List<JobTypeStatistic> jobTypeStatisticList = new ArrayList<>();
-        JobType[] jobTypes = JobType.values();
-        for (JobType jobTypeItem : jobTypes) {
+        List<JobTypeConfig> jobTypeConfigList = getJobTypeConfigList();
+        for (JobTypeConfig jobTypeConfig : jobTypeConfigList) {
             JobTypeStatistic jobTypeStatistic = new JobTypeStatistic();
-            String jobType = jobTypeItem.getType();
-            jobTypeStatistic.setJobType(jobType);
+            String jobTypeName = jobTypeConfig.getName();
+            jobTypeStatistic.setJobType(jobTypeName);
+            jobTypeStatistic.setJobTypeTitle(jobTypeConfig.getTitle());
             jobTypeStatistic.setCount(0);
             for (WedprJobTable wedprJobTable : jobTableList1) {
-                if (jobType.equals(wedprJobTable.getJobType())) {
+                if (jobTypeName.equals(wedprJobTable.getJobType())) {
                     jobTypeStatistic.setCount(wedprJobTable.getCount());
                 }
             }
@@ -125,13 +131,15 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
             if (jobTable1 != null) {
                 agencyJobTypeStatistic.setTotalCount(jobTable1.getCount());
             }
-            List<JobTypeStatistic> jobTypeStatisticsList = new ArrayList<>(jobTypes.length);
-            for (JobType jobTypeItem : jobTypes) {
-                String jobType = jobTypeItem.getType();
+            List<JobTypeStatistic> jobTypeStatisticsList =
+                    new ArrayList<>(jobTypeConfigList.size());
+            for (JobTypeConfig jobTypeConfig : jobTypeConfigList) {
+                String jobTypeName = jobTypeConfig.getName();
                 WedprJobTable jobTable2 =
-                        wedprJobTableMapper.jobAgencyTypeStatistic(agencyName, jobType);
+                        wedprJobTableMapper.jobAgencyTypeStatistic(agencyName, jobTypeName);
                 JobTypeStatistic jobTypeStatistic = new JobTypeStatistic();
-                jobTypeStatistic.setJobType(jobType);
+                jobTypeStatistic.setJobType(jobTypeName);
+                jobTypeStatistic.setJobTypeTitle(jobTypeConfig.getTitle());
                 jobTypeStatistic.setCount(0);
                 if (jobTable2 != null) {
                     jobTypeStatistic.setCount(jobTable2.getCount());
@@ -152,18 +160,30 @@ public class WedprJobTableServiceImpl extends ServiceImpl<WedprJobTableMapper, W
         return response;
     }
 
+    private List<JobTypeConfig> getJobTypeConfigList() throws JsonProcessingException {
+        SysConfigDO sysConfigDO = sysConfigMapper.queryConfig("wedpr_algorithm_templates");
+        String configValue = sysConfigDO.getConfigValue();
+        WedprJobTypeConfigWrapper wedprJobTypeConfigWrapper =
+                ObjectMapperFactory.getObjectMapper()
+                        .readValue(configValue, WedprJobTypeConfigWrapper.class);
+        List<JobTypeConfig> jobTypeConfigList = wedprJobTypeConfigWrapper.getTemplates();
+        return jobTypeConfigList;
+    }
+
     @Override
-    public GetJobLineResponse getJobDateLine(GetJobDateLineRequest getJobDateLineRequest) {
+    public GetJobLineResponse getJobDateLine(GetJobDateLineRequest getJobDateLineRequest)
+            throws JsonProcessingException {
         String startTime = getJobDateLineRequest.getStartTime();
         String endTime = getJobDateLineRequest.getEndTime();
-        JobType[] jobTypeList = JobType.values();
+        List<JobTypeConfig> jobTypeConfigList = getJobTypeConfigList();
         List<JobTypeStat> jobTypeStatList = new ArrayList<>();
-        for (JobType jobTypeEnum : jobTypeList) {
-            String jobType = jobTypeEnum.getType();
+        for (JobTypeConfig jobTypeConfig : jobTypeConfigList) {
+            String jobTypeName = jobTypeConfig.getName();
             List<WedprJobTable> jobList =
-                    wedprJobTableMapper.getJobDateLine(jobType, startTime, endTime);
+                    wedprJobTableMapper.getJobDateLine(jobTypeName, startTime, endTime);
             JobTypeStat jobTypeStat = new JobTypeStat();
-            jobTypeStat.setJobType(jobType);
+            jobTypeStat.setJobType(jobTypeName);
+            jobTypeStat.setJobTypeTile(jobTypeConfig.getTitle());
             int size = jobList.size();
             List<String> dateList = new ArrayList<>(size);
             List<Integer> countList = new ArrayList<>(size);
