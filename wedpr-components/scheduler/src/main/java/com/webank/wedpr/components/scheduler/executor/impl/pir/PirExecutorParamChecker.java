@@ -15,10 +15,10 @@
 
 package com.webank.wedpr.components.scheduler.executor.impl.pir;
 
+import com.webank.wedpr.common.protocol.JobType;
 import com.webank.wedpr.components.pir.sdk.model.PirQueryParam;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.scheduler.executor.ExecutorParamChecker;
-import com.webank.wedpr.core.protocol.JobType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -35,7 +35,7 @@ public class PirExecutorParamChecker implements ExecutorParamChecker {
         // deserialize the jobParam
         PirQueryParam pirQueryParam = PirQueryParam.deserialize(jobDO.getParam());
         // check the jobParam
-        pirQueryParam.check();
+        pirQueryParam.check(true);
         return pirQueryParam;
     }
 }

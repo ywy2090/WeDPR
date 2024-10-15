@@ -15,6 +15,9 @@
 
 package com.webank.wedpr.components.scheduler.pir.impl;
 
+import com.webank.wedpr.common.protocol.JobStatus;
+import com.webank.wedpr.common.protocol.JobType;
+import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
 import com.webank.wedpr.components.scheduler.JobDetailResponse;
@@ -23,9 +26,6 @@ import com.webank.wedpr.components.scheduler.executor.impl.ml.MLExecutorClient;
 import com.webank.wedpr.components.scheduler.executor.impl.ml.request.GetTaskResultRequest;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.scheduler.executor.impl.psi.model.PSIJobParam;
-import com.webank.wedpr.core.protocol.JobStatus;
-import com.webank.wedpr.core.protocol.JobType;
-import com.webank.wedpr.core.utils.WeDPRException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,7 @@ public class SchedulerServiceImpl implements SchedulerService {
         if (!JobStatus.success(jobDO.getStatus())) {
             return new JobDetailResponse(jobDO, null);
         }
+        // the ml job
         if (jobDO.getType().mlJob()) {
             return new JobDetailResponse(
                     jobDO,
@@ -61,6 +62,10 @@ public class SchedulerServiceImpl implements SchedulerService {
         if (JobType.isPSIJob(jobDO.getJobType())) {
             PSIJobParam psiJobParam = PSIJobParam.deserialize(jobDO.getParam());
             response.setResultFileInfo(psiJobParam.getResultPath(fileMetaBuilder, jobID));
+        }
+        // the pir job, get result files
+        if (JobType.isPirJob(jobDO.getJobType())) {
+            response.setResultFileInfo(fileMetaBuilder.build(jobDO.getJobResult().getResult()));
         }
         return response;
     }

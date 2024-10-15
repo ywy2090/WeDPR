@@ -16,11 +16,11 @@
 package com.webank.wedpr.components.pir.sdk.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.webank.wedpr.common.utils.Common;
+import com.webank.wedpr.common.utils.ObjectMapperFactory;
+import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.api.credential.core.impl.CredentialInfo;
 import com.webank.wedpr.components.db.mapper.service.publish.model.PirSearchType;
-import com.webank.wedpr.core.utils.Common;
-import com.webank.wedpr.core.utils.ObjectMapperFactory;
-import com.webank.wedpr.core.utils.WeDPRException;
 import java.util.List;
 import java.util.Objects;
 import lombok.Data;
@@ -73,13 +73,16 @@ public class PirQueryParam implements Cloneable {
         this.algorithmType = PirParamEnum.AlgorithmType.deserialize(pirAlgorithmType);
     }
 
-    public void check() throws WeDPRException {
+    public void check(boolean requireSearchIdList) throws WeDPRException {
         Common.requireNonNull("searchType", this.searchTypeObject);
         Common.requireNonNull("pirAlgorithmType", this.algorithmType);
         Common.requireNonNull("serviceID", serviceId);
         Common.requireNonNull("queriedFields", queriedFields);
+        if (!requireSearchIdList) {
+            return;
+        }
         if (Objects.isNull(searchIdList) || searchIdList.size() == 0) {
-            throw new WeDPRException(-1, "searchId列表不能为空");
+            throw new WeDPRException(-1, "the searchIdList can't be empty");
         }
     }
 

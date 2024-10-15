@@ -15,9 +15,9 @@
 
 package com.webank.wedpr.components.pir.sdk.config;
 
-import com.webank.wedpr.core.config.WeDPRCommonConfig;
-import com.webank.wedpr.core.config.WeDPRConfig;
-import com.webank.wedpr.core.utils.ThreadPoolService;
+import com.webank.wedpr.common.config.WeDPRCommonConfig;
+import com.webank.wedpr.common.config.WeDPRConfig;
+import com.webank.wedpr.common.utils.ThreadPoolService;
 
 public class PirSDKConfig {
     private static String PIR_TOPIC_PREFIX = "PIR_TOPIC_";
@@ -50,5 +50,9 @@ public class PirSDKConfig {
 
     public static Integer getPirQueryTimeoutMs() {
         return PIR_QUERY_TIMEOUT_MS;
+    }
+
+    public static String getPirCacheDir() {
+        return PIR_CACHE_DIR;
     }
 }

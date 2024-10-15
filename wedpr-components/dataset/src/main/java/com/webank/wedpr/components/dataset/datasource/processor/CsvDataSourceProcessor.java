@@ -1,5 +1,8 @@
 package com.webank.wedpr.components.dataset.datasource.processor;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.webank.wedpr.common.utils.Common;
+import com.webank.wedpr.common.utils.ObjectMapperFactory;
 import com.webank.wedpr.components.dataset.config.DatasetConfig;
 import com.webank.wedpr.components.dataset.dao.MergeChunkResult;
 import com.webank.wedpr.components.dataset.datasource.DataSourceMeta;
@@ -14,8 +17,6 @@ import com.webank.wedpr.components.db.mapper.dataset.dao.UserInfo;
 import com.webank.wedpr.components.db.mapper.dataset.exception.DatasetException;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
 import com.webank.wedpr.components.storage.api.StoragePath;
-import com.webank.wedpr.core.utils.Common;
-import com.webank.wedpr.core.utils.ObjectMapperFactory;
 import java.util.Arrays;
 import java.util.List;
 import lombok.Data;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = false)
 public class CsvDataSourceProcessor implements DataSourceProcessor {
 

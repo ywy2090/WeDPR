@@ -15,6 +15,10 @@
 
 package com.webank.wedpr.components.scheduler.executor.manager;
 
+import com.webank.wedpr.common.protocol.JobStatus;
+import com.webank.wedpr.common.protocol.JobType;
+import com.webank.wedpr.common.utils.Constant;
+import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.project.JobChecker;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
@@ -24,10 +28,6 @@ import com.webank.wedpr.components.scheduler.executor.callback.TaskFinishedHandl
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutiveContext;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
-import com.webank.wedpr.core.protocol.JobStatus;
-import com.webank.wedpr.core.protocol.JobType;
-import com.webank.wedpr.core.utils.Constant;
-import com.webank.wedpr.core.utils.WeDPRException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -197,8 +197,13 @@ public class ExecutorManagerImpl implements ExecutorManager {
             @Override
             public void onFinish(JobDO jobDO, ExecuteResult result) {
                 try {
-                    projectMapperWrapper.updateFinalJobResult(
-                            jobDO, JobStatus.RunSuccess, result.serialize());
+                    if (result.getResultStatus() == null || result.getResultStatus().failed()) {
+                        projectMapperWrapper.updateFinalJobResult(
+                                jobDO, JobStatus.RunFailed, result.serialize());
+                    } else {
+                        projectMapperWrapper.updateFinalJobResult(
+                                jobDO, JobStatus.RunSuccess, result.serialize());
+                    }
                 } catch (Exception e) {
                     logger.error(
                             "update job status to success for job {} failed, result: {}, error: ",

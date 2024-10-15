@@ -15,6 +15,10 @@
 
 package com.webank.wedpr.components.scheduler.config;
 
+import com.webank.wedpr.common.protocol.ExecutorType;
+import com.webank.wedpr.components.api.credential.dao.ApiCredentialMapper;
+import com.webank.wedpr.components.crypto.CryptoToolkitFactory;
+import com.webank.wedpr.components.db.mapper.service.publish.dao.ServiceAuthMapper;
 import com.webank.wedpr.components.project.JobChecker;
 import com.webank.wedpr.components.project.dao.JobDO;
 import com.webank.wedpr.components.project.dao.ProjectMapperWrapper;
@@ -34,7 +38,6 @@ import com.webank.wedpr.components.storage.config.HdfsStorageConfig;
 import com.webank.wedpr.components.storage.config.LocalStorageConfig;
 import com.webank.wedpr.components.sync.ResourceSyncer;
 import com.webank.wedpr.components.sync.config.ResourceSyncerConfig;
-import com.webank.wedpr.core.protocol.ExecutorType;
 import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,6 +70,9 @@ public class SchedulerLoader {
     @Autowired
     private WeDPRTransport weDPRTransport;
 
+    @Autowired private ServiceAuthMapper serviceAuthMapper;
+    @Autowired private ApiCredentialMapper apiCredentialMapper;
+
     @Bean(name = "schedulerTaskImpl")
     @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
     @ConditionalOnMissingBean
@@ -86,7 +92,7 @@ public class SchedulerLoader {
     }
 
     protected void registerExecutors(
-            ExecutorManager executorManager, FileMetaBuilder fileMetaBuilder) {
+            ExecutorManager executorManager, FileMetaBuilder fileMetaBuilder) throws Exception {
 
         SchedulerClient schedulerClient = new SchedulerClient();
         RemoteSchedulerExecutor remoteSchedulerExecutor =
@@ -116,6 +122,8 @@ public class SchedulerLoader {
                 ExecutorType.PIR.getType(),
                 new PirExecutor(
                         weDPRTransport,
+                        storage,
+                        new FileMetaBuilder(new StoragePathBuilder(hdfsConfig, localStorageConfig)),
                         new ExecutiveContextBuilder(projectMapperWrapper),
                         new TaskFinishedHandler() {
                             @Override
@@ -123,7 +131,10 @@ public class SchedulerLoader {
                                 projectMapperWrapper.updateJobResult(
                                         jobDO.getId(), jobDO.getJobResult().getJobStatus(), null);
                             }
-                        }));
+                        },
+                        serviceAuthMapper,
+                        apiCredentialMapper,
+                        CryptoToolkitFactory.build()));
         logger.info("register PirExecutor success");
     }
 }

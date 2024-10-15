@@ -17,16 +17,17 @@ package com.webank.wedpr.components.scheduler.executor.impl.psi.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.webank.wedpr.common.config.WeDPRCommonConfig;
+import com.webank.wedpr.common.protocol.JobType;
+import com.webank.wedpr.common.utils.CSVFileParser;
+import com.webank.wedpr.common.utils.Common;
+import com.webank.wedpr.common.utils.ObjectMapperFactory;
+import com.webank.wedpr.common.utils.WeDPRException;
 import com.webank.wedpr.components.scheduler.executor.impl.ExecutorConfig;
 import com.webank.wedpr.components.scheduler.executor.impl.model.DatasetInfo;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMeta;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
 import com.webank.wedpr.components.storage.api.FileStorageInterface;
-import com.webank.wedpr.core.config.WeDPRCommonConfig;
-import com.webank.wedpr.core.utils.CSVFileParser;
-import com.webank.wedpr.core.utils.Common;
-import com.webank.wedpr.core.utils.ObjectMapperFactory;
-import com.webank.wedpr.core.utils.WeDPRException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public class PSIJobParam {
                         remotePath,
                         input.getOwner(),
                         input.getOwnerAgency());
-        fileMetaBuilder.resetWithHome(output);
+        fileMetaBuilder.getAbsoluteDir(output);
         return output;
     }
 
@@ -259,20 +260,28 @@ public class PSIJobParam {
             String owner = partyInfo.getDataset().getOwner();
             String remotePath =
                     WeDPRCommonConfig.getUserJobCachePath(
-                            owner, jobID, ExecutorConfig.getPSIPrepareFileName());
+                            owner,
+                            JobType.PSI.getType(),
+                            jobID,
+                            ExecutorConfig.getPSIPrepareFileName());
 
             // update the input
             FileMeta updatedInput =
                     fileMetaBuilder.build(
-                            storage.type(), remotePath, owner, WeDPRCommonConfig.getAgency());
-
-            // reset the home
-            fileMetaBuilder.resetWithHome(updatedInput);
+                            storage.type(),
+                            storage.generateAbsoluteDir(remotePath),
+                            owner,
+                            WeDPRCommonConfig.getAgency());
             logger.info(
                     "Begin to upload the extracted psi file from {}=>{}",
                     extractFilePath,
                     updatedInput.getPath());
-            storage.upload(null, Boolean.TRUE, extractFilePath, updatedInput.getPath(), true);
+            storage.upload(
+                    new FileStorageInterface.FilePermissionInfo(owner, null),
+                    Boolean.TRUE,
+                    extractFilePath,
+                    updatedInput.getPath(),
+                    false);
             partyInfo.setDataset(updatedInput);
 
             logger.info(

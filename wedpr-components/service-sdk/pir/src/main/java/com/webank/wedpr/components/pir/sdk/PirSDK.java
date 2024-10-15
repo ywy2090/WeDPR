@@ -15,12 +15,14 @@
 
 package com.webank.wedpr.components.pir.sdk;
 
+import com.webank.wedpr.common.utils.WeDPRResponse;
+import com.webank.wedpr.components.api.credential.core.impl.CredentialInfo;
 import com.webank.wedpr.components.pir.sdk.model.PirQueryParam;
 import com.webank.wedpr.components.pir.sdk.model.PirResult;
-import com.webank.wedpr.core.utils.WeDPRResponse;
 import org.apache.commons.lang3.tuple.Pair;
 
 public interface PirSDK {
 
-    public abstract Pair<WeDPRResponse, PirResult> query(PirQueryParam queryParam) throws Exception;
+    public abstract Pair<WeDPRResponse, PirResult> query(
+            CredentialInfo credentialInfo, PirQueryParam queryParam) throws Exception;
 }

@@ -16,14 +16,15 @@
 package com.webank.wedpr.components.project.dao;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.webank.wedpr.common.protocol.JobStatus;
+import com.webank.wedpr.common.protocol.JobType;
+import com.webank.wedpr.common.utils.*;
 import com.webank.wedpr.components.meta.resource.follower.dao.FollowerDO;
 import com.webank.wedpr.components.uuid.generator.WeDPRUuidGenerator;
-import com.webank.wedpr.core.protocol.JobStatus;
-import com.webank.wedpr.core.protocol.JobType;
-import com.webank.wedpr.core.utils.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +34,10 @@ import org.apache.commons.lang3.StringUtils;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JobDO extends TimeRange {
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @ToString
     public static class JobResultItem {
         private String jobID;
@@ -67,14 +70,18 @@ public class JobDO extends TimeRange {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @ToString
     public static class JobResult {
+        // the job status
         @JsonProperty("status")
         private JobStatus jobStatus;
 
+        // the serialized final jobResult
         @JsonProperty("statusDetail")
         private String result;
 
+        // the subJobResults(workflow cases)
         @JsonProperty("subJobStatusInfos")
         private Map<String, JobDO.JobResultItem> subJobResults = new HashMap<>();
 
@@ -174,6 +181,9 @@ public class JobDO extends TimeRange {
 
     public void setResult(String result) {
         this.result = result;
+        if (StringUtils.isBlank(result)) {
+            return;
+        }
         this.jobResult = JobResult.deserialize(result);
     }
 
@@ -265,14 +275,14 @@ public class JobDO extends TimeRange {
     }
 
     public void checkCreate() throws Exception {
-        // check parties
-        if (this.getShouldSync() && this.taskParties == null) {
-            throw new WeDPRException("Invalid job for the relevant parties are not defined!");
-        }
         // check jobType
         if (this.getType() == null || StringUtils.isBlank(this.getJobType())) {
             throw new WeDPRException(
                     "Invalid job for the job type " + this.getJobType() + " is not supported!");
+        }
+        // check parties
+        if (this.getShouldSync() && this.taskParties == null) {
+            throw new WeDPRException("Invalid job for the relevant parties are not defined!");
         }
         // check the status
         if (!StringUtils.isBlank(this.getStatus())) {

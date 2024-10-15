@@ -15,11 +15,21 @@
 
 package com.webank.wedpr.components.task.plugin.pir.service.impl;
 
+import com.webank.wedpr.common.config.WeDPRCommonConfig;
+import com.webank.wedpr.common.utils.Constant;
+import com.webank.wedpr.common.utils.ThreadPoolService;
+import com.webank.wedpr.common.utils.WeDPRException;
+import com.webank.wedpr.common.utils.WeDPRResponse;
+import com.webank.wedpr.components.api.credential.core.CredentialVerifier;
+import com.webank.wedpr.components.api.credential.core.impl.CredentialVerifierImpl;
+import com.webank.wedpr.components.crypto.CryptoToolkitFactory;
 import com.webank.wedpr.components.db.mapper.dataset.mapper.DatasetMapper;
-import com.webank.wedpr.components.db.mapper.service.publish.dao.PublishedServiceInfo;
-import com.webank.wedpr.components.db.mapper.service.publish.dao.PublishedServiceMapper;
+import com.webank.wedpr.components.db.mapper.service.publish.dao.*;
 import com.webank.wedpr.components.db.mapper.service.publish.model.PirServiceSetting;
 import com.webank.wedpr.components.db.mapper.service.publish.model.ServiceStatus;
+import com.webank.wedpr.components.db.mapper.service.publish.verifier.ServiceAuthVerifier;
+import com.webank.wedpr.components.db.mapper.service.publish.verifier.impl.ServiceAuthVerifierImpl;
+import com.webank.wedpr.components.hook.ServiceHook;
 import com.webank.wedpr.components.pir.sdk.config.PirSDKConfig;
 import com.webank.wedpr.components.pir.sdk.core.ObfuscateData;
 import com.webank.wedpr.components.pir.sdk.core.ObfuscateQueryResult;
@@ -36,16 +46,12 @@ import com.webank.wedpr.components.task.plugin.pir.core.impl.ObfuscatorImpl;
 import com.webank.wedpr.components.task.plugin.pir.core.impl.PirDatasetConstructorImpl;
 import com.webank.wedpr.components.task.plugin.pir.dao.NativeSQLMapper;
 import com.webank.wedpr.components.task.plugin.pir.dao.NativeSQLMapperWrapper;
+import com.webank.wedpr.components.task.plugin.pir.handler.PirServiceHook;
 import com.webank.wedpr.components.task.plugin.pir.model.ObfuscationParam;
 import com.webank.wedpr.components.task.plugin.pir.model.PirDataItem;
 import com.webank.wedpr.components.task.plugin.pir.service.PirService;
 import com.webank.wedpr.components.task.plugin.pir.transport.PirTopicSubscriber;
 import com.webank.wedpr.components.task.plugin.pir.transport.impl.PirTopicSubscriberImpl;
-import com.webank.wedpr.core.config.WeDPRCommonConfig;
-import com.webank.wedpr.core.utils.Constant;
-import com.webank.wedpr.core.utils.ThreadPoolService;
-import com.webank.wedpr.core.utils.WeDPRException;
-import com.webank.wedpr.core.utils.WeDPRResponse;
 import com.webank.wedpr.sdk.jni.transport.WeDPRTransport;
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -72,13 +78,24 @@ public class PirServiceImpl implements PirService {
     @Autowired
     private WeDPRTransport weDPRTransport;
 
+    @Qualifier("serviceHook")
+    @Autowired
+    private ServiceHook serviceHook;
+
+    private CredentialVerifier verifier;
+
     @Autowired private PublishedServiceMapper publishedServiceMapper;
+    @Autowired private ServiceInvokeMapper serviceInvokeMapper;
+    @Autowired private ServiceAuthMapper serviceAuthMapper;
+
     private final ThreadPoolService threadPoolService = PirSDKConfig.getThreadPoolService();
 
     private NativeSQLMapperWrapper nativeSQLMapperWrapper;
     private Obfuscator obfuscator;
     private PirDatasetConstructor pirDatasetConstructor;
     private PirTopicSubscriber pirTopicSubscriber;
+    private PirServiceHook pirServiceHook;
+    private ServiceAuthVerifier serviceAuthVerifier;
 
     @PostConstruct
     public void init() throws Exception {
@@ -90,8 +107,14 @@ public class PirServiceImpl implements PirService {
                         fileStorage,
                         new StoragePathBuilder(hdfsConfig, localStorageConfig),
                         nativeSQLMapper);
-        this.pirTopicSubscriber = new PirTopicSubscriberImpl(weDPRTransport);
+        this.pirServiceHook = new PirServiceHook(serviceHook, serviceInvokeMapper);
+        this.pirTopicSubscriber =
+                new PirTopicSubscriberImpl(
+                        weDPRTransport,
+                        new CredentialVerifierImpl(CryptoToolkitFactory.build(), null),
+                        pirServiceHook);
         registerPublishedServices();
+        this.serviceAuthVerifier = new ServiceAuthVerifierImpl(serviceAuthMapper);
     }
 
     protected void registerPublishedServices() throws Exception {
@@ -125,6 +148,8 @@ public class PirServiceImpl implements PirService {
 
     @Override
     public WeDPRResponse query(PirQueryRequest pirQueryRequest) throws Exception {
+        // check the request
+        pirQueryRequest.check(false);
         PublishedServiceInfo condition =
                 new PublishedServiceInfo(pirQueryRequest.getQueryParam().getServiceId());
         // check the service
@@ -145,10 +170,16 @@ public class PirServiceImpl implements PirService {
                             + " is not ready yet, status: "
                             + result.get(0).getStatus());
         }
-        // TODO: check the auth
         // get the serviceSetting
         PirServiceSetting serviceSetting =
                 PirServiceSetting.deserialize(result.get(0).getServiceConfig());
+        // check searchType
+        pirQueryRequest.checkSearchType(result.get(0).getServiceId(), serviceSetting);
+        // check the auth
+        serviceAuthVerifier.verify(
+                pirQueryRequest.getQueryParam().getServiceId(),
+                pirQueryRequest.getQueryParam().getCredentialInfo());
+
         return query(
                 pirQueryRequest.getQueryParam(),
                 serviceSetting,
