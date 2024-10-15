@@ -143,13 +143,14 @@
             <el-table size="small" :data="jobSettingForm.selectedData" :border="true" class="table-wrap">
               <el-table-column label="角色" prop="ownerAgencyName" show-overflow-tooltip>
                 <template>
-                  <el-tag color="#4CA9EC" style="color: white" size="small">参与方</el-tag>
+                  <el-tag color="#4CA9EC" style="color: white" size="small">主动方</el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
               <el-table-column label="数据资源名称" prop="datasetTitle" show-overflow-tooltip />
               <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
               <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
+              <el-table-column label="包含字段" prop="datasetFields" show-overflow-tooltip />
             </el-table>
           </div>
         </div>
@@ -164,7 +165,14 @@
           </el-select>
         </el-form-item>
       </el-form>
-      <el-form v-if="selectedAlg.value === jobEnum.SQL" key="3" label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
+      <el-form
+        v-if="selectedAlg.value === jobEnum.SQL || selectedAlg.value === jobEnum.MPC"
+        key="3"
+        label-width="200px"
+        :model="jobSettingForm"
+        ref="jobSettingForm"
+        :rules="jobSettingFormRules"
+      >
         <div class="participates data-container">
           <p>已选数据</p>
           <div class="area table-area">
@@ -177,11 +185,21 @@
             </el-table>
           </div>
         </div>
-        <formCard key="SQL" class="sql-card" title="编写SQL语句">
+        <formCard key="SQL" class="sql-card" title="编写SQL语句" v-if="selectedAlg.value === jobEnum.SQL">
           <el-form-item label="" prop="sql" label-width="0">
             <div class="sql-container">
               <div class="modify-container">
-                <editorCom v-model="jobSettingForm.sql" />
+                <editorCom v-model="jobSettingForm.sql" lang="sql" />
+              </div>
+              <div class="lead"><img src="~Assets/images/icon_guide.png" /> 语法指引及示例下载</div>
+            </div>
+          </el-form-item>
+        </formCard>
+        <formCard key="Python" class="sql-card" title="编写Python语句" v-if="selectedAlg.value === jobEnum.MPC">
+          <el-form-item label="" prop="python" label-width="0">
+            <div class="sql-container">
+              <div class="modify-container">
+                <editorCom v-model="jobSettingForm.python" lang="python" />
               </div>
               <div class="lead"><img src="~Assets/images/icon_guide.png" /> 语法指引及示例下载</div>
             </div>
@@ -204,7 +222,7 @@
               <el-table-column label="支持的查询方式" prop="searchType" show-overflow-tooltip>
                 <template v-slot="scope">
                   <span v-if="scope.row.searchType === searchTypeEnum.ALL">查询存在性，查询字段值</span>
-                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExists">查询存在性</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExist">查询存在性</span>
                   <span v-if="scope.row.searchType === searchTypeEnum.SearchValue">查询字段值</span>
                 </template>
               </el-table-column>
@@ -216,8 +234,8 @@
           <el-form-item label="查询类型：" prop="searchType" label-width="120px">
             <el-radio-group v-model="jobSettingForm.searchType">
               <el-radio
-                v-if="selectedServiceConfig.searchType === searchTypeEnum.SearchExists || selectedServiceConfig.searchType === searchTypeEnum.ALL"
-                :label="searchTypeEnum.SearchExists"
+                v-if="selectedServiceConfig.searchType === searchTypeEnum.SearchExist || selectedServiceConfig.searchType === searchTypeEnum.ALL"
+                :label="searchTypeEnum.SearchExist"
                 >查询存在性</el-radio
               >
               <el-radio
@@ -279,7 +297,7 @@
       <el-button size="medium" v-if="active < 2" type="primary" @click="next" :disabled="nextDisabaled"> 下一步 </el-button>
       <el-button size="medium" v-if="active === 2" type="primary" @click="runJob" :disabled="runDisabaled"> 运行 </el-button>
     </div>
-    <tagSelect :showTagsModal="showTagsModal" @closeModal="closeModal" @tagSelected="tagSelected"></tagSelect>
+    <tagSelect :showFieldsSelect="selectedAlg.value === jobEnum.XGB_TRAINING" :showTagsModal="showTagsModal" @closeModal="closeModal" @tagSelected="tagSelected"></tagSelect>
     <participateSelect :showParticipateModal="showParticipateModal" @closeModal="closeModal" @participateSelected="participateSelected"></participateSelect>
   </div>
 </template>
@@ -634,13 +652,13 @@ export default {
         onlyMeta: false,
         condition: {
           id: '',
-          name: '',
+          name: 'XGB_TRAINING',
           type: 'ALGORITHM_SETTING',
           owner: ''
         }
       })
       if (res.code === 0 && res.data) {
-        const { setting = '' } = res.data[0]
+        const { setting = '' } = res.data.dataList[0]
         console.log(setting, 'JSON.parse(setting)')
         this.modelModule = JSON.parse(setting)
       }
@@ -897,8 +915,8 @@ div.lead-mode {
     div.sql-container {
       display: flex;
       div.modify-container {
-        flex: 1;
         height: 500px;
+        width: 850px;
       }
       div.lead {
         color: #3071f2;

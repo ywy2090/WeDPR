@@ -85,7 +85,8 @@ export const jobEnum = {
   LR_PREDICTING: 'LR_PREDICTING',
   PSI: 'PSI',
   SQL: 'SQL',
-  PIR: 'PIR'
+  PIR: 'PIR',
+  MPC: 'MPC'
 }
 
 export const serviceTypeEnum = {
@@ -106,9 +107,15 @@ export const servicePulishStatus = {
 }
 
 export const searchTypeEnum = {
-  SearchExists: 'SearchExists',
+  SearchExist: 'SearchExist',
   SearchValue: 'SearchValue',
   ALL: 'ALL'
+}
+
+export const searchTypeDesEnum = {
+  SearchExist: '查询存在性',
+  SearchValue: '查询字段值',
+  ALL: '查询存在性，查询字段值 '
 }
 
 export const agencyStatusEnum = {
