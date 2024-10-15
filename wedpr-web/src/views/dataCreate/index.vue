@@ -610,26 +610,25 @@ export default {
       const datasetVisibilityDetails = { datasetVisibility }
       let permissionDes = []
       if (datasetVisibility) {
-        const settingValue = setting.map((v) => this.rangeMap[v])
-        settingValue.forEach((v) => {
+        setting.forEach((v) => {
           datasetVisibilityDetails[v] = true
         })
-        if (settingValue.includes('global')) {
+        if (setting.includes('global')) {
           permissionDes = [...permissionDes, '全局']
         }
-        if (settingValue.includes('selfAgency')) {
+        if (setting.includes('selfAgency')) {
           permissionDes = [...permissionDes, '本机构内']
         }
-        if (settingValue.includes('agencyList')) {
+        if (setting.includes('agencyList')) {
           datasetVisibilityDetails.agencyList = agencyList
           permissionDes = [...permissionDes, ...agencyList.map((v) => v + '机构')]
         }
-        if (settingValue.includes('selfUserGroup')) {
+        if (setting.includes('selfUserGroup')) {
           datasetVisibilityDetails.groupIdList = groupIdList
           const dataTags = this.groupList.filter((v) => groupIdList.includes(v.groupId)).map((v) => v.groupName + '(' + this.agencyId + '机构)')
           permissionDes = [...permissionDes, ...dataTags]
         }
-        if (settingValue.includes('userList')) {
+        if (setting.includes('userList')) {
           datasetVisibilityDetails.userList = userList.map((v) => {
             if (v.agency === this.agencyId) {
               return { ...v, user: v.user.join(',') }

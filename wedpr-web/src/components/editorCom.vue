@@ -26,6 +26,9 @@ export default {
   props: {
     title: {
       type: String
+    },
+    lang: {
+      type: String
     }
   },
   model: {
@@ -34,7 +37,8 @@ export default {
   data() {
     return {
       languageOptions: ['python', 'sql'],
-      theme: 'vs-dark',
+      // theme: 'vs-dark',
+      theme: 'vs',
       language: 'sql',
       // 主要配置
       defaultOpts: {
@@ -83,13 +87,19 @@ export default {
         roundedSelection: false, // 选区是否有圆角
         scrollBeyondLastLine: false, // 设置编辑器是否可以滚动到最后一行之后
         readOnly: false, // 是否为只读模式
-        theme: 'vs-dark' // vs, hc-black, or vs-dark
+        theme: 'vs' // vs, hc-black, or vs-dark
       },
       editor: null
     }
   },
   mounted() {
+    this.defaultOpts.language = this.lang
     this.init()
+  },
+  watch: {
+    lang(nv) {
+      nv && this.init()
+    }
   },
   methods: {
     init() {
@@ -104,8 +114,13 @@ export default {
         // this.$emit('change', this.editor.getValue())
         this.$emit('input', this.editor.getValue())
       })
-      this.addSqlFormatter()
-      this.addSqlTips()
+      if (this.lang === 'sql') {
+        this.addSqlFormatter()
+        this.addSqlTips()
+      } else {
+        this.addPythonTips()
+      }
+
       // this.addFormatter()
     },
     addPythonTips() {
@@ -138,35 +153,33 @@ export default {
               insertText: item
             })
           })
-          sqlLanguage.operators.forEach((item) => {
-            suggestions.push({
-              label: item,
-              kind: monaco.languages.CompletionItemKind.Operator,
-              insertText: item
-            })
-          })
-          sqlLanguage.builtinFunctions.forEach((item) => {
-            suggestions.push({
-              label: item,
-              kind: monaco.languages.CompletionItemKind.Function,
-              insertText: item
-            })
-          })
-          sqlLanguage.builtinVariables.forEach((item) => {
-            suggestions.push({
-              label: item,
-              kind: monaco.languages.CompletionItemKind.Variable,
-              insertText: item
-            })
-          })
+          // sqlLanguage.operators.forEach((item) => {
+          //   suggestions.push({
+          //     label: item,
+          //     kind: monaco.languages.CompletionItemKind.Operator,
+          //     insertText: item
+          //   })
+          // })
+          // sqlLanguage.builtinFunctions.forEach((item) => {
+          //   suggestions.push({
+          //     label: item,
+          //     kind: monaco.languages.CompletionItemKind.Function,
+          //     insertText: item
+          //   })
+          // })
+          // sqlLanguage.builtinVariables.forEach((item) => {
+          //   suggestions.push({
+          //     label: item,
+          //     kind: monaco.languages.CompletionItemKind.Variable,
+          //     insertText: item
+          //   })
+          // })
           return {
             suggestions: suggestions
           }
         }
       })
     },
-    // 格式化代码
-    formatSql() {},
     addSqlFormatter() {
       // 监听右键事件
       this.editor.addAction({
@@ -196,6 +209,9 @@ export default {
 div.editor-container {
   height: 100%;
   width: 100%;
+  border: 1px solid #e0e4ed;
+  padding: 10px;
+  border-radius: 10px;
   div.monaco-editor {
     width: 100%;
     height: calc(100% - 30px);

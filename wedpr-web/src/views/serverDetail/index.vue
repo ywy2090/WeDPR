@@ -18,6 +18,20 @@
       </div>
       <div class="whole">
         <div class="half">
+          <span class="title">服务状态：</span>
+          <span class="info" :title="serviceInfo.push">
+            <el-tag size="small" :color="colorMap[serviceInfo.status]">{{ servicePulishStatus[serviceInfo.status] }}</el-tag>
+          </span>
+        </div>
+      </div>
+      <div class="whole">
+        <div class="half">
+          <span class="title">所属机构：</span>
+          <span class="info" :title="serviceInfo.agency"> {{ serviceInfo.agency }} </span>
+        </div>
+      </div>
+      <div class="whole">
+        <div class="half">
           <span class="title">所属用户：</span>
           <span class="info" :title="serviceInfo.owner"> {{ serviceInfo.owner }} </span>
         </div>
@@ -43,7 +57,7 @@
               <el-table-column label="支持的查询方式" prop="searchType" show-overflow-tooltip>
                 <template v-slot="scope">
                   <span v-if="scope.row.searchType === searchTypeEnum.ALL">查询存在性，查询字段值</span>
-                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExists">查询存在性</span>
+                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExist">查询存在性</span>
                   <span v-if="scope.row.searchType === searchTypeEnum.SearchValue">查询字段值</span>
                 </template>
               </el-table-column>
@@ -101,7 +115,7 @@
 <script>
 import { serviceManageServer } from 'Api'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
-import { jobStatusList, jobStatusMap, searchTypeEnum, serviceTypeEnum } from 'Utils/constant.js'
+import { jobStatusList, jobStatusMap, searchTypeEnum, serviceTypeEnum, servicePulishStatus } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 import wePagination from '@/components/wePagination.vue'
 import serverApply from './serviceApply'
@@ -142,10 +156,16 @@ export default {
       jobStatusMap,
       searchTypeEnum,
       serviceTypeEnum,
+      servicePulishStatus,
       pageMode: process.env.VUE_APP_MODE,
       showApplyModal: false,
       serviceId: '',
-      serviceConfigList: []
+      serviceConfigList: [],
+      colorMap: {
+        Publishing: '#3071F2',
+        PublishSuccess: '#52B81F',
+        PublishFailed: '#FF4D4F'
+      }
     }
   },
   created() {
@@ -155,7 +175,7 @@ export default {
     this.showApplyModal = type === 'apply'
   },
   computed: {
-    ...mapGetters(['algList', 'agencyId'])
+    ...mapGetters(['algList', 'agencyId', 'userId'])
   },
   methods: {
     handleData(key) {
@@ -199,7 +219,10 @@ export default {
         }
 
         this.serviceInfo = { ...wedprPublishedServiceList[0], datasetId, serviceType }
-        this.getServerUseRecord()
+        // 自己的服务查询使用记录
+        if (this.serviceInfo.owner === this.userId && this.serviceInfo.agency === this.agencyId) {
+          this.getServerUseRecord()
+        }
       } else {
         this.serviceInfo = {}
       }
@@ -241,7 +264,7 @@ export default {
       this.loadingFlag = true
       const { serviceId } = this
       const { page_offset, page_size } = this.pageData
-      const res = await serviceManageServer.getServerUseRecord({ serviceId, pageNum: page_offset, pageSize: page_size })
+      const res = await serviceManageServer.getServerUseRecord({ condition: { serviceId, id: '' }, pageNum: page_offset, pageSize: page_size })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
@@ -295,6 +318,12 @@ div.info-container {
     font-size: 14px;
     line-height: 22px;
     color: #525660;
+  }
+  ::v-deep .el-tag {
+    padding: 0 12px;
+    border: none;
+    line-height: 24px;
+    color: white;
   }
   span.title {
     float: left;

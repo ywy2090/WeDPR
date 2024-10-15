@@ -218,7 +218,7 @@ export default {
       this.pageData = { ...pageData }
       this.queryAccessKeyList()
     },
-    // 获取账户列表
+    // 获取ak列表
     async queryAccessKeyList() {
       const { page_offset, page_size } = this.pageData
       const { accessKeyID, status } = this.searchQuery

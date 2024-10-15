@@ -8,7 +8,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="选择数据：" prop="datasetInfo"> <dataSelect :ownerAgencyName="dataForm.ownerAgencyName" @selected="selected" /> </el-form-item>
-        <el-form-item label="选择标签：" prop="fields">
+        <el-form-item label="选择标签：" prop="fields" v-if="showFieldsSelect">
           <el-select style="width: 160px" v-model="dataForm.fields" placeholder="请选择标签">
             <el-option :label="item.label" :value="item.value" v-for="item in fieldsList" :key="item.value"></el-option>
           </el-select>
@@ -31,6 +31,10 @@ export default {
     showTagsModal: {
       type: Boolean,
       default: false
+    },
+    showFieldsSelect: {
+      type: Boolean,
+      default: false
     }
   },
   components: {
@@ -44,11 +48,6 @@ export default {
         fields: ''
       },
 
-      dataFormFormRules: {
-        ownerAgencyName: [{ required: true, message: '标签方不能为空', trigger: 'blur' }],
-        datasetInfo: [{ required: true, message: '数据集不能为空', trigger: 'blur' }],
-        fields: [{ required: true, message: '标签字段不能为空', trigger: 'blur' }]
-      },
       formLabelWidth: '112px',
       loading: false,
       groupId: '',
@@ -61,7 +60,14 @@ export default {
     this.dataForm.ownerAgencyName = this.agencyId
   },
   computed: {
-    ...mapGetters(['agencyList', 'agencyId'])
+    ...mapGetters(['agencyList', 'agencyId']),
+    dataFormFormRules() {
+      return {
+        ownerAgencyName: [{ required: true, message: '标签方不能为空', trigger: 'blur' }],
+        datasetInfo: [{ required: true, message: '数据集不能为空', trigger: 'blur' }],
+        fields: [{ required: this.showFieldsSelect, message: '标签字段不能为空', trigger: 'blur' }]
+      }
+    }
   },
   methods: {
     handleClose() {

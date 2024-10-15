@@ -29,6 +29,13 @@
           @paginationChange="paginationHandle"
         ></we-pagination>
       </formCard>
+      <formCard title="设置访问凭证">
+        <el-form-item label-width="108px" label="访问凭证：" prop="grantedAccessKeyList">
+          <el-select style="width: 480px" multiple v-model="serverForm.grantedAccessKeyList" placeholder="请选择" clearable>
+            <el-option :title="item.value" :label="item.label" :value="item.value" :key="item" v-for="item in accessKeyList"></el-option>
+          </el-select>
+        </el-form-item>
+      </formCard>
       <formCard title="设置查询规则">
         <el-form-item label-width="108px" label="查询主键：" prop="idField">
           <el-select v-model="serverForm.idField" placeholder="请选择" clearable>
@@ -37,7 +44,7 @@
         </el-form-item>
         <el-form-item label-width="108px" label="查询类型：" prop="searchType">
           <el-checkbox-group v-model="serverForm.searchType">
-            <el-checkbox :label="searchTypeEnum.SearchExists">查询存在性</el-checkbox>
+            <el-checkbox :label="searchTypeEnum.SearchExist">查询存在性</el-checkbox>
             <el-checkbox :label="searchTypeEnum.SearchValue">查询字段值</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
@@ -66,7 +73,7 @@
 import formCard from '@/components/formCard.vue'
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import dataCard from '@/components/dataCard.vue'
-import { serviceManageServer, dataManageServer } from 'Api'
+import { serviceManageServer, dataManageServer, accessKeyManageServer } from 'Api'
 import wePagination from '@/components/wePagination.vue'
 import { searchTypeEnum, serviceTypeEnum } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
@@ -86,7 +93,8 @@ export default {
         searchType: [],
         searchFieldsType: '',
         idField: '',
-        accessibleValueQueryFields: []
+        accessibleValueQueryFields: [],
+        grantedAccessKeyList: []
       },
       pageData: {
         page_offset: 1,
@@ -102,6 +110,7 @@ export default {
       },
       type: '',
       dataList: [],
+      accessKeyList: [],
       selectedData: {},
       serviceId: '',
       searchTypeEnum
@@ -112,6 +121,7 @@ export default {
     const { type, serviceId } = this.$route.query
     console.log(searchTypeEnum, 'searchTypeEnum')
     this.type = type
+    this.queryAccessKeyList()
     if (this.type === 'edit') {
       this.serviceId = serviceId
       this.queryService()
@@ -134,6 +144,13 @@ export default {
           {
             required: true,
             message: '请输入服务描述',
+            trigger: 'blur'
+          }
+        ],
+        grantedAccessKeyList: [
+          {
+            required: true,
+            message: '请选择访问凭证',
             trigger: 'blur'
           }
         ],
@@ -179,12 +196,21 @@ export default {
       console.log(res)
       if (res.code === 0 && res.data) {
         const { wedprPublishedServiceList = [] } = res.data
-        const { serviceConfig = '', serviceName, serviceDesc } = wedprPublishedServiceList[0] || {}
+        const { serviceConfig = '', serviceName, serviceDesc, grantedAccessKeyList } = wedprPublishedServiceList[0] || {}
         const { accessibleValueQueryFields = [], datasetId, idField, searchType } = JSON.parse(serviceConfig)
         await this.getDetail({ datasetId })
-        const handledSearchType = searchTypeEnum.ALL ? [searchTypeEnum.SearchExists, searchTypeEnum.SearchValue] : [searchType]
+        const handledSearchType = searchTypeEnum.ALL ? [searchTypeEnum.SearchExist, searchTypeEnum.SearchValue] : [searchType]
         const searchFieldsType = accessibleValueQueryFields.length === this.selectedData.fieldsList.length ? 'all' : 'some'
-        this.serverForm = { ...this.serverForm, serviceName, idField, serviceDesc, searchType: handledSearchType, searchFieldsType, accessibleValueQueryFields }
+        this.serverForm = {
+          ...this.serverForm,
+          serviceName,
+          idField,
+          serviceDesc,
+          searchType: handledSearchType,
+          searchFieldsType,
+          accessibleValueQueryFields,
+          grantedAccessKeyList
+        }
         console.log(this.serverForm, 'serverForm')
       }
     },
@@ -228,6 +254,21 @@ export default {
         this.selectedData = {}
       }
     },
+    // 获取ak列表
+    async queryAccessKeyList() {
+      const params = { condition: { status: 'Enable', id: '' }, pageNum: -1, pageSize: 1 }
+      const res = await accessKeyManageServer.queryAccessKeyList(params)
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { credentials = [] } = res.data
+        this.accessKeyList = credentials.map((v) => {
+          return {
+            label: v.desc,
+            value: v.accessKeyID
+          }
+        })
+      }
+    },
     checkService() {
       this.$refs.serverForm.validate((valid) => {
         if (valid) {
@@ -235,16 +276,23 @@ export default {
             this.$message.error('请选择数据集')
             return
           }
-          const { serviceName, serviceDesc, searchFieldsType, idField } = this.serverForm
+          const { serviceName, serviceDesc, searchFieldsType, idField, grantedAccessKeyList } = this.serverForm
           let { accessibleValueQueryFields, searchType } = this.serverForm
           accessibleValueQueryFields = searchFieldsType === 'all' ? [...this.selectedData.fieldsList] : accessibleValueQueryFields
           searchType = searchType.length === 2 ? searchTypeEnum.ALL : searchType[0]
           const { datasetId } = this.selectedData
           const serviceConfig = { searchType, datasetId, accessibleValueQueryFields, idField }
           if (this.type === 'edit') {
-            this.updateService({ serviceId: this.serviceId, serviceName, serviceDesc, serviceConfig: JSON.stringify(serviceConfig), serviceType: serviceTypeEnum.PIR })
+            this.updateService({
+              serviceId: this.serviceId,
+              serviceName,
+              serviceDesc,
+              grantedAccessKeyList,
+              serviceConfig: JSON.stringify(serviceConfig),
+              serviceType: serviceTypeEnum.PIR
+            })
           } else {
-            this.createService({ serviceName, serviceDesc, serviceConfig: JSON.stringify(serviceConfig), serviceType: serviceTypeEnum.PIR })
+            this.createService({ serviceName, serviceDesc, grantedAccessKeyList, serviceConfig: JSON.stringify(serviceConfig), serviceType: serviceTypeEnum.PIR })
           }
         } else {
           return false

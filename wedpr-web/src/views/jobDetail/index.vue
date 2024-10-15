@@ -9,6 +9,36 @@
               <span class="info" :title="jobInfo.id"> {{ jobInfo.id }} </span>
             </div>
           </div>
+          <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+            <div class="half">
+              <span class="title">所选服务：</span>
+              <span class="info link" :title="jobInfo.serviceId" @click="goServiceDetail(jobInfo.serviceId, jobInfo.serviceType)"> {{ jobInfo.serviceId }} </span>
+            </div>
+          </div>
+          <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+            <div class="half">
+              <span class="title">数据集：</span>
+              <span class="info link" :title="jobInfo.datasetId" @click="goDatasetDetail(jobInfo.serviceId)"> {{ jobInfo.datasetId }} </span>
+            </div>
+          </div>
+          <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+            <div class="half">
+              <span class="title">查询类型：</span>
+              <span class="info" :title="searchTypeDesEnum[jobInfo.searchType]"> {{ searchTypeDesEnum[jobInfo.searchType] }} </span>
+            </div>
+          </div>
+          <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR && jobInfo.searchType !== searchTypeEnum.SearchExist">
+            <div class="half">
+              <span class="title">查询字段：</span>
+              <span class="info" :title="jobInfo.queriedFields"> {{ jobInfo.queriedFields }} </span>
+            </div>
+          </div>
+          <div class="whole" v-if="jobInfo.jobType === jobEnum.PIR">
+            <div class="half">
+              <span class="title">查询字段值：</span>
+              <span class="info" :title="jobInfo.searchIdList"> {{ jobInfo.searchIdList }} </span>
+            </div>
+          </div>
           <div class="whole" v-if="jobInfo.jobType !== jobEnum.PIR">
             <div class="half">
               <span class="title">标签提供方：</span>
@@ -63,25 +93,7 @@
             </div>
           </div>
         </div>
-        <div class="con" v-if="jobInfo.jobType === jobEnum.PIR">
-          <div class="title-radius">选择的服务</div>
-          <div class="tableContent autoTableWrap">
-            <el-table size="small" :data="serviceData" :border="true" class="table-wrap">
-              <el-table-column label="服务名称" prop="serviceName" show-overflow-tooltip />
-              <el-table-column label="数据集" prop="datasetId" show-overflow-tooltip />
-              <el-table-column label="主键" prop="idField" show-overflow-tooltip />
-              <el-table-column label="支持的查询方式" prop="searchType" show-overflow-tooltip>
-                <template v-slot="scope">
-                  <span v-if="scope.row.searchType === searchTypeEnum.ALL">查询存在性，查询字段值</span>
-                  <span v-if="scope.row.searchType === searchTypeEnum.SearchExists">查询存在性</span>
-                  <span v-if="scope.row.searchType === searchTypeEnum.SearchValue">查询字段值</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="可查的字段列表" prop="accessibleValueQueryFields" />
-            </el-table>
-          </div>
-        </div>
-        <div class="con" v-else>
+        <div class="con" v-if="dataList.length">
           <div class="title-radius">参与数据资源</div>
           <div class="tableContent autoTableWrap">
             <el-table :max-height="tableHeight" size="small" v-loading="loadingFlag" :data="dataList" :border="true" class="table-wrap">
@@ -98,10 +110,16 @@
             </el-table>
           </div>
         </div>
+        <div v-if="jobInfo.status === 'RunSuccess' && jobInfo.jobType === jobEnum.PIR && jobInfo.owner === userId && jobInfo.ownerAgency === agencyId">
+          <div class="title-radius">任务结果</div>
+          <div style="padding-left: 10px">
+            <baseResult :jobType="jobInfo.jobType" v-if="jobInfo.jobType === jobEnum.PIR" :jobID="jobID" :jobStatusInfo="jobStatusInfo" :resultFileInfo="resultFileInfo" />
+          </div>
+        </div>
       </el-tab-pane>
       <el-tab-pane label="工作流视图" name="second" v-if="false"> </el-tab-pane>
       <el-tab-pane label="审计信息" name="third" v-if="false"> </el-tab-pane>
-      <el-tab-pane label="查看结果" name="four" v-if="jobInfo.status === 'RunSuccess' && receiverList.includes(agencyId)">
+      <el-tab-pane label="查看结果" name="four" v-if="jobInfo.jobType !== jobEnum.PIR && jobInfo.status === 'RunSuccess' && receiverList.includes(agencyId)">
         <xgbResult
           @saveModelConf="showSettingSaveModal"
           v-if="jobInfo.jobType === jobEnum.XGB_TRAINING"
@@ -109,7 +127,7 @@
           :jobStatusInfo="jobStatusInfo"
           :modelResultDetail="modelResultDetail"
         />
-        <baseResult v-if="jobInfo.jobType === jobEnum.PSI" :jobID="jobID" :jobStatusInfo="jobStatusInfo" :resultFileInfo="resultFileInfo" />
+        <baseResult :jobType="jobInfo.jobType" v-if="jobInfo.jobType === jobEnum.PSI" :jobID="jobID" :jobStatusInfo="jobStatusInfo" :resultFileInfo="resultFileInfo" />
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -119,7 +137,7 @@ import { jobManageServer, dataManageServer, settingManageServer, serviceManageSe
 import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import xgbResult from './result/xgbResult.vue'
 import baseResult from './result/baseResult.vue'
-import { jobStatusMap, jobEnum, searchTypeEnum } from 'Utils/constant.js'
+import { jobStatusMap, jobEnum, searchTypeEnum, searchTypeDesEnum } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 export default {
   name: 'groupManage',
@@ -146,7 +164,8 @@ export default {
       receiverList: [],
       jobEnum,
       modelSetting: {},
-      serviceData: [],
+      serviceData: {},
+      searchTypeDesEnum,
       searchTypeEnum
     }
   },
@@ -156,9 +175,15 @@ export default {
     id && this.getJobInfo()
   },
   computed: {
-    ...mapGetters(['agencyId'])
+    ...mapGetters(['agencyId', 'userId'])
   },
   methods: {
+    goServiceDetail(serviceId, type) {
+      this.$router.push({ path: '/serverDetail', query: { serviceId, serverType: type } })
+    },
+    goDatasetDetail(datasetId) {
+      this.$router.push({ path: '/dataDetail', query: { datasetId } })
+    },
     async getJobInfo() {
       this.loadingFlag = true
       const { jobID } = this
@@ -177,7 +202,7 @@ export default {
         }
 
         console.log(JSON.parse(param), 'JSON.parse(param)')
-        const { dataSetList, modelSetting, serviceId } = JSON.parse(param)
+        const { dataSetList, modelSetting, serviceId, searchType, queriedFields, searchIdList } = JSON.parse(param)
         this.modelSetting = modelSetting
         // 获取任务关联数据集列表
         if (dataSetList && dataSetList.length) {
@@ -193,6 +218,7 @@ export default {
 
         // pir服务需要获取服务详情
         if (serviceId) {
+          this.jobInfo = { ...this.jobInfo, searchType, queriedFields, searchIdList }
           this.queryService(serviceId)
         }
         console.log(JSON.parse(parties), 'parties')
@@ -212,11 +238,11 @@ export default {
       console.log(res)
       if (res.code === 0 && res.data) {
         const { wedprPublishedServiceList = [] } = res.data
-        const { serviceConfig = '', serviceType, serviceName } = wedprPublishedServiceList[0] || {}
+        const { serviceConfig = '', serviceType, agency, serviceId } = wedprPublishedServiceList[0] || {}
+        this.receiverList = [agency]
         console.log(serviceType, 'serviceType')
-        const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
-        this.serviceData = [{ datasetId, searchType, idField, accessibleValueQueryFields, serviceName }]
-        console.log(this.serviceData, 'this.serviceData============================================')
+        const { datasetId } = JSON.parse(serviceConfig)
+        this.jobInfo = { ...this.jobInfo, datasetId, serviceId, serviceType }
       }
     },
     // 获取数据集详情
@@ -297,6 +323,10 @@ div.info-container {
     text-overflow: ellipsis;
     font-size: 14px;
     line-height: 22px;
+  }
+  span.info.link {
+    cursor: pointer;
+    color: #3071f2;
   }
   .el-row {
     margin-bottom: 16px;
