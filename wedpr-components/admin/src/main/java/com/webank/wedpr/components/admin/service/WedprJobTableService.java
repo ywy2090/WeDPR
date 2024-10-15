@@ -1,6 +1,7 @@
 package com.webank.wedpr.components.admin.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.webank.wedpr.components.admin.entity.WedprJobTable;
 import com.webank.wedpr.components.admin.request.GetJobDateLineRequest;
 import com.webank.wedpr.components.admin.request.GetWedprJobListRequest;
@@ -17,7 +18,8 @@ import com.webank.wedpr.components.admin.response.ListJobResponse;
 public interface WedprJobTableService extends IService<WedprJobTable> {
     ListJobResponse listJob(GetWedprJobListRequest getWedprJobListRequest);
 
-    GetJobStatisticsResponse getJobStatistics();
+    GetJobStatisticsResponse getJobStatistics() throws JsonProcessingException;
 
-    GetJobLineResponse getJobDateLine(GetJobDateLineRequest getJobDateLineRequest);
+    GetJobLineResponse getJobDateLine(GetJobDateLineRequest getJobDateLineRequest)
+            throws JsonProcessingException;
 }

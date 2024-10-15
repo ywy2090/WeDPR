@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 public class JobTypeStat {
     private String jobType;
+    private String jobTypeTile;
     private List<String> dateList;
     private List<Integer> countList;
 }
