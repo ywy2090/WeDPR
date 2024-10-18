@@ -1,7 +1,7 @@
 <template>
   <div class="group-manage">
     <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
-      <el-tab-pane label="任务信息" name="first">
+      <el-tab-pane label="任务信息" name="first" v-loading="loading">
         <div class="info-container">
           <div class="whole">
             <div class="half">
@@ -101,6 +101,7 @@
               <el-table-column label="数据资源名称" prop="datasetTitle" />
               <el-table-column label="所属机构" prop="ownerAgencyName" />
               <el-table-column label="所属用户" prop="ownerUserName" />
+              <el-table-column label="数据集字段" prop="datasetFields" show-overflow-tooltip />
               <el-table-column label="创建时间" prop="createAt" />
               <el-table-column label="操作">
                 <template v-slot="scope">
@@ -108,6 +109,72 @@
                 </template>
               </el-table-column>
             </el-table>
+          </div>
+        </div>
+        <div class="con" v-if="xgbJobSavedModelData.length || xgbJobOriginModelData.length">
+          <div class="title-radius">模型信息</div>
+          <div class="tableContent autoTableWrap">
+            <el-table
+              :max-height="tableHeight"
+              v-if="xgbJobSavedModelData.length"
+              size="small"
+              :span-method="objectSpanMethodSaved"
+              v-loading="loadingFlag"
+              :data="xgbJobSavedModelData"
+              :border="true"
+              class="table-wrap"
+            >
+              <el-table-column label="模型名称" prop="modelName" />
+              <el-table-column label="所属机构" prop="modelAgency" />
+              <el-table-column label="所属用户" prop="modelOwner" />
+              <el-table-column label="模型任务来源" prop="jobID">
+                <template v-slot="scope">
+                  <el-button @click="goJobDetail(scope.row.jobID)" size="small" type="text">{{ scope.row.jobID }}</el-button>
+                </template>
+              </el-table-column>
+              <el-table-column label="标签提供方" prop="label_provider" />
+              <el-table-column label="标签字段" prop="label_column" />
+              <el-table-column label="参与机构" prop="agency" />
+              <el-table-column label="数据集字段" prop="fields" show-overflow-tooltip>
+                <template v-slot="scope">
+                  {{ scope.row.fields.join(',') }}
+                </template>
+              </el-table-column>
+              <el-table-column label="操作">
+                <template v-slot="scope">
+                  <el-button @click="copyModel(scope.row.modelString)" size="small" type="text">复制模型</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-table
+              v-if="xgbJobOriginModelData.length"
+              :max-height="tableHeight"
+              :span-method="objectSpanMethodOrigin"
+              size="small"
+              v-loading="loadingFlag"
+              :data="xgbJobOriginModelData"
+              :border="true"
+              class="table-wrap"
+            >
+              <el-table-column label="模型类型" prop="model_type" />
+              <el-table-column label="标签提供方" prop="label_provider" />
+              <el-table-column label="标签字段" prop="label_column" />
+              <el-table-column label="参与机构" prop="agency" />
+              <el-table-column label="数据集字段" prop="fields" show-overflow-tooltip>
+                <template v-slot="scope">
+                  {{ scope.row.fields.join(',') }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div v-if="xgbJobOriginModelData.length">
+            <div style="margin-top: 20px; padding-bottom: 20px">
+              <el-button type="primary" @click="showSettingSaveModal"> 保存配置 </el-button>
+              <el-button type="primary" @click="showSettingSaveModelModal"> 保存模型 </el-button>
+              <el-button @click="reBuild"> 调参重跑 </el-button>
+            </div>
+            <div class="tips">* 保存配置：后续可选择基于该配置进行建模与调参重跑</div>
+            <div class="tips">* 保存模型：后续可选择基于该模型进行预测</div>
           </div>
         </div>
         <div v-if="jobInfo.status === 'RunSuccess' && jobInfo.jobType === jobEnum.PIR && jobInfo.owner === userId && jobInfo.ownerAgency === agencyId">
@@ -121,9 +188,9 @@
       <el-tab-pane label="审计信息" name="third" v-if="false"> </el-tab-pane>
       <el-tab-pane label="查看结果" name="four" v-if="jobInfo.jobType !== jobEnum.PIR && jobInfo.status === 'RunSuccess' && receiverList.includes(agencyId)">
         <xgbResult
-          @saveModelConf="showSettingSaveModal"
-          v-if="jobInfo.jobType === jobEnum.XGB_TRAINING"
+          v-if="[jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING, jobEnum.XGB_TRAINING, jobEnum.XGB_PREDICTING].includes(jobInfo.jobType)"
           :jobID="jobID"
+          :jobType="jobInfo.jobType"
           :jobStatusInfo="jobStatusInfo"
           :modelResultDetail="modelResultDetail"
         />
@@ -134,14 +201,13 @@
 </template>
 <script>
 import { jobManageServer, dataManageServer, settingManageServer, serviceManageServer } from 'Api'
-import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import xgbResult from './result/xgbResult.vue'
 import baseResult from './result/baseResult.vue'
 import { jobStatusMap, jobEnum, searchTypeEnum, searchTypeDesEnum } from 'Utils/constant.js'
+import { copy } from 'Utils'
 import { mapGetters } from 'vuex'
 export default {
   name: 'groupManage',
-  mixins: [tableHeightHandle],
   components: {
     xgbResult,
     baseResult
@@ -166,7 +232,12 @@ export default {
       modelSetting: {},
       serviceData: {},
       searchTypeDesEnum,
-      searchTypeEnum
+      searchTypeEnum,
+      model: '',
+      loading: false,
+      xgbJobSavedModelData: [],
+      xgbJobOriginModelData: [],
+      timer: null
     }
   },
   created() {
@@ -177,24 +248,75 @@ export default {
   computed: {
     ...mapGetters(['agencyId', 'userId'])
   },
+  watch: {
+    // 监听路由对象($route)的变化
+    $route: {
+      handler: function (to, from) {
+        // 如果路由参数有所更新，比如参数id变化了
+        const { id } = to.query
+        if (id !== from.query.id) {
+          this.jobID = id
+          this.xgbJobSavedModelData = []
+          this.xgbJobOriginModelData = []
+          id && this.getJobInfo()
+        }
+      },
+      // 设置为深度监听
+      deep: true
+    }
+  },
   methods: {
+    goJobDetail(id) {
+      this.$router.push({ path: '/jobDetail', query: { id } })
+    },
+    copyModel(modelStr) {
+      copy(modelStr, '模型复制成功')
+    },
     goServiceDetail(serviceId, type) {
       this.$router.push({ path: '/serverDetail', query: { serviceId, serverType: type } })
     },
     goDatasetDetail(datasetId) {
       this.$router.push({ path: '/dataDetail', query: { datasetId } })
     },
+    handleXgbJobSavedModelData(modelString) {
+      const { setting, name, agency, owner, ...rest } = JSON.parse(modelString)
+      const settingData = JSON.parse(setting)
+      const { participant_agency_list, ...restSetting } = settingData
+      this.xgbJobSavedModelData = participant_agency_list.map((v) => {
+        return {
+          ...rest,
+          ...restSetting,
+          ...v,
+          modelName: name,
+          modelAgency: agency,
+          modelOwner: owner,
+          modelString
+        }
+      })
+      console.log(this.xgbJobSavedModelData, 'xgbJobSavedModelData')
+    },
+    handleXgbJobOriginModelData(modelString) {
+      const settingData = JSON.parse(modelString)
+      const { participant_agency_list, ...restSetting } = settingData
+      this.xgbJobOriginModelData = participant_agency_list.map((v) => {
+        return {
+          ...restSetting,
+          ...v
+        }
+      })
+    },
     async getJobInfo() {
-      this.loadingFlag = true
+      this.loading = true
       const { jobID } = this
       const res = await jobManageServer.queryJobDetail({ jobID })
-      this.loadingFlag = false
+      this.loading = false
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { job = {}, modelResultDetail = {}, resultFileInfo } = res.data
+        const { job = {}, modelResultDetail = {}, resultFileInfo, model } = res.data
         const { parties = '', param } = job
         const { jobStatusInfo = {} } = job
         this.jobInfo = { ...job }
+        // 参与方解析
         if (parties) {
           this.jobInfo.particapate = JSON.parse(parties)
             .map((v) => v.agency)
@@ -202,8 +324,18 @@ export default {
         }
 
         console.log(JSON.parse(param), 'JSON.parse(param)')
-        const { dataSetList, modelSetting, serviceId, searchType, queriedFields, searchIdList } = JSON.parse(param)
+        const { dataSetList, modelPredictAlgorithm = '', modelSetting, serviceId, searchType, queriedFields, searchIdList } = JSON.parse(param)
         this.modelSetting = modelSetting
+        this.model = model
+        // 展示建模任务模型
+        if (model) {
+          this.handleXgbJobOriginModelData(model)
+        }
+        // 展示建模任务保存后的模型
+        if (modelPredictAlgorithm) {
+          this.handleXgbJobSavedModelData(modelPredictAlgorithm)
+        }
+
         // 获取任务关联数据集列表
         if (dataSetList && dataSetList.length) {
           this.receiverList = dataSetList.filter((v) => v.receiveResult).map((v) => v.dataset.ownerAgency)
@@ -214,6 +346,7 @@ export default {
             })
             .filter((v) => v)
           ids.length && this.getListDetail({ datasetIdList: ids })
+          console.log(JSON.parse(model), 'model')
         }
 
         // pir服务需要获取服务详情
@@ -225,16 +358,29 @@ export default {
         this.modelResultDetail = modelResultDetail
         this.jobStatusInfo = jobStatusInfo
         this.resultFileInfo = resultFileInfo
+        this.startInterVal()
       } else {
         this.jobInfo = {}
       }
     },
+    startInterVal() {
+      this.timer && clearInterval(this.timer)
+      this.timer = setInterval(() => {
+        const pendingStatus = ['Submitted', 'Handshaking', 'HandshakeSuccess', 'Running']
+        console.log(999999999)
+        if (pendingStatus.includes(this.jobInfo.status)) {
+          this.getJobInfo()
+        } else {
+          this.timer && clearInterval(this.timer)
+        }
+      }, 5000)
+    },
     // 获取服务详情
     async queryService(serviceId) {
-      this.loadingFlag = true
+      this.loading = true
       const params = { condition: {}, serviceIdList: [serviceId], pageNum: 1, pageSize: 1 }
       const res = await serviceManageServer.getPublishList(params)
-      this.loadingFlag = false
+      this.loading = false
       console.log(res)
       if (res.code === 0 && res.data) {
         const { wedprPublishedServiceList = [] } = res.data
@@ -277,6 +423,25 @@ export default {
         })
         .catch(() => {})
     },
+    showSettingSaveModelModal() {
+      this.$prompt('请输入保存的模型名称', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValidator(value) {
+          console.log(value, 'value')
+          try {
+            return !!value.trim()
+          } catch {
+            return false
+          }
+        },
+        inputErrorMessage: '模型名称不能为空'
+      })
+        .then(({ value }) => {
+          this.saveModel(value)
+        })
+        .catch(() => {})
+    },
     async saveModelConf(name) {
       const { modelSetting } = this
       const params = {
@@ -290,9 +455,68 @@ export default {
         this.$message.success('保存配置成功！')
       }
     },
+    async saveModel(name) {
+      const { model, jobID } = this
+      const modelData = JSON.parse(model)
+      const params = {
+        templateList: [{ name, type: 'MODEL_SETTING', setting: JSON.stringify({ ...modelData, jobID }) }]
+      }
+      const res = await settingManageServer.insertSettings(params)
+      console.log(res)
+      if (res.code === 0 && res.data) {
+        const { data } = res
+        console.log(data)
+        this.$message.success('保存模型成功！')
+      }
+    },
+    reBuild() {
+      const { jobID = '' } = this
+      const { jobType } = this.jobInfo
+      this.$router.push({
+        path: 'resetParams',
+        query: { jobID, jobType }
+      })
+    },
+    objectSpanMethodOrigin({ row, column, rowIndex, columnIndex }) {
+      const length = this.xgbJobOriginModelData.length
+      if (columnIndex < 3) {
+        if (rowIndex === 0) {
+          return {
+            // 此单元格在列上要占据length个行单元格，1个列单元格
+            rowspan: length,
+            colspan: 1
+          }
+        } else {
+          return {
+            rowspan: 0,
+            colspan: 0
+          }
+        }
+      }
+    },
+    objectSpanMethodSaved({ row, column, rowIndex, columnIndex }) {
+      const length = this.xgbJobSavedModelData.length
+      if (columnIndex < 6 || columnIndex > 7) {
+        if (rowIndex === 0) {
+          return {
+            // 此单元格在列上要占据length个行单元格，1个列单元格
+            rowspan: length,
+            colspan: 1
+          }
+        } else {
+          return {
+            rowspan: 0,
+            colspan: 0
+          }
+        }
+      }
+    },
     getDetail(datasetId) {
       this.$router.push({ path: '/dataDetail', query: { datasetId } })
     }
+  },
+  destroyed() {
+    this.timer && clearInterval(this.timer)
   }
 }
 </script>
@@ -304,6 +528,13 @@ div.whole {
 div.half {
   width: 50%;
   display: flex;
+}
+div.con {
+  margin-bottom: 30px;
+}
+.tips {
+  color: #b3b5b9;
+  margin-bottom: 10px;
 }
 div.info-container {
   margin-bottom: 44px;

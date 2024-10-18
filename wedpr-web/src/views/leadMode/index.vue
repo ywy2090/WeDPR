@@ -12,7 +12,7 @@
         <el-step title="查看结果"></el-step>
       </el-steps>
     </div>
-
+    <!-- step1 ==================================================== -->
     <formCard key="1" title="请选择模板" v-show="active === 0">
       <div class="alg-container">
         <div :class="selectedAlg.value === item.value ? 'alg active' : 'alg'" v-for="item in algList" @click="selectAlg(item)" :key="item.value">
@@ -21,7 +21,11 @@
         </div>
       </div>
     </formCard>
+    <!-- step2 ==================================================== -->
     <div v-show="active === 1 && selectedAlg.value !== jobEnum.PIR">
+      <formCard style="width: 1124px" title="请选择模型" v-if="[jobEnum.XGB_PREDICTING, jobEnum.LR_PREDICTING].includes(selectedAlg.value)">
+        <modelSelect  @modelSelectedChange="modelSelectedChange" v-model="jobSettingForm.modelPredictAlgorithm" />
+      </formCard>
       <div class="tags data-container" v-if="selectedAlg.needTagsProvider">
         <p>
           选择标签数据
@@ -38,7 +42,7 @@
             <el-table-column label="已选资源ID" prop="datasetId" show-overflow-tooltip />
             <el-table-column label="所属用户" prop="ownerUserName" show-overflow-tooltip />
             <el-table-column label="包含字段" prop="datasetFields" show-overflow-tooltip />
-            <el-table-column label="已选标签字段" prop="selectedTagFields" show-overflow-tooltip />
+            <el-table-column v-if="selectedAlg.value === jobEnum.XGB_TRAINING" label="已选标签字段" prop="selectedTagFields" show-overflow-tooltip />
           </el-table>
         </div>
       </div>
@@ -68,9 +72,11 @@
     <div v-show="active === 1 && selectedAlg.value === jobEnum.PIR">
       <serviceSelect :serviceType="serviceTypeEnum.PIR" @selected="handleServiceSelected" />
     </div>
+    <!-- step3 ==================================================== -->
     <div v-show="active === 2">
+      <!-- XGB_TRAINING LR_TRAINING -->
       <el-form
-        v-if="selectedAlg.value === jobEnum.XGB_TRAINING || selectedAlg.value === jobEnum.LR_TRAINING"
+        v-if="[jobEnum.XGB_TRAINING, jobEnum.LR_TRAINING].includes(selectedAlg.value)"
         label-width="200px"
         :model="jobSettingForm"
         ref="jobSettingForm"
@@ -130,6 +136,7 @@
           </el-select>
         </el-form-item>
       </el-form>
+      <!-- XGB_PREDICTING LR_PREDICTING -->
       <el-form
         v-if="selectedAlg.value === jobEnum.XGB_PREDICTING || selectedAlg.value === jobEnum.LR_PREDICTING"
         label-width="200px"
@@ -142,8 +149,9 @@
           <div class="area table-area">
             <el-table size="small" :data="jobSettingForm.selectedData" :border="true" class="table-wrap">
               <el-table-column label="角色" prop="ownerAgencyName" show-overflow-tooltip>
-                <template>
-                  <el-tag color="#4CA9EC" style="color: white" size="small">主动方</el-tag>
+                <template v-slot="scope">
+                  <el-tag v-if="scope.$index === 0" color="#4CA9EC" style="color: white" size="small">标签方</el-tag>
+                  <el-tag v-else color="#4CA9EC" style="color: white" size="small">参与方</el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="机构ID" prop="ownerAgencyName" show-overflow-tooltip />
@@ -154,10 +162,28 @@
             </el-table>
           </div>
         </div>
-        <formCard title="请选择模型">
-          <el-form-item prop="modelId" class="modelId" label-width="0">
-            <modelSelect v-model="jobSettingForm.modelId" />
-          </el-form-item>
+        <formCard key="set" title="请设置参数">
+          <div class="alg-container">
+            <el-form-item v-for="item in modelModule" :key="item.label" :label="item.label">
+              <el-input-number size="small" v-if="item.type === 'float'" v-model="item.value" :step="0.1" style="width: 140px" :min="item.min_value" :max="item.max_value" />
+              <el-input size="small" v-if="item.type === 'string'" v-model="item.value" style="width: 140px" />
+              <el-input-number
+                size="small"
+                v-if="item.type === 'int'"
+                v-model="item.value"
+                :step="1"
+                :min="item.min_value"
+                :max="item.max_value"
+                step-strictly
+                style="width: 140px"
+              />
+              <el-radio-group v-if="item.type === 'bool'" v-model="item.value">
+                <el-radio :label="1"> true </el-radio>
+                <el-radio :label="0"> false </el-radio>
+              </el-radio-group>
+              <span v-if="item.type !== 'bool'" class="tips">{{ item.description }}</span>
+            </el-form-item>
+          </div>
         </formCard>
         <el-form-item label="结果接收方：" prop="receiver" label-width="120px">
           <el-select size="small" style="width: 360px" v-model="jobSettingForm.receiver" multiple placeholder="请选择">
@@ -165,6 +191,7 @@
           </el-select>
         </el-form-item>
       </el-form>
+      <!-- SQL MPC -->
       <el-form
         v-if="selectedAlg.value === jobEnum.SQL || selectedAlg.value === jobEnum.MPC"
         key="3"
@@ -211,6 +238,7 @@
           </el-select>
         </el-form-item>
       </el-form>
+      <!-- PIR -->
       <el-form v-if="selectedAlg.value === jobEnum.PIR" key="3" label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
         <div class="participates data-container">
           <p>已选服务</p>
@@ -264,6 +292,7 @@
           </el-form-item>
         </formCard>
       </el-form>
+      <!-- PSI -->
       <div v-if="selectedAlg.value === jobEnum.PSI">
         <el-form label-width="200px" :model="jobSettingForm" ref="jobSettingForm" :rules="jobSettingFormRules">
           <div class="participates data-container">
@@ -297,8 +326,19 @@
       <el-button size="medium" v-if="active < 2" type="primary" @click="next" :disabled="nextDisabaled"> 下一步 </el-button>
       <el-button size="medium" v-if="active === 2" type="primary" @click="runJob" :disabled="runDisabaled"> 运行 </el-button>
     </div>
-    <tagSelect :showFieldsSelect="selectedAlg.value === jobEnum.XGB_TRAINING" :showTagsModal="showTagsModal" @closeModal="closeModal" @tagSelected="tagSelected"></tagSelect>
-    <participateSelect :showParticipateModal="showParticipateModal" @closeModal="closeModal" @participateSelected="participateSelected"></participateSelect>
+    <tagSelect
+      :showFieldsSelect="selectedAlg.value === jobEnum.XGB_TRAINING || selectedAlg.value === jobEnum.LR_TRAINING"
+      :showTagsModal="showTagsModal"
+      @closeModal="closeModal"
+      @tagSelected="tagSelected"
+      :ownerAgencyName="tagAgency"
+    ></tagSelect>
+    <participateSelect
+      :ownerAgencyName="filterPaticipateAgency"
+      :showParticipateModal="showParticipateModal"
+      @closeModal="closeModal"
+      @participateSelected="participateSelected"
+    ></participateSelect>
   </div>
 </template>
 <script>
@@ -337,29 +377,21 @@ export default {
         queryType: 1,
         dataFields: [],
         fieldsValueList: [],
-        modelId: '',
+        modelPredictAlgorithm: {},
         searchType: [],
         queriedFields: [],
         searchIdList: ''
       },
 
       modelModule: [
-        {
-          type: 'float',
-          min_value: 0,
-          max_value: 1,
-          value: 0.5,
-          label: '测试值：',
-          description: '我是测试值'
-        },
-        {
-          type: 'float',
-          min_value: 0,
-          max_value: 1,
-          value: 0.5,
-          label: '测试值1：',
-          description: '我是测试值'
-        }
+        // {
+        //   type: 'float',
+        //   min_value: 0,
+        //   max_value: 1,
+        //   value: 0.5,
+        //   label: '测试值：',
+        //   description: '我是测试值'
+        // },
       ],
       selectedAlg: {},
       showTagsModal: false,
@@ -375,7 +407,9 @@ export default {
       addContainerIndex: 0,
       modelTableData: [],
       searchTypeEnum,
-      selectedServiceConfig: {}
+      selectedServiceConfig: {},
+      tagAgency: '',
+      filterPaticipateAgency: []
     }
   },
   created() {
@@ -395,13 +429,21 @@ export default {
       this.tagSelectList = []
       switch (selectedAlg.value) {
         case jobEnum.XGB_TRAINING:
-          this.queryDefaultSettings()
+          this.queryDefaultSettings('SYS_' + jobEnum.XGB_TRAINING)
           this.queryModelSettingList()
           break
         // FIXME:
         case jobEnum.LR_TRAINING:
-          this.queryDefaultSettings()
-          this.queryModelSettingList()
+          this.queryDefaultSettings('SYS_' + jobEnum.LR_TRAINING)
+          // this.queryModelSettingList()
+          break
+        case jobEnum.XGB_PREDICTING:
+          this.queryDefaultSettings('SYS_PREDICTING')
+          // this.queryModelSettingList()
+          break
+        case jobEnum.LR_PREDICTING:
+          this.queryDefaultSettings('SYS_PREDICTING')
+          // this.queryModelSettingList()
           break
         default:
           break
@@ -481,7 +523,9 @@ export default {
         selectedData: [{ required: true, message: '参与方不能为空', trigger: 'blur' }],
         sql: [{ required: this.selectedAlg.value === jobEnum.SQL, message: 'sql内容不能为空', trigger: 'blur' }],
         queryType: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询类型', trigger: 'blur' }],
-        modelId: [{ required: this.selectedAlg.value === jobEnum.XGB_PREDICTING, message: '请选择模型', trigger: 'blur' }],
+        modelPredictAlgorithm: [
+          { required: this.selectedAlg.value === jobEnum.XGB_PREDICTING || this.selectedAlg.value === jobEnum.LR_PREDICTING, message: '请选择模型', trigger: 'blur' }
+        ],
         searchType: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询类型', trigger: 'blur' }],
         queriedFields: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请选择查询字段', trigger: 'blur' }],
         searchIdList: [{ required: this.selectedAlg.value === jobEnum.PIR, message: '请输入字段值', trigger: 'blur' }]
@@ -505,11 +549,16 @@ export default {
               this.handlePsiJobData()
               break
             case jobEnum.XGB_TRAINING:
-              this.handleXGBdata()
+              this.handleTraingData()
               break
-            // FIXME:
+            case jobEnum.XGB_PREDICTING:
+              this.handlePredictingData()
+              break
             case jobEnum.LR_TRAINING:
-              this.handleXGBdata()
+              this.handleTraingData()
+              break
+            case jobEnum.LR_PREDICTING:
+              this.handlePredictingData()
               break
             case jobEnum.PIR:
               this.handlePIRdata()
@@ -540,9 +589,9 @@ export default {
     },
     hanleSelectedModel(checked, item) {
       if (checked) {
-        this.jobSettingForm.modelId = item.modelId
+        this.jobSettingForm.modelPredictAlgorithm = item
       } else {
-        this.jobSettingForm.modelId = ''
+        this.jobSettingForm.modelPredictAlgorithm = {}
       }
     },
     handlePIRdata() {
@@ -587,7 +636,7 @@ export default {
       const datasetList = selectedData.map((v) => v.datasetId)
       this.submitJob({ job: params, taskParties, datasetList })
     },
-    handleXGBdata() {
+    handleTraingData() {
       const { selectedAlg, modelModule } = this
       const { selectedData, receiver } = this.jobSettingForm
       const { name } = this.dataInfo
@@ -625,6 +674,43 @@ export default {
       console.log({ job: params, taskParties }, receiver)
       this.submitJob({ job: params, taskParties, datasetList })
     },
+    handlePredictingData() {
+      const { selectedAlg, modelModule } = this
+      const { selectedData, receiver, modelPredictAlgorithm } = this.jobSettingForm
+      const { name } = this.dataInfo
+      console.log(selectedData, 'selectedData')
+      const dataSetList = selectedData.map((v, i) => {
+        const dataset = {
+          owner: v.ownerUserName,
+          ownerAgency: v.ownerAgencyName,
+          path: JSON.parse(v.datasetStoragePath).filePath,
+          storageTypeStr: v.datasetStorageType,
+          datasetID: v.datasetId
+        }
+        return {
+          idFields: v.datasetFieldsSelected,
+          dataset,
+          labelProvider: !!(i === 0), // 先选的是标签方
+          receiveResult: receiver.includes(v.ownerAgencyName)
+        }
+      })
+      const modelSetting = {}
+      modelModule.forEach((v) => {
+        const key = v.label
+        modelSetting[key] = v.value
+      })
+      const param = { dataSetList, modelSetting, modelPredictAlgorithm: JSON.stringify(modelPredictAlgorithm) }
+      const params = { jobType: selectedAlg.value, projectName: name, param: JSON.stringify(param) }
+      const taskParties = selectedData.map((v) => {
+        return {
+          userName: v.ownerUserName,
+          agency: v.ownerAgencyName
+        }
+      })
+      const datasetList = selectedData.map((v) => v.datasetId)
+      console.log({ job: params, taskParties }, receiver)
+      this.submitJob({ job: params, taskParties, datasetList })
+    },
     handleSelectSetting(data) {
       const setting = JSON.parse(data.setting)
       this.modelModule.forEach((v) => {
@@ -647,12 +733,12 @@ export default {
       }
     },
     // 查询xgb默认模板参数
-    async queryDefaultSettings() {
+    async queryDefaultSettings(name) {
       const res = await settingManageServer.querySettings({
         onlyMeta: false,
         condition: {
           id: '',
-          name: 'XGB_TRAINING',
+          name,
           type: 'ALGORITHM_SETTING',
           owner: ''
         }
@@ -682,6 +768,18 @@ export default {
             value: v
           }
         })
+      }
+    },
+    // 模型选择变更 影响数据集选择
+    modelSelectedChange(item) {
+      if (item) {
+        const { participant_agency_list } = item
+        const tagAgency = participant_agency_list.filter((v) => v.isLabelProvider)[0].agency
+        const filterPaticipateAgency = participant_agency_list.filter((v) => !v.isLabelProvider).map((v) => v.agency)
+        this.tagAgency = tagAgency
+        this.filterPaticipateAgency = filterPaticipateAgency
+        this.tagSelectList = []
+        this.paticipateSelectList = [{}]
       }
     },
     showAddParticipate(addContainerIndex) {
@@ -732,14 +830,50 @@ export default {
         const participateAgencyList = validpaticipateSelect.map((v) => v.ownerAgencyName)
         // 参与机构数量
         const uniqueAgencyLength = Array.from(new Set(participateAgencyList)).length
-        if (this.selectedAlg.value === jobEnum.XGB_TRAINING || this.selectedAlg.value === jobEnum.LR_TRAINING) {
+        if ([jobEnum.XGB_TRAINING, jobEnum.LR_TRAINING, jobEnum.LR_PREDICTING, jobEnum.XGB_PREDICTING].includes(this.selectedAlg.value)) {
           const tag = this.tagSelectList[0] || {}
           const xgbValidParticipateLength = validpaticipateSelect.filter((v) => v.ownerAgencyName !== tag.ownerAgencyName).length
-          // xgb需要选择标签提供方数据集
+          // 建模预测需要选择标签提供方数据集
           const tagSelectListNum = this.tagSelectList.length
           if (!(tagSelectListNum === 1 && this.calcParticipateNumberMatch(participateNumber, xgbValidParticipateLength))) {
             this.$message.error(`请添加标签提供方，并添加至少${parseInt(participateNumber)}个不同机构的参与方`)
             return
+          }
+          // 预测任务 选择的数据集要和选择的模型内数据集数量和字段相匹配
+          if ([jobEnum.LR_PREDICTING, jobEnum.XGB_PREDICTING].includes(this.selectedAlg.value)) {
+            const { participant_agency_list } = this.jobSettingForm.modelPredictAlgorithm
+            const modelTagsFileds = participant_agency_list.filter((v) => v.isLabelProvider)[0].fields
+            const modelPaticipate = participant_agency_list.filter((v) => !v.isLabelProvider)
+            if (modelPaticipate.length !== xgbValidParticipateLength) {
+              this.$message.error('参与方数据集数量错误，需要等于模型中参与方数量')
+              return
+            }
+            // 标签方字段校验
+            const { datasetFields = '' } = tag
+            const tagSelectedFields = datasetFields.split(', ')
+            if (!modelTagsFileds.every((v) => tagSelectedFields.includes(v))) {
+              this.$message.error('标签方数据集选择错误，需要包含模型中标签方数据集所有字段')
+              return
+            }
+            // 参与方字段校验
+            let valid = true
+            modelPaticipate.forEach((v) => {
+              const { fields: modelFields, agency } = v
+              const matchPaticipateSelect = validpaticipateSelect.filter((k) => k.ownerAgencyName === agency)
+              if (matchPaticipateSelect.length === 1) {
+                const { datasetFields = '' } = matchPaticipateSelect[0]
+                const selectedFields = datasetFields.split(', ')
+                if (!modelFields.every((k) => selectedFields.includes(k))) {
+                  valid = false
+                }
+              } else {
+                valid = false
+              }
+            })
+            if (!valid) {
+              this.$message.error('参与方数据集选择错误，需要包含模型中参与方数据集所有字段')
+              return
+            }
           }
         } else if (this.selectedAlg.value === jobEnum.PSI) {
           // psi 可同一机构下多个数据集
@@ -748,7 +882,7 @@ export default {
             return
           }
         } else if (this.selectedAlg.value === jobEnum.PIR) {
-          // psi 可同一机构下多个数据集
+          // pir 要选择服务
           if (!this.jobSettingForm.selectedData.length) {
             this.$message.error('请选择服务')
             return

@@ -85,7 +85,7 @@ export default {
       formLabelWidth: '112px',
       loadingFlag: false,
       groupId: '',
-      pageData: { page_offset: 1, page_size: 8 },
+      pageData: { page_offset: 1, page_size: 4 },
       dataList: [],
       selectdDataId: '',
       selectedData: {},
@@ -93,6 +93,7 @@ export default {
     }
   },
   created() {
+    this.selectdDataId = ''
     this.getListDataset()
   },
   computed: {
@@ -175,7 +176,7 @@ export default {
 }
 .card-container {
   margin: -10px -10px;
-  max-height: 410px;
+  height: auto;
   overflow: auto;
 }
 

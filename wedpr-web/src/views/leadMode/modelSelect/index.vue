@@ -1,19 +1,13 @@
 <template>
   <div class="record">
     <div class="card-container" v-if="modelTableData.length">
-      <modelCard
-        v-for="item in modelTableData"
-        :selected="value === item.setting"
-        @selected="(data) => hanleSelectedModel(data, item)"
-        :modelInfo="item"
-        :key="item.id"
-      ></modelCard>
+      <modelCard v-for="item in modelTableData" :selected="value.id === item.id" @selected="(data) => hanleSelectedModel(data, item)" :modelInfo="item" :key="item.id"></modelCard>
     </div>
     <el-empty v-else :image-size="120" description="暂无数据">
       <img slot="image" src="~Assets/images/pic_empty_news.png" alt="" />
     </el-empty>
     <we-pagination
-      :pageSizesOption="[8, 12, 16, 24, 32]"
+      :pageSizesOption="pageSizesOption"
       :total="total"
       :page_offset="pageData.page_offset"
       :page_size="pageData.page_size"
@@ -36,6 +30,12 @@ export default {
     value: {
       type: String,
       default: ''
+    },
+    pageSizesOption: {
+      type: Array,
+      default: () => {
+        return [8, 12, 16, 24, 32]
+      }
     }
   },
   components: {
@@ -50,6 +50,7 @@ export default {
     }
   },
   created() {
+    this.pageData.page_size = this.pageSizesOption[0]
     this.getModelData()
   },
   computed: {
@@ -58,9 +59,11 @@ export default {
   methods: {
     hanleSelectedModel(selected, item) {
       if (selected) {
-        this.$emit('input', item.setting)
+        this.$emit('input', item)
+        this.$emit('modelSelectedChange', item)
       } else {
-        this.$emit('input', '')
+        this.$emit('input', null)
+        this.$emit('modelSelectedChange', null)
       }
     },
     async getModelData() {
@@ -121,7 +124,7 @@ export default {
 }
 .card-container {
   margin: -10px;
-  max-height: 410px;
+  height: auto;
   overflow: auto;
 }
 

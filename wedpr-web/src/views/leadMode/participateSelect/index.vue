@@ -4,11 +4,11 @@
       <el-form label-position="right" size="small" :model="dataForm" :rules="dataFormFormRules" ref="dataForm" :label-width="formLabelWidth">
         <el-form-item label="选择参与方：" prop="ownerAgencyName">
           <el-select style="width: 1010px" v-model="dataForm.ownerAgencyName" placeholder="请选择参与方">
-            <el-option :label="item.label" :value="item.value" v-for="item in agencyList" :key="item.value"></el-option>
+            <el-option :label="item.label" :value="item.value" v-for="item in showSelectList" :key="item.value"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="选择数据：" prop="datasetInfo">
-          <dataSelect :key="dataForm.ownerAgencyName" :ownerAgencyName="dataForm.ownerAgencyName" @selected="selected" />
+          <dataSelect :key="showParticipateModal" :ownerAgencyName="dataForm.ownerAgencyName" @selected="selected" />
         </el-form-item>
       </el-form>
     </div>
@@ -28,6 +28,10 @@ export default {
     showParticipateModal: {
       type: Boolean,
       default: false
+    },
+    ownerAgencyName: {
+      type: Array,
+      default: () => []
     }
   },
   components: {
@@ -49,16 +53,34 @@ export default {
       groupId: '',
       pageData: { page_offset: '', page_size: '' },
       dataList: [],
-      fieldsList: []
+      fieldsList: [],
+      showSelectList: []
     }
   },
   created() {
-    this.dataForm.ownerAgencyName = this.agencyId
+    this.filterSelect()
   },
   computed: {
     ...mapGetters(['agencyList', 'agencyId'])
   },
+  watch: {
+    ownerAgencyName() {
+      this.filterSelect()
+    },
+    showParticipateModal(nv) {
+      nv && this.filterSelect()
+    }
+  },
   methods: {
+    filterSelect() {
+      const { ownerAgencyName } = this
+      if (ownerAgencyName.length) {
+        this.showSelectList = this.agencyList.filter((v) => ownerAgencyName.includes(v.value))
+      } else {
+        this.showSelectList = [...this.agencyList]
+      }
+      this.dataForm.ownerAgencyName = this.showSelectList.length ? this.showSelectList[0].value : ''
+    },
     handleClose() {
       this.dataForm = {
         ownerAgencyName: '',
@@ -102,7 +124,7 @@ export default {
   }
   .card-container {
     margin: -10px -10px;
-    max-height: 410px;
+    height: auto;
     overflow: auto;
   }
 

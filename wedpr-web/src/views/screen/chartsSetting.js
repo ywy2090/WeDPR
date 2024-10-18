@@ -1,4 +1,4 @@
-export const colorList = ['#2F89F3', '#69CB92', '#FFA927', '#739AFC', '#EC744C']
+export const colorList = ['#2F89F3', '#69CB92', '#FFA927', '#739AFC', '#EC744C', '#ff4d4d', '#7575a3', '#a6a6a6']
 export const circleOption = {
   tooltip: {
     trigger: 'item'
@@ -311,7 +311,7 @@ export const lineJobOption = {
   },
   smooth: true,
   legend: {
-    data: ['机构1', '机构2', '机构3'],
+    data: [],
     textStyle: {
       color: 'white',
       fontSize: '10px'
@@ -381,6 +381,78 @@ export const graphChartOption = {
         opacity: 0.9,
         width: 2,
         curveness: 0
+      }
+    }
+  ]
+}
+
+export function spliceLegend(legendData) {
+  if (legendData.length < 4) {
+    return {
+      data: legendData,
+      textStyle: {
+        color: 'white',
+        fontSize: '10px'
+      },
+      left: 'center',
+      bottom: -6,
+      icon: 'circle',
+      // type: 'scroll',
+      orient: 'horizontal' // vertical
+    }
+  }
+  const middleIndex = Math.ceil(legendData.length / 2) // 获取数组中间下标
+  const oneData = legendData.slice(0, middleIndex)
+  const twoData = legendData.slice(-middleIndex)
+  return [
+    {
+      data: oneData,
+      orient: 'horizontal',
+      icon: 'circle',
+      align: 'left',
+      bottom: 20,
+      itemWidth: 8,
+      itemHeight: 8,
+      formatter: (name) => {
+        return `{b|${name}} `
+      },
+      x: 'center',
+      textStyle: {
+        color: 'white',
+        fontSize: 12,
+        align: 'left',
+        // 文字块背景色，一定要加上，否则对齐不会生效
+        backgroundColor: 'transparent',
+        rich: {
+          b: {
+            width: 100
+          }
+        }
+      }
+    },
+    {
+      data: twoData,
+      orient: 'horizontal',
+      icon: 'circle',
+      align: 'left',
+      bottom: 0,
+      itemWidth: 8,
+      itemHeight: 8,
+      formatter: (name) => {
+        return `{b|${name}} `
+      },
+      x: 'center',
+      textStyle: {
+        color: 'white',
+        fontSize: 12,
+        align: 'left',
+        // 文字块背景色，一定要加上，否则对齐不会生效
+        backgroundColor: 'transparent',
+        rich: {
+          b: {
+            width: 100
+          }
+        }
       }
     }
   ]
