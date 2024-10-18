@@ -51,6 +51,7 @@ export default {
       loadingFlag: false,
       groupId: '',
       pageData: { page_offset: 1, page_size: 4 },
+      total: -1,
       dataList: [],
       selectdserviceId: '',
       selectedData: {},
@@ -131,7 +132,7 @@ export default {
 }
 .card-container {
   margin: -10px;
-  max-height: 410px;
+  height: auto;
   overflow: auto;
 }
 

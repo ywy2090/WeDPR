@@ -61,11 +61,11 @@
           <div class="sort">
             <p class="title">任务类型排序</p>
             <div class="chart">
-              <el-table size="small" v-loading="loadingFlag" :data="jobOverviewList" :border="false">
-                <el-table-column width="126px" label="分类" prop="type">
+              <el-table v-loading="loadingFlag" :data="jobOverviewList" :border="false">
+                <el-table-column width="136px" label="分类" prop="type">
                   <template v-slot="scope"> {{ handleData(scope.row.type).label }} </template>
                 </el-table-column>
-                <el-table-column width="96px" label="数量" prop="count" />
+                <el-table-column width="86px" label="数量" prop="count" />
                 <el-table-column width="180px" label="占比">
                   <template v-slot="scope">
                     <el-progress v-if="scope.row.progress" :stroke-width="8" :percentage="scope.row.progress"></el-progress>
@@ -160,7 +160,7 @@ import * as echarts from 'echarts'
 import { mapGetters } from 'vuex'
 import { dataManageServer, accountManageServer, projectManageServer, jobManageServer } from 'Api'
 import dayjs from 'dayjs'
-import { jobStatusMap, jobEnum } from 'Utils/constant.js'
+import { jobStatusMap } from 'Utils/constant.js'
 import modifyUser from './modifyUser/index.vue'
 const channelColors = {
   PSI: '#2F89F3',
@@ -264,7 +264,8 @@ export default {
         startTime: dayjs(that.searchDateVal[0]).format('YYYY-MM-DD') || '',
         endTime: dayjs(that.searchDateVal[1]).format('YYYY-MM-DD') || ''
       }
-      this.queryJobLine({ statTime: params, jobTypeList: [jobEnum.PSI, jobEnum.XGB_PREDICTING, jobEnum.XGB_TRAINING] })
+      const jobTypeList = this.algList.map((v) => v.name)
+      this.queryJobLine({ statTime: params, jobTypeList })
       console.log(params)
     },
     searchTabInput() {
@@ -336,18 +337,24 @@ export default {
       }
     },
     async queryJobOverview() {
-      const res = await projectManageServer.queryJobOverview({ jobTypeList: [jobEnum.PSI, jobEnum.XGB_PREDICTING, jobEnum.XGB_TRAINING] })
+      const jobTypeList = this.algList.map((v) => v.name)
+      const res = await projectManageServer.queryJobOverview({ jobTypeList })
       this.loadingFlag = false
       console.log(res)
       if (res.code === 0 && res.data) {
         const { jobOverviewList, totalCount } = res.data
-        this.jobOverviewList = jobOverviewList.map((v) => {
-          return {
-            type: v.jobType,
-            count: v.count,
-            progress: Math.floor((v.count * 100) / totalCount)
-          }
-        })
+        this.jobOverviewList = jobOverviewList
+          .map((v) => {
+            return {
+              type: v.jobType,
+              count: v.count,
+              progress: Math.floor((v.count * 100) / totalCount)
+            }
+          })
+          .sort((a, b) => {
+            return b.count - a.count
+          })
+          .slice(0, 6)
         console.log(this.jobOverviewList)
       } else {
         this.jobOverviewList = []
@@ -360,20 +367,17 @@ export default {
       if (res.code === 0 && res.data) {
         console.log(res)
         const { statResults = [] } = res.data
-
+        const { algList } = this
         const xData = statResults.map((v) => {
           return v.timeRange.startTime
         })
         const yData = statResults.map((k) => k.jobTypeStats)
-        console.log(yData, 'yData')
-        const PSIData = yData.map((v) => v.filter((k) => k.jobType === jobEnum.PSI)[0].count)
-        const XGB_PREDICTINGData = yData.map((v) => v.filter((k) => k.jobType === jobEnum.XGB_PREDICTING)[0].count)
-        const XGB_TRAININGData = yData.map((v) => v.filter((k) => k.jobType === jobEnum.XGB_TRAINING)[0].count)
-        const seriesYData = [
-          { name: this.handleData(jobEnum.PSI).label, dataList: PSIData },
-          { name: this.handleData(jobEnum.XGB_PREDICTING).label, dataList: XGB_PREDICTINGData },
-          { name: this.handleData(jobEnum.XGB_TRAINING).label, dataList: XGB_TRAININGData }
-        ]
+        const algNames = algList.map((v) => v.title)
+        const seriesYData = algList.map((v) => {
+          const dataList = yData.map((dataItem) => dataItem.filter((data) => data.jobType === v.name)[0].count)
+          console.log(dataList, 'dataList==============')
+          return { name: v.title, dataList }
+        })
         const series = seriesYData.map((item) => {
           return {
             data: item.dataList, // 具体数据
@@ -400,10 +404,14 @@ export default {
             top: 30, // 图表距离容器下面多少距离
             containLabel: true // 防止标签溢出
           },
+          tooltip: {
+            trigger: 'axis'
+          },
           smooth: true,
           legend: {
-            data: [this.handleData(jobEnum.PSI).label, this.handleData(jobEnum.XGB_PREDICTING).label, this.handleData(jobEnum.XGB_TRAINING).label],
-            left: 60,
+            type: 'scroll',
+            data: algNames,
+            left: 'center',
             bottom: -6
           },
           yAxis: { type: 'value' },

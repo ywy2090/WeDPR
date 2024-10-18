@@ -4,10 +4,10 @@
       <el-form label-position="right" size="small" :model="dataForm" :rules="dataFormFormRules" ref="dataForm" :label-width="formLabelWidth">
         <el-form-item label="选择标签方：" prop="ownerAgencyName">
           <el-select style="width: 1010px" v-model="dataForm.ownerAgencyName" placeholder="请选择标签方">
-            <el-option :label="item.label" :value="item.value" v-for="item in agencyList" :key="item.value"></el-option>
+            <el-option :label="item.label" :value="item.value" v-for="item in showSelectList" :key="item.value"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="选择数据：" prop="datasetInfo"> <dataSelect :ownerAgencyName="dataForm.ownerAgencyName" @selected="selected" /> </el-form-item>
+        <el-form-item label="选择数据：" prop="datasetInfo"> <dataSelect :key="showTagsModal" :ownerAgencyName="dataForm.ownerAgencyName" @selected="selected" /> </el-form-item>
         <el-form-item label="选择标签：" prop="fields" v-if="showFieldsSelect">
           <el-select style="width: 160px" v-model="dataForm.fields" placeholder="请选择标签">
             <el-option :label="item.label" :value="item.value" v-for="item in fieldsList" :key="item.value"></el-option>
@@ -35,6 +35,11 @@ export default {
     showFieldsSelect: {
       type: Boolean,
       default: false
+    },
+    // 预测任务选择模型的时候数据集提供方会确定
+    ownerAgencyName: {
+      type: String,
+      default: ''
     }
   },
   components: {
@@ -47,17 +52,17 @@ export default {
         datasetInfo: null,
         fields: ''
       },
-
       formLabelWidth: '112px',
       loading: false,
       groupId: '',
       pageData: { page_offset: '', page_size: '' },
       dataList: [],
-      fieldsList: []
+      fieldsList: [],
+      showSelectList: []
     }
   },
   created() {
-    this.dataForm.ownerAgencyName = this.agencyId
+    this.filterSelect()
   },
   computed: {
     ...mapGetters(['agencyList', 'agencyId']),
@@ -69,7 +74,25 @@ export default {
       }
     }
   },
+  watch: {
+    ownerAgencyName() {
+      this.filterSelect()
+    },
+    showTagsModal(nv) {
+      nv && this.filterSelect()
+    }
+  },
   methods: {
+    filterSelect() {
+      const { ownerAgencyName } = this
+      if (ownerAgencyName) {
+        this.showSelectList = this.agencyList.filter((v) => v.value === ownerAgencyName)
+      } else {
+        this.showSelectList = [...this.agencyList]
+      }
+      this.dataForm.ownerAgencyName = this.showSelectList.length ? this.showSelectList[0].value : ''
+      console.log(this.dataForm.ownerAgencyName, 'this.dataForm.ownerAgencyName')
+    },
     handleClose() {
       this.dataForm = {
         ownerAgencyName: '',
@@ -133,7 +156,7 @@ export default {
   }
   .card-container {
     margin: -10px -10px;
-    max-height: 410px;
+    height: auto;
     overflow: auto;
   }
 

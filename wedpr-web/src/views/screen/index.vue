@@ -116,7 +116,7 @@ import { mapGetters } from 'vuex'
 import { dashboardManageServer, logManageServer } from 'Api'
 import { jobStatusMap, actionMap, actionScreenStatus } from 'Utils/constant.js'
 import dayjs from 'dayjs'
-import { colorList, circleOption, barOption, lineOption, circleJobOption, barJobOption, lineJobOption, graphChartOption } from './chartsSetting.js'
+import { colorList, circleOption, barOption, lineOption, circleJobOption, barJobOption, lineJobOption, graphChartOption, spliceLegend } from './chartsSetting.js'
 import nodeUsable from '../../assets/images/node-usable.png'
 import nodeDisable from '../../assets/images/node-disable.png'
 import notConnected from '../../assets/images/notconnected.png'
@@ -515,6 +515,7 @@ export default {
             data: countList
           }
         })
+        barJobOption.legend = spliceLegend(jobTypeList)
         this.initJobBarData()
       }
     },
@@ -539,8 +540,9 @@ export default {
           }
         })
         lineJobOption.xAxis.data = dateList
-        lineJobOption.legend.data = jobTypeList
+        lineJobOption.legend = spliceLegend(jobTypeList)
         lineJobOption.series = series
+        console.log(lineJobOption, 'lineJobOption======================')
         this.initJobLineData()
       }
     },
@@ -728,7 +730,7 @@ div.screen {
       color: #95989d;
       font-size: 16px;
       p {
-        width: 266px;
+        width: 276px;
         text-align: left;
         float: right;
       }

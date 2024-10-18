@@ -48,6 +48,7 @@
           <span class="info"> {{ serviceInfo.createTime }} </span>
         </div>
       </div>
+
       <div class="whole" v-if="serviceInfo.serviceType === serviceTypeEnum.PIR">
         <div class="half">
           <span class="title">查询规则：</span>
@@ -70,12 +71,28 @@
         <div class="half">
           <span class="title">模型内容：</span>
           <span class="info">
-            <el-table size="small" :data="serviceConfigList" :border="true" class="table-wrap">
+            <el-table size="small" :data="serviceConfigList" :border="true" class="table-wrap" :span-method="objectSpanMethod">
+              <el-table-column label="模型类型" prop="model_type" />
               <el-table-column label="标签提供方" prop="label_provider" show-overflow-tooltip />
               <el-table-column label="标签字段" prop="label_column" show-overflow-tooltip />
-              <el-table-column label="参与方" prop="participant_agency_list" show-overflow-tooltip />
-              <el-table-column label="模型类型" prop="model_type" />
+              <el-table-column label="参与机构" prop="agency" show-overflow-tooltip />
+              <el-table-column label="包含标签" prop="fields" show-overflow-tooltip />
             </el-table>
+          </span>
+        </div>
+      </div>
+      <div class="whole" v-if="serviceInfo.owner === userId && serviceInfo.agency === agencyId">
+        <div class="half">
+          <span class="title">授权信息：</span>
+          <span class="info">
+            <el-table size="small" v-if="serviceAuthInfos.length" :data="serviceAuthInfos" :border="true" class="table-wrap">
+              <el-table-column label="授权机构" prop="accessibleAgency" />
+              <el-table-column label="授权用户" prop="accessibleUser" show-overflow-tooltip />
+              <el-table-column label="AccessKey" prop="accessKeyId" show-overflow-tooltip />
+              <el-table-column label="申请时间" prop="applyTime" show-overflow-tooltip />
+              <el-table-column label="过期时间" prop="expireTime" show-overflow-tooltip />
+            </el-table>
+            <span v-else>暂无授权</span>
           </span>
         </div>
       </div>
@@ -165,7 +182,8 @@ export default {
         Publishing: '#3071F2',
         PublishSuccess: '#52B81F',
         PublishFailed: '#FF4D4F'
-      }
+      },
+      serviceAuthInfos: []
     }
   },
   created() {
@@ -204,9 +222,10 @@ export default {
       console.log(res)
       if (res.code === 0 && res.data) {
         const { wedprPublishedServiceList = [] } = res.data
-        const { serviceConfig = '', serviceType } = wedprPublishedServiceList[0] || {}
-        const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
+        const { serviceConfig = '', serviceType, serviceAuthInfos } = wedprPublishedServiceList[0] || {}
         if (serviceType === serviceTypeEnum.PIR) {
+          // pir服务
+          const { datasetId, searchType, idField, accessibleValueQueryFields } = JSON.parse(serviceConfig)
           this.serviceConfigList = [
             {
               searchType,
@@ -214,17 +233,45 @@ export default {
               accessibleValueQueryFields
             }
           ]
+          this.serviceInfo = { ...wedprPublishedServiceList[0], datasetId, serviceType }
+          console.log(this.serviceConfigList, 'serviceConfigList')
         } else {
-          this.serviceConfigList = [JSON.parse(serviceConfig)]
+          //  model服务
+          const { participant_agency_list = [], ...rest } = JSON.parse(serviceConfig)
+          this.serviceConfigList = participant_agency_list.map((v) => {
+            return {
+              ...v,
+              ...rest
+            }
+          })
+          console.log(this.serviceConfigList, 'serviceConfigList')
+          this.serviceInfo = { ...wedprPublishedServiceList[0], serviceType }
         }
 
-        this.serviceInfo = { ...wedprPublishedServiceList[0], datasetId, serviceType }
         // 自己的服务查询使用记录
         if (this.serviceInfo.owner === this.userId && this.serviceInfo.agency === this.agencyId) {
+          this.serviceAuthInfos = serviceAuthInfos
           this.getServerUseRecord()
         }
       } else {
         this.serviceInfo = {}
+      }
+    },
+    objectSpanMethod({ row, column, rowIndex, columnIndex }) {
+      const length = this.serviceConfigList.length
+      if (columnIndex < 3) {
+        if (rowIndex === 0) {
+          return {
+            // 此单元格在列上要占据length个行单元格，1个列单元格
+            rowspan: length,
+            colspan: 1
+          }
+        } else {
+          return {
+            rowspan: 0,
+            colspan: 0
+          }
+        }
       }
     },
     handleParamsValid(params) {

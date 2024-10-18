@@ -78,13 +78,14 @@ export default {
     }
   },
   created() {
-    const { jobID } = this.$route.query
+    const { jobID, jobType } = this.$route.query
     this.jobID = jobID
     this.querySettings({
       onlyMeta: false,
       condition: {
         id: '',
-        name: jobEnum.XGB_TRAINING,
+        name: 'SYS_' + jobType,
+        type: 'ALGORITHM_SETTING',
         owner: '*'
       }
     })
@@ -123,7 +124,7 @@ export default {
       const res = await settingManageServer.querySettings(params)
       console.log(res)
       if (res.code === 0 && res.data) {
-        const { setting = '' } = res.data[0]
+        const { setting = '' } = res.data.dataList[0]
         console.log('JSON.parse(setting)', JSON.parse(setting))
         this.modelModule = JSON.parse(setting)
         this.queryJobByCondition()

@@ -87,14 +87,12 @@
 </template>
 <script>
 import { projectManageServer } from 'Api'
-import { tableHeightHandle } from 'Mixin/tableHeightHandle.js'
 import { jobStatusList, jobStatusMap } from 'Utils/constant.js'
 import { mapGetters } from 'vuex'
 import wePagination from '@/components/wePagination.vue'
 import { handleParamsValid } from 'Utils/index.js'
 export default {
   name: 'projectDetail',
-  mixins: [tableHeightHandle],
   components: {
     wePagination
   },
