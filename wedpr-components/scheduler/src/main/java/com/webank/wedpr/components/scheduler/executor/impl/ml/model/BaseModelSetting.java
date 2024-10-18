@@ -13,22 +13,34 @@
  *
  */
 
-package com.webank.wedpr.components.scheduler.executor.impl.ml.request;
+package com.webank.wedpr.components.scheduler.executor.impl.ml.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.webank.wedpr.common.protocol.JobType;
-import com.webank.wedpr.components.scheduler.executor.impl.model.AlgorithmType;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class XGBJobRequest extends ModelJobRequest {
+public class BaseModelSetting {
+    @JsonProperty("use_psi")
+    private Boolean usePsi = false;
 
-    public XGBJobRequest(ModelJobRequest modelJobRequest, JobType jobType) {
-        super(modelJobRequest);
-        this.setTaskType(jobType.getType());
-        if (jobType.trainJob()) {
-            this.algorithmType = AlgorithmType.WEDPR_TRAIN.getType();
-        } else {
-            this.algorithmType = AlgorithmType.WEDPR_PREDICT.getType();
+    @JsonProperty("use_iv")
+    private Boolean useIv = false;
+
+    public void setUsePsi(Boolean usePsi) {
+        if (usePsi == null) {
+            return;
         }
+        this.usePsi = usePsi;
+    }
+
+    public void setUseIv(Boolean useIv) {
+        if (useIv == null) {
+            return;
+        }
+        this.useIv = useIv;
     }
 }

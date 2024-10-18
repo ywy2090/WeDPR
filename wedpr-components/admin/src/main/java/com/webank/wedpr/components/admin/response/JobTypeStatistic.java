@@ -6,5 +6,6 @@ import lombok.Data;
 @Data
 public class JobTypeStatistic {
     private String jobType;
+    private String jobTypeTitle;
     private Integer count;
 }
