@@ -85,14 +85,20 @@ public class ExecutorManagerImpl implements ExecutorManager {
                 proceedingJobs.remove(executiveContext);
                 return;
             }
+
+            JobDO.JobResult jobResult = executiveContext.getJob().getJobResult();
             // the job has already been finished(the sync case)
-            if (executiveContext.getJob().getJobResult() != null
-                    && executiveContext.getJob().getJobResult().getJobStatus() != null
-                    && executiveContext.getJob().getJobResult().getJobStatus().finished()) {
+            if (jobResult != null
+                    && jobResult.getJobStatus() != null
+                    && jobResult.getJobStatus().finished()) {
                 proceedingJobs.remove(executiveContext);
                 return;
             }
-            ExecuteResult result = executor.queryStatus(executiveContext.getJob().getId());
+            ExecuteResult result = executor.queryStatus(executiveContext.getTaskID());
+            if (result == null) {
+                return;
+            }
+
             if (result.finished()) {
                 executiveContext.onTaskFinished(result);
                 proceedingJobs.remove(executiveContext);
@@ -114,7 +120,7 @@ public class ExecutorManagerImpl implements ExecutorManager {
 
         int proceedingJobsSize = proceedingJobs.size();
         if (proceedingJobsSize > 0) {
-            logger.info("## query all jobs status proceeding jobs size: {}", proceedingJobsSize);
+            logger.info("## query all jobs status, proceeding jobs number: {}", proceedingJobsSize);
         } else {
             logger.info("## query all jobs status, no jobs is proceeding");
         }
@@ -207,7 +213,7 @@ public class ExecutorManagerImpl implements ExecutorManager {
                     }
                 } catch (Exception e) {
                     logger.error(
-                            "update job status to success for job {} failed, result: {}, error: ",
+                            "update job status for job {} failed, result: {}, error: ",
                             jobDO.getId(),
                             result.toString(),
                             e);

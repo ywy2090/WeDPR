@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.webank.wedpr.components.scheduler.mapper.JobWorkerMapper">
+    <resultMap id="JobWorkerResultMap" type="com.webank.wedpr.components.scheduler.dag.entity.JobWorker">
+        <id property="workerId" column="worker_id" />
+        <result property="jobId" column="job_id" />
+        <result property="type" column="type" />
+        <result property="status" column="status" />
+        <result property="args" column="args" />
+        <result property="upstreams" column="upstreams" />
+<!--        <result property="inputsStatement" column="inputs_statement" />-->
+<!--        <result property="outputs" column="outputs" />-->
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <select id="selectJobWorkerById" resultMap="JobWorkerResultMap">
+        SELECT
+            worker_id,
+            job_id,
+            type,
+            status,
+            args,
+            upstreams,
+            inputs_statement,
+            outputs,
+            create_time,
+            update_time
+        FROM wedpr_job_worker_table WHERE worker_id = #{workerId}
+    </select>
+
+    <insert id="insertJobWorker" parameterType="com.webank.wedpr.components.scheduler.dag.entity.JobWorker">
+        INSERT INTO wedpr_job_worker_table (worker_id, job_id, type, status, args, upstreams)
+        VALUES (#{workerId}, #{jobId}, #{type}, #{status}, #{args}, #{upstreams})
+    </insert>
+
+    <insert id="batchInsertJobWorkers" parameterType="java.util.List">
+        INSERT INTO wedpr_job_worker_table (worker_id, job_id, type, status, args, upstreams, inputs_statement, outputs)
+        VALUES
+        <foreach collection="list" item="jobWorker" separator=",">
+            (#{jobWorker.workerId}, #{jobWorker.jobId}, #{jobWorker.type}, #{jobWorker.status}, #{jobWorker.args}, #{jobWorker.upstreams})
+        </foreach>
+    </insert>
+
+    <update id="updateJobWorkerStatus" parameterType="map">
+        UPDATE wedpr_job_worker_table SET status = #{status} WHERE worker_id = #{workerId}
+    </update>
+
+</mapper>

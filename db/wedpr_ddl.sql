@@ -140,6 +140,22 @@ create table if not exists `wedpr_job_table`(
     index report_status_index(`report_status`)
 )ENGINE=InnoDB default charset=utf8mb4 default collate=utf8mb4_bin ROW_FORMAT=DYNAMIC;
 
+-- the job dag worker table
+CREATE TABLE if not exists wedpr_job_worker_table (
+    worker_id VARCHAR(100),
+    job_id VARCHAR(255),
+    type VARCHAR(255),
+    status VARCHAR(255),
+    args TEXT,
+    upstreams TEXT,
+    inputs_statement TEXT,
+    outputs TEXT,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (worker_id),
+    INDEX job_id_idx (job_id)
+)ENGINE='InnoDB' DEFAULT CHARSET='utf8mb4' COLLATE='utf8mb4_bin' ROW_FORMAT=DYNAMIC;
+
 -- job dataset relationship table
 create table if not exists `wedpr_job_dataset_relation`(
     `job_id` varchar(64) not null comment "任务ID",

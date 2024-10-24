@@ -9,9 +9,9 @@ import com.webank.wedpr.components.scheduler.executor.impl.ml.request.FeatureEng
 import com.webank.wedpr.components.scheduler.executor.impl.ml.request.ModelJobRequest;
 import com.webank.wedpr.components.scheduler.executor.impl.ml.request.PreprocessingRequest;
 import com.webank.wedpr.components.scheduler.executor.impl.model.FileMetaBuilder;
+import com.webank.wedpr.components.scheduler.executor.impl.mpc.MPCExecutor;
 import com.webank.wedpr.components.scheduler.executor.impl.mpc.MPCJobParam;
 import com.webank.wedpr.components.scheduler.executor.impl.psi.MLPSIExecutor;
-import com.webank.wedpr.components.scheduler.executor.impl.psi.MPCExecutor;
 import com.webank.wedpr.components.scheduler.executor.impl.psi.MPCPSIExecutor;
 import com.webank.wedpr.components.scheduler.executor.impl.psi.PSIExecutor;
 import com.webank.wedpr.components.scheduler.workflow.WorkFlow;
@@ -119,9 +119,8 @@ public class JobWorkFlowBuilderManager {
                     PreprocessingRequest preprocessingRequest =
                             mpcJobParam.toPreprocessingRequest(fileMetaBuilder);
                     jobDO.setJobRequest(preprocessingRequest);
-                    jobDO.setJobType(JobType.MPC.getType());
+                    jobDO.setJobType(JobType.MPC.getType())
                     */
-
                     JobWorkFlowBuilderImpl jobWorkFlowBuilder =
                             new JobWorkFlowBuilderImpl(
                                     getJobWorkFlowBuilder(jobDO.getJobType()), this);

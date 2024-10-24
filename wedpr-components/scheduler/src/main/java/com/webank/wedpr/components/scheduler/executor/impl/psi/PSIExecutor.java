@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PSIExecutor implements Executor {
-    private static class QueryTaskParam {
+    public static class QueryTaskParam {
         private String taskID;
 
         public QueryTaskParam() {}
